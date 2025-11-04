@@ -878,7 +878,8 @@ async function fetchIPInfo(ip) {
         asn: data.asn,
         isp: data.org,
         latitude: data.latitude,
-        longitude: data.longitude
+        longitude: data.longitude,
+        hostname: data.hostname || null  // リモートホスト（逆引き）
       }
     };
   } catch (e) {

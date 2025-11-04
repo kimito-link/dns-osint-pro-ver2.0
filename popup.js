@@ -67,6 +67,20 @@ async function getActiveTabTitle() {
 }
 
 /**
+ * 国コードから国旗絵文字を生成
+ * @param {string} countryCode - ISO 3166-1 alpha-2 国コード（例: JP, US）
+ * @returns {string} 国旗絵文字
+ */
+function getFlagEmoji(countryCode) {
+  if (!countryCode || countryCode.length !== 2) return '';
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt());
+  return String.fromCodePoint(...codePoints);
+}
+
+/**
  * ページタイトルからサイト名/ブランド名を抽出
  * 風評被害チェック用のキーワードとして使用
  * @param {string} title - ページタイトル
@@ -2756,20 +2770,59 @@ async function fetchAll(domain) {
           const data = ipInfo.data;
           let serverInfoLines = [];
 
-          // サーバー会社 (ASN)
-          if (data.asn) {
-            serverInfoLines.push(`<strong>サーバー会社:</strong> ${data.asn.name || data.asn.asn}`);
-            if (data.asn.domain) {
-              serverInfoLines.push(`<strong>ドメイン:</strong> ${data.asn.domain}`);
+          // 🌍 IPアドレス
+          serverInfoLines.push(`<strong>IPアドレス:</strong> ${data.ip || ip}`);
+
+          // 🔄 リモートホスト（逆引き）
+          try {
+            const ptrResult = await U.dohQuery(ip.split('.').reverse().join('.') + '.in-addr.arpa', 'PTR');
+            if (ptrResult.Answer && ptrResult.Answer.length > 0) {
+              const hostname = ptrResult.Answer[0].data;
+              serverInfoLines.push(`<strong>リモートホスト（逆引き）:</strong> ${hostname}`);
             }
+          } catch (e) {
+            if (DEBUG_MODE) console.log('PTRレコード取得エラー:', e);
           }
 
-          // 国・地域
+          // 🏴 国・地域
           if (data.country) {
-            serverInfoLines.push(`<strong>国:</strong> ${data.country}`);
+            const flag = data.countryCode ? getFlagEmoji(data.countryCode) : '';
+            serverInfoLines.push(`<strong>国:</strong> ${flag} ${data.country}${data.countryCode ? ' (' + data.countryCode + ')' : ''}`);
           }
           if (data.city) {
             serverInfoLines.push(`<strong>都市:</strong> ${data.city}`);
+          }
+          if (data.region) {
+            serverInfoLines.push(`<strong>地域:</strong> ${data.region}`);
+          }
+
+          // 📍 緯度・経度
+          if (data.latitude && data.longitude) {
+            serverInfoLines.push(`<strong>緯度・経度:</strong> ${data.latitude}, ${data.longitude}`);
+            serverInfoLines.push(`<a href="https://www.google.com/maps?q=${data.latitude},${data.longitude}" target="_blank" style="color: #1976d2; text-decoration: none; border-bottom: 1px dotted #1976d2;">📍 Google Mapsで開く</a>`);
+            
+            // 地図の埋め込み
+            serverInfoLines.push(`
+              <div style="margin-top: 10px; border-radius: 8px; overflow: hidden;">
+                <iframe 
+                  width="100%" 
+                  height="200" 
+                  frameborder="0" 
+                  style="border:0" 
+                  referrerpolicy="no-referrer-when-downgrade"
+                  src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${data.latitude},${data.longitude}&zoom=10"
+                  allowfullscreen>
+                </iframe>
+              </div>
+            `);
+          }
+
+          // 🏢 サーバー会社 (ASN)
+          if (data.asn) {
+            serverInfoLines.push(`<strong>サーバー会社:</strong> ${data.org || data.asn}`);
+          }
+          if (data.isp) {
+            serverInfoLines.push(`<strong>ISP:</strong> ${data.isp}`);
           }
 
           if (serverInfoLines.length > 0) {
@@ -3454,6 +3507,70 @@ async function fetchAll(domain) {
         console.log('IP RDAPはオプショナル情報のため、エラーを表示しません');
       }
     }
+  }
+
+  // 💻 クライアント情報（ブラウザ、OS、UA、言語）
+  try {
+    const clientInfoLines = [];
+    
+    // ブラウザ名とバージョン
+    const ua = navigator.userAgent;
+    let browserName = 'Unknown';
+    let browserVersion = '';
+    
+    if (ua.indexOf('Edg') > -1) {
+      browserName = 'Microsoft Edge';
+      browserVersion = ua.match(/Edg\/([\d.]+)/)?.[1] || '';
+    } else if (ua.indexOf('Chrome') > -1) {
+      browserName = 'Google Chrome';
+      browserVersion = ua.match(/Chrome\/([\d.]+)/)?.[1] || '';
+    } else if (ua.indexOf('Firefox') > -1) {
+      browserName = 'Mozilla Firefox';
+      browserVersion = ua.match(/Firefox\/([\d.]+)/)?.[1] || '';
+    } else if (ua.indexOf('Safari') > -1) {
+      browserName = 'Apple Safari';
+      browserVersion = ua.match(/Version\/([\d.]+)/)?.[1] || '';
+    }
+    
+    clientInfoLines.push(`<strong>ブラウザ名:</strong> ${browserName}${browserVersion ? ' ' + browserVersion : ''}`);
+    
+    // OS判定
+    let osName = 'Unknown';
+    if (ua.indexOf('Win') > -1) {
+      osName = 'Windows';
+      if (ua.indexOf('Windows NT 10.0') > -1) osName += ' 10/11';
+      else if (ua.indexOf('Windows NT 6.3') > -1) osName += ' 8.1';
+      else if (ua.indexOf('Windows NT 6.2') > -1) osName += ' 8';
+      else if (ua.indexOf('Windows NT 6.1') > -1) osName += ' 7';
+    } else if (ua.indexOf('Mac') > -1) {
+      osName = 'macOS';
+    } else if (ua.indexOf('Linux') > -1) {
+      osName = 'Linux';
+    } else if (ua.indexOf('Android') > -1) {
+      osName = 'Android';
+    } else if (ua.indexOf('iOS') > -1 || ua.indexOf('iPhone') > -1 || ua.indexOf('iPad') > -1) {
+      osName = 'iOS';
+    }
+    
+    clientInfoLines.push(`<strong>OS:</strong> ${osName}`);
+    
+    // ブラウザ対応言語コード
+    const languages = navigator.languages || [navigator.language];
+    clientInfoLines.push(`<strong>ブラウザ対応言語:</strong> ${languages.join(', ')}`);
+    
+    // ユーザーエージェント（折りたたみ可能）
+    clientInfoLines.push(`
+      <details style="margin-top: 10px;">
+        <summary style="cursor: pointer; color: #1976d2;"><strong>ユーザーエージェント（詳細）</strong></summary>
+        <div style="margin-top: 5px; padding: 10px; background: #f5f5f5; border-radius: 4px; font-size: 0.85em; word-break: break-all; line-height: 1.6;">
+          ${ua}
+        </div>
+      </details>
+    `);
+    
+    addRow('💻 クライアント情報', clientInfoLines.join('<br>'));
+  } catch (e) {
+    if (DEBUG_MODE) console.error('クライアント情報取得エラー:', e);
   }
 
   // 結果がない場合

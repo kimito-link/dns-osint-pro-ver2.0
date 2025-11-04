@@ -2241,32 +2241,64 @@ async function fetchAll(domain) {
       }
 
       // ========================================
-      // ⚠️ その他の問題と良好な点
+      // 🔴 深刻な問題（issues）→ りんくの赤い警告
       // ========================================
       const hasIssues = healthResult.issues && healthResult.issues.length > 0;
-      const hasWarnings = healthResult.warnings && healthResult.warnings.length > 0;
+      
+      if (hasIssues) {
+        healthHtml += '<div style="background: linear-gradient(135deg, #f44336 0%, #e53935 100%); border: 3px solid #c62828; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); margin-bottom: 20px;">';
+        healthHtml += '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">';
+        healthHtml += '<img src="images/link.png" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #fff;">';
+        healthHtml += '<div style="flex: 1;">';
+        healthHtml += '<strong style="color: #fff; font-size: 1.3em;">りんく：「深刻な問題が見つかったよ！」</strong><br>';
+        healthHtml += '<span style="color: rgba(255,255,255,0.9); font-size: 0.95em;">すぐに対応が必要です</span>';
+        healthHtml += '</div>';
+        healthHtml += '</div>';
+        
+        healthHtml += '<div style="background: rgba(255,255,255,0.95); padding: 15px; border-radius: 8px; margin-bottom: 15px;">';
+        healthHtml += '<div style="color: #333; font-size: 0.95em; line-height: 1.8;">';
+        healthResult.issues.forEach(issue => {
+          healthHtml += `⚠️ ${issue}<br>`;
+        });
+        healthHtml += '</div>';
+        healthHtml += '</div>';
+        
+        healthHtml += '<div style="background: #e3f2fd; border-left: 4px solid #1976d2; padding: 12px; border-radius: 4px; margin-bottom: 15px;">';
+        healthHtml += '<div style="display: flex; gap: 10px; align-items: start;">';
+        healthHtml += '<img src="images/link.png" style="width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;">';
+        healthHtml += '<div style="flex: 1;">';
+        healthHtml += '<strong style="color: #1565c0;">💎 りんくからの提案</strong><br>';
+        healthHtml += '<span style="font-size: 0.9em; color: #333; line-height: 1.6;">';
+        healthHtml += 'サーバー会社やエンジニアに相談して、早急に改善してもらいましょう！リバースハックでも対応できます。';
+        healthHtml += '</span>';
+        healthHtml += '</div>';
+        healthHtml += '</div>';
+        healthHtml += '</div>';
+        
+        healthHtml += '</div>';
+      }
 
-      if (hasIssues || hasWarnings) {
+      // ========================================
+      // ⚠️ 注意点（warnings）→ こん太のオレンジ警告
+      // ========================================
+      const hasWarnings = healthResult.warnings && healthResult.warnings.length > 0;
+      
+      if (hasWarnings) {
         healthHtml += '<div style="background: #fff3e0; border: 2px solid #ff9800; padding: 15px; border-radius: 8px; margin-bottom: 15px;">';
         healthHtml += '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">';
         healthHtml += '<img src="images/konta.png" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ff9800;">';
-        healthHtml += '<strong style="color: #e65100;">こん太:「改善できる点があるぜ!」</strong>';
+        healthHtml += '<strong style="color: #e65100;">🦝 こん太:「改善したほうが良い点があるぜ！」</strong>';
+        healthHtml += '</div>';
+        
+        healthHtml += '<div style="background: #e3f2fd; padding: 10px; border-radius: 4px; margin-bottom: 10px; font-size: 0.85em;">';
+        healthHtml += '<strong style="color: #1565c0;">💡 どうすればいい？</strong><br>';
+        healthHtml += 'サーバー会社やエンジニアに相談して改善してもらうことをおすすめします。';
         healthHtml += '</div>';
 
         healthHtml += '<div style="color: #333; font-size: 0.9em; line-height: 1.8;">';
-
-        if (hasIssues) {
-          healthResult.issues.forEach(issue => {
-            healthHtml += `⚠️ ${issue}<br>`;
-          });
-        }
-
-        if (hasWarnings) {
-          healthResult.warnings.forEach(warning => {
-            healthHtml += `⚠️ ${warning}<br>`;
-          });
-        }
-
+        healthResult.warnings.forEach(warning => {
+          healthHtml += `⚠️ ${warning}<br>`;
+        });
         healthHtml += '</div>';
         healthHtml += '</div>';
       }
@@ -3018,68 +3050,115 @@ async function fetchAll(domain) {
           console.log('🔍 統合後のキー:', Object.keys(parsed));
         }
 
-        if (parsed['Domain Name']) whoisLines.push(`<strong>ドメイン名:</strong> ${parsed['Domain Name']}`);
-        if (parsed['Organization']) whoisLines.push(`<strong>組織名:</strong> ${parsed['Organization']}`);
-        if (parsed['Organization Type']) whoisLines.push(`<strong>組織種別:</strong> ${parsed['Organization Type']}`);
+        // parsedオブジェクトが有効かチェック
+        if (parsed && Object.keys(parsed).length > 0) {
+          // 基本情報（わかりやすい説明付き）
+          whoisLines.push('<div style="background: #e3f2fd; padding: 10px; border-radius: 4px; margin-bottom: 10px; font-size: 0.9em;">');
+          whoisLines.push('<strong style="color: #1565c0;">💡 WHOIS情報とは？</strong><br>');
+          whoisLines.push('ドメインの登録者情報や管理状態を確認できる公開情報です。誰がこのドメインを所有・管理しているかがわかります。');
+          whoisLines.push('</div>');
 
-        // 日付情報
-        if (parsed['Created Date'] || parsed['Registered Date'] || parsed['Connected Date'] || parsed['Expires on'] || parsed['Last Update']) {
-          whoisLines.push('<br><strong style="color: #1976d2;">📅 日付情報:</strong>');
-          if (parsed['Created Date']) whoisLines.push(`　・ 作成日: ${parsed['Created Date']}`);
-          if (parsed['Registered Date']) whoisLines.push(`　・ 登録日: ${parsed['Registered Date']}`);
-          if (parsed['Connected Date']) whoisLines.push(`　・ 接続日: ${parsed['Connected Date']}`);
-          if (parsed['Expires on']) whoisLines.push(`　・ 有効期限: ${parsed['Expires on']}`);
-          if (parsed['Last Update']) whoisLines.push(`　・ 最終更新: ${parsed['Last Update']}`);
-        }
-
-        if (parsed['State']) whoisLines.push(`<br><strong>🛡️ ステータス:</strong> ${parsed['State']}`);
-
-        // 連絡先情報
-        if (parsed['Administrative Contact'] || parsed['Technical Contact']) {
-          whoisLines.push('<br><strong style="color: #1976d2;">💼 連絡先情報:</strong>');
-          if (parsed['Administrative Contact']) whoisLines.push(`　・ 管理者: ${parsed['Administrative Contact']}`);
-          if (parsed['Technical Contact']) whoisLines.push(`　・ 技術担当者: ${parsed['Technical Contact']}`);
-        }
-
-        // 登録者詳細情報
-        if (parsed['Name'] || parsed['Email'] || parsed['Web Page'] || parsed['Phone'] || parsed['Fax'] || parsed['Postal Code'] || parsed['Address']) {
-          whoisLines.push('<br><strong style="color: #1976d2;">👤 登録者詳細情報:</strong>');
-          if (parsed['Name']) whoisLines.push(`　・ 氏名: ${parsed['Name']}`);
-          if (parsed['Email']) whoisLines.push(`　・ メール: ${parsed['Email']}`);
-          if (parsed['Web Page']) whoisLines.push(`　・ ウェブページ: <a href="${parsed['Web Page']}" target="_blank">${parsed['Web Page']}</a>`);
-          if (parsed['Phone']) whoisLines.push(`　・ 電話: ${parsed['Phone']}`);
-          if (parsed['Fax']) whoisLines.push(`　・ FAX: ${parsed['Fax']}`);
-          if (parsed['Postal Code']) whoisLines.push(`　・ 郵便番号: ${parsed['Postal Code']}`);
-          if (parsed['Address']) {
-            const addr = Array.isArray(parsed['Address']) ? parsed['Address'].join(' ') : parsed['Address'];
-            whoisLines.push(`　・ 住所: ${addr}`);
+          if (parsed['Domain Name']) {
+            whoisLines.push(`<strong>🌐 ドメイン名:</strong> ${parsed['Domain Name']}`);
+            whoisLines.push(`<span style="font-size: 0.85em; color: #666; display: block; margin-left: 20px; margin-bottom: 8px;">→ このウェブサイトの住所（アドレス）です</span>`);
           }
-        }
+          
+          if (parsed['Organization']) {
+            whoisLines.push(`<strong>🏢 組織名:</strong> ${parsed['Organization']}`);
+            whoisLines.push(`<span style="font-size: 0.85em; color: #666; display: block; margin-left: 20px; margin-bottom: 8px;">→ このドメインを所有している会社・団体の名前です</span>`);
+          }
+          
+          if (parsed['Organization Type']) {
+            whoisLines.push(`<strong>📋 組織種別:</strong> ${parsed['Organization Type']}`);
+            whoisLines.push(`<span style="font-size: 0.85em; color: #666; display: block; margin-left: 20px; margin-bottom: 8px;">→ 法人か個人か、どのような組織かを示しています</span>`);
+          }
 
-        // ネームサーバー
-        if (parsed['Name Server']) {
-          const ns = Array.isArray(parsed['Name Server']) ? parsed['Name Server'] : [parsed['Name Server']];
-          whoisLines.push(`<br><strong style="color: #1976d2;">📡 ネームサーバー:</strong>`);
-          ns.forEach(server => {
-            whoisLines.push(`　・ ${server}`);
-          });
-        }
+          // 日付情報
+          if (parsed['Created Date'] || parsed['Registered Date'] || parsed['Connected Date'] || parsed['Expires on'] || parsed['Last Update']) {
+            whoisLines.push('<br><strong style="color: #1976d2;">📅 日付情報:</strong>');
+            whoisLines.push(`<span style="font-size: 0.85em; color: #666; display: block; margin-left: 20px; margin-bottom: 5px;">→ ドメインがいつ登録され、いつまで有効かがわかります</span>`);
+            if (parsed['Created Date']) whoisLines.push(`　・ 作成日: ${parsed['Created Date']} <span style="color: #666; font-size: 0.85em;">(ドメインが最初に作られた日)</span>`);
+            if (parsed['Registered Date']) whoisLines.push(`　・ 登録日: ${parsed['Registered Date']} <span style="color: #666; font-size: 0.85em;">(正式に登録された日)</span>`);
+            if (parsed['Connected Date']) whoisLines.push(`　・ 接続日: ${parsed['Connected Date']} <span style="color: #666; font-size: 0.85em;">(ネットワークに接続された日)</span>`);
+            if (parsed['Expires on']) whoisLines.push(`　・ 有効期限: ${parsed['Expires on']} <span style="color: #666; font-size: 0.85em;">(この日までに更新しないと使えなくなります)</span>`);
+            if (parsed['Last Update']) whoisLines.push(`　・ 最終更新: ${parsed['Last Update']} <span style="color: #666; font-size: 0.85em;">(情報が最後に更新された日)</span>`);
+          }
 
-        // その他の情報
-        if (parsed['Notify'] || parsed['Changed'] || parsed['Sign']) {
-          whoisLines.push('<br><strong style="color: #1976d2;">📝 その他の情報:</strong>');
-          if (parsed['Notify']) whoisLines.push(`　・ 通知先: ${parsed['Notify']}`);
-          if (parsed['Changed']) whoisLines.push(`　・ 変更日: ${parsed['Changed']}`);
-          if (parsed['Sign']) whoisLines.push(`　・ DNSSEC署名: ${parsed['Sign']}`);
+          if (parsed['State']) {
+            whoisLines.push(`<br><strong>🛡️ ステータス:</strong> ${parsed['State']}`);
+            whoisLines.push(`<span style="font-size: 0.85em; color: #666; display: block; margin-left: 20px; margin-bottom: 8px;">→ ドメインの現在の状態です。「Active」なら正常に使用できます</span>`);
+          }
+
+          // 連絡先情報
+          if (parsed['Administrative Contact'] || parsed['Technical Contact']) {
+            whoisLines.push('<br><strong style="color: #1976d2;">💼 連絡先情報:</strong>');
+            whoisLines.push(`<span style="font-size: 0.85em; color: #666; display: block; margin-left: 20px; margin-bottom: 5px;">→ ドメインの管理者や技術担当者の連絡先です</span>`);
+            if (parsed['Administrative Contact']) whoisLines.push(`　・ 管理者: ${parsed['Administrative Contact']} <span style="color: #666; font-size: 0.85em;">(ドメインの責任者)</span>`);
+            if (parsed['Technical Contact']) whoisLines.push(`　・ 技術担当者: ${parsed['Technical Contact']} <span style="color: #666; font-size: 0.85em;">(技術的な問題の連絡先)</span>`);
+          }
+
+          // 登録者詳細情報
+          if (parsed['Name'] || parsed['Email'] || parsed['Web Page'] || parsed['Phone'] || parsed['Fax'] || parsed['Postal Code'] || parsed['Address']) {
+            whoisLines.push('<br><strong style="color: #1976d2;">👤 登録者詳細情報:</strong>');
+            whoisLines.push(`<span style="font-size: 0.85em; color: #666; display: block; margin-left: 20px; margin-bottom: 5px;">→ ドメイン登録者の詳しい情報です</span>`);
+            if (parsed['Name']) whoisLines.push(`　・ 氏名: ${parsed['Name']}`);
+            if (parsed['Email']) whoisLines.push(`　・ メール: ${parsed['Email']}`);
+            if (parsed['Web Page']) whoisLines.push(`　・ ウェブページ: <a href="${parsed['Web Page']}" target="_blank">${parsed['Web Page']}</a>`);
+            if (parsed['Phone']) whoisLines.push(`　・ 電話: ${parsed['Phone']}`);
+            if (parsed['Fax']) whoisLines.push(`　・ FAX: ${parsed['Fax']}`);
+            if (parsed['Postal Code']) whoisLines.push(`　・ 郵便番号: ${parsed['Postal Code']}`);
+            if (parsed['Address']) {
+              const addr = Array.isArray(parsed['Address']) ? parsed['Address'].join(' ') : parsed['Address'];
+              whoisLines.push(`　・ 住所: ${addr}`);
+            }
+          }
+
+          // ネームサーバー
+          if (parsed['Name Server']) {
+            const ns = Array.isArray(parsed['Name Server']) ? parsed['Name Server'] : [parsed['Name Server']];
+            whoisLines.push(`<br><strong style="color: #1976d2;">📡 ネームサーバー:</strong>`);
+            whoisLines.push(`<span style="font-size: 0.85em; color: #666; display: block; margin-left: 20px; margin-bottom: 5px;">→ ドメインをIPアドレスに変換するサーバーです。どこのサービスを使っているかがわかります</span>`);
+            ns.forEach(server => {
+              whoisLines.push(`　・ ${server}`);
+            });
+          }
+
+          // その他の情報
+          if (parsed['Notify'] || parsed['Changed'] || parsed['Sign']) {
+            whoisLines.push('<br><strong style="color: #1976d2;">📝 その他の情報:</strong>');
+            if (parsed['Notify']) whoisLines.push(`　・ 通知先: ${parsed['Notify']}`);
+            if (parsed['Changed']) whoisLines.push(`　・ 変更日: ${parsed['Changed']}`);
+            if (parsed['Sign']) whoisLines.push(`　・ DNSSEC署名: ${parsed['Sign']} <span style="color: #666; font-size: 0.85em;">(ドメインのセキュリティ強化技術)</span>`);
+          }
         }
 
         if (whoisLines.length > 0) {
           addRow("🇯🇵 WHOIS情報 (.jpドメイン)", whoisLines.join("<br>"));
         } else if (rdapResult.whois) {
-          // parsedが空の場合は、生のWHOISテキストを表示
-          console.warn('⚠️ parsedデータが空のため、生のWHOISテキストを表示します');
-          const rawWhois = rdapResult.whois.replace(/\n/g, '<br>');
-          addRow("🇯🇵 WHOIS情報 (.jpドメイン) - 生データ", `<pre style="white-space: pre-wrap; font-size: 0.85em; line-height: 1.6;">${rawWhois}</pre>`);
+          // parsedが空の場合は、重要な情報を抽出して表示
+          console.warn('⚠️ parsedデータが空のため、WHOISテキストから情報を抽出します');
+          const rawWhois = rdapResult.whois;
+          
+          // JPRSのヘルプテキストを除外
+          const lines = rawWhois.split('\n').filter(line => {
+            const trimmed = line.trim();
+            // コメント行とヘルプテキストを除外
+            return trimmed && 
+                   !trimmed.startsWith('[') && 
+                   !trimmed.startsWith('%') &&
+                   !trimmed.startsWith('#') &&
+                   !trimmed.toLowerCase().includes('jprs') &&
+                   !trimmed.toLowerCase().includes('database');
+          });
+          
+          if (lines.length > 0) {
+            whoisLines.push('<div style="background: #fff3e0; padding: 10px; border-radius: 4px; margin-bottom: 10px;">');
+            whoisLines.push('<strong style="color: #e65100;">⚠️ 情報の解析に失敗しました</strong><br>');
+            whoisLines.push('WHOIS情報は取得できましたが、自動解析できませんでした。以下は生データです：');
+            whoisLines.push('</div>');
+            whoisLines.push(`<pre style="white-space: pre-wrap; font-size: 0.85em; line-height: 1.6; background: #f5f5f5; padding: 10px; border-radius: 4px;">${lines.join('\n')}</pre>`);
+            addRow("🇯🇵 WHOIS情報 (.jpドメイン)", whoisLines.join("<br>"));
+          }
         }
 
         // 次の処理をスキップ（catchに飛ばない）

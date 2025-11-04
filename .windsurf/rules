@@ -1,0 +1,37 @@
+# DNS OSINT Pro ver2.0 - Windsurf Rules
+
+## プロジェクト概要
+Chrome拡張機能でDNS/WHOIS/サジェスト分析を行うOSINTツール
+
+## 主要ファイル
+- manifest.json: Chrome拡張設定（Manifest V3）
+- popup.js: メインロジック（フロントエンド）
+- background.js: バックグラウンド処理（Service Worker）
+- utils.js: DNS/RDAP ユーティリティ
+- styles.css: スタイルシート
+
+## コーディング規約
+1. JavaScript: ES6+、async/await優先
+2. インデント: 2スペース
+3. 命名: camelCase
+4. コメント: 日本語OK
+5. Manifest V3を厳守
+
+## 重要な方針
+- 風評被害対策への導線を重視
+- セキュリティ最優先（HTTPS、DoH使用）
+- プライバシー保護徹底
+- わかりやすいUI/UX
+
+## 禁止事項
+- localStorage/sessionStorage（Chrome拡張の制約）
+- 非推奨API
+- 外部への無断データ送信
+
+## LINEリンク
+https://t.co/3DiN1zx5ju
+
+## API使用
+- Cloudflare DoH: DNS情報取得
+- RDAP.org: WHOIS情報
+- Google/Yahoo/Bing Suggest: サジェスト取得

@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>君斗りんくのWEBサイト健康診断</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      width: 800px !important;
+      height: 600px !important;
+      max-width: 800px !important;
+      max-height: 600px !important;
+      overflow: hidden !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    
+    /* Hover効果用クラス (CSP対応) */
+    .hover-scale {
+      transition: all 0.3s;
+    }
+    .hover-scale:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.3) !important;
+    }
+    
+    /* border-colorも変わるhover */
+    .hover-scale-border {
+      transition: all 0.3s;
+    }
+    .hover-scale-border:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3) !important;
+      border-color: #4caf50 !important;
+    }
+    
+    /* 小さめのbox-shadowのhover */
+    .hover-scale-small {
+      transition: all 0.3s;
+    }
+    
+    /* サジェストリンクのhover */
+    .suggest-link {
+      transition: border-bottom 0.2s;
+    }
+    .suggest-link.google:hover {
+      border-bottom: 1px solid #1a73e8 !important;
+    }
+    .suggest-link.yahoo:hover {
+      border-bottom: 1px solid #c00 !important;
+    }
+    .suggest-link.bing:hover {
+      border-bottom: 1px solid #0078d4 !important;
+    }
+    
+    /* 口コミサイトボタンのhover */
+    .review-btn {
+      transition: all 0.2s;
+    }
+    .review-btn.google-maps:hover {
+      background: #4285f4 !important;
+      color: #fff !important;
+    }
+    .review-btn.yahoo-chiebukuro:hover {
+      background: #ff0033 !important;
+      color: #fff !important;
+    }
+    .review-btn.minhyo:hover {
+      background: #ff9800 !important;
+      color: #fff !important;
+    }
+    .review-btn.jobtalk:hover {
+      background: #00a95f !important;
+      color: #fff !important;
+    }
+    .review-btn.openwork:hover {
+      background: #00a8e1 !important;
+      color: #fff !important;
+    }
+    .review-btn.enlighthouse:hover {
+      background: #ff6b35 !important;
+      color: #fff !important;
+    }
+    .review-btn.indeed:hover {
+      background: #2164f3 !important;
+      color: #fff !important;
+    }
+    .hover-scale-small:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
+    }
+  </style>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <img src="images/link.png" alt="君斗りんく" class="header-logo" />
+      <div class="header-text">
+        <h1>💫 君斗りんくのWEBサイト健康診断</h1>
+        <p style="margin: 5px 0 0 0; font-size: 0.75em; color: #fff; font-weight: normal; opacity: 0.9;">DNS & WHOIS＆サジェストチェック</p>
+      </div>
+    </div>
+    <div class="row">
+      <input id="domain" placeholder="ドメイン名を入力" />
+      <button id="go">検索</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- 特別なセクション（1列表示） -->
+    <div id="specialSections"></div>
+    
+    <!-- Googleインデックス状況チェックボタン（SEO関連） -->
+    <div id="googleIndexSection" style="margin: 15px 0; display: none;">
+      <button id="checkGoogleIndex" style="
+        width: 100%;
+        padding: 15px 20px;
+        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.05em;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      ">
+        📊 Googleインデックス状況を確認
+      </button>
+      <div id="googleIndexResult" style="margin-top: 15px;"></div>
+    </div>
+    
+    <!-- 通常のDNS情報テーブル（2列表示） -->
+    <table id="resultTable">
+      <thead>
+        <tr>
+          <th>タイプ</th>
+          <th>値</th>
+        </tr>
+      </thead>
+      <tbody id="resultBody">
+        <tr>
+          <td colspan="2" class="loading">ドメインを入力して検索してください</td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+
+  <script src="utils.js"></script>
+  <script src="ui-components.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

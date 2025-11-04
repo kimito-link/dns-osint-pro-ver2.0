@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "君斗りんくのWEBサイト健康診断 & OSINT Helper",
+  "version": "5.5.0",
+  "description": "現在のタブのドメインについて、IP/DNS/WHOIS(RDAP)/Wayback/サブドメイン/履歴を一括取得。右クリック照会・グラフ・コピー/DL対応。",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Open OSINT Helper"
+  },
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "https://cloudflare-dns.com/*",
+    "https://rdap.org/*",
+    "https://archive.org/*",
+    "https://web.archive.org/*",
+    "https://crt.sh/*",
+    "https://api.securitytrails.com/*",
+    "https://ipdata.co/*",
+    "https://www.whoisxmlapi.com/*",
+    "http://suggestqueries.google.com/*",
+    "https://suggestqueries.google.com/*",
+    "https://search.yahoo.co.jp/*",
+    "https://api.bing.com/*",
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "images/link.png",
+    "32": "images/link.png",
+    "48": "images/link.png",
+    "128": "images/link.png"
+  },
+  "options_page": "options.html"
+}

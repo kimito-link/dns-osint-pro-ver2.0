@@ -1,0 +1,40 @@
+{
+  "name": "dns-osint-pro-ver2.0",
+  "version": "5.1.0",
+  "description": "Chrome extension for DNS, WHOIS, and site health analysis with reputation monitoring",
+  "main": "popup.js",
+  "scripts": {
+    "dev": "echo 'Load extension from chrome://extensions/'",
+    "lint": "eslint *.js",
+    "format": "prettier --write '**/*.{js,json,md,html,css}'",
+    "zip": "zip -r dns-osint-pro-ver2.0.zip . -x '*.git*' -x '*node_modules*' -x '*.DS_Store' -x '*docs/*' -x '*.md'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/dns-osint-pro-ver2.0.git"
+  },
+  "keywords": [
+    "chrome-extension",
+    "dns",
+    "whois",
+    "osint",
+    "security",
+    "reputation-monitoring",
+    "seo",
+    "website-analysis"
+  ],
+  "author": "Reverse Rebirth Hack Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yourusername/dns-osint-pro-ver2.0/issues"
+  },
+  "homepage": "https://github.com/yourusername/dns-osint-pro-ver2.0#readme",
+  "devDependencies": {
+    "eslint": "^8.50.0",
+    "prettier": "^3.0.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>OSINT Helper – オプション</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>オプション</h1>
+    <p class="sub">外部APIキーを保存（保存は Chrome Sync ストレージ）</p>
+  </header>
+
+  <main style="padding:16px; display:grid; gap:12px;">
+    <section class="card">
+      <h2>API キー</h2>
+      <div class="kv"><span>SecurityTrails API Key</span><input id="stKey" placeholder="例: ST-xxxxxxxx" /></div>
+      <div class="kv"><span>WhoisXML API Key</span><input id="wxKey" placeholder="例: at_xxxxxxxxx" /></div>
+      <div class="kv"><span>ipdata API Key</span><input id="ipdKey" placeholder="例: xxxxxxxxx" /></div>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button id="save">保存</button>
+        <button id="clear">クリア</button>
+      </div>
+      <p class="note">※ 入力は端末間で同期されます。公開前にキーの取り扱いをご確認ください。</p>
+    </section>
+  </main>
+
+  <script src="options.js"></script>
+</body>
+</html>

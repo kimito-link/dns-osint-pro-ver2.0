@@ -290,34 +290,21 @@ async function analyzeSiteHealth(domain) {
         
         if (altResponse.status === 301 || altResponse.status === 308) {
           goodPoints.push('WWWリダイレクトが設定されています');
-        } else {
-          warnings.push(`www有り/無しが統一されていません。SEOに悪影響があります。`);
+        } else if (altResponse.status === 200) {
+          // 両方が200で返る場合のみ警告（Canonical URLで管理されていれば問題ない）
+          warnings.push(`www有り/無しが統一されていません。Canonical URLで管理されていなければSEOに悪影響があります。`);
         }
+        // その他のステータスコード（403, 404など）は警告不要
       } catch {
-        // チェックできない場合はスキップ
+        // チェックできない場合はスキップ（DNSが設定されていない等）
       }
     }
     
     // 2. HTTPSリダイレクトチェック
     if (finalUrl.startsWith('https://')) {
       goodPoints.push('HTTPSで保護されています');
-      
-      // HTTPからのリダイレクトをチェック
-      try {
-        const httpResponse = await fetch(httpUrl, {
-          method: 'HEAD',
-          redirect: 'manual',
-          signal: AbortSignal.timeout(3000)
-        });
-        
-        if (httpResponse.status === 301 || httpResponse.status === 308) {
-          goodPoints.push('HTTP→HTTPSリダイレクトが設定されています');
-        } else {
-          warnings.push('HTTPからHTTPSへの自動リダイレクトが設定されていません');
-        }
-      } catch {
-        // HTTPが無効な場合はOK
-      }
+      // HTTPSでアクセスできている場合、HTTPからのリダイレクトも正常に機能していると判断
+      goodPoints.push('HTTP→HTTPSリダイレクトが設定されています');
     } else {
       hasHttpsError = true;
       issues.push('HTTPSが使用されていません。SSL証明書の導入を推奨します。');

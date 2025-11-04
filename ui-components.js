@@ -57,13 +57,13 @@ window.OsintUIComponents = {
           </div>
         </div>
         
-        <a href="https://lin.ee/lrjVHvH" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #fff; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-          <img src="images/rev.png" style="height: 40px; width: auto;">
-          <div style="text-align: left;">
-            <div style="color: #d32f2f; font-weight: bold; font-size: 1.15em;">リバースハックに相談（ITインフラ）</div>
-            <div style="font-size: 0.8em; color: #999;">りんくが頼りにしている専門家 | レスポンス◎</div>
+        <a href="https://lin.ee/lrjVHvH" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">
+          <img src="images/rev.png" style="height: 45px; width: auto;">
+          <div style="text-align: left; flex: 1;">
+            <div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>
+            <div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div>
           </div>
-          <div style="color: #d32f2f; font-size: 1.5em;">→</div>
+          <div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>
         </a>
       </div>
     `;
@@ -95,13 +95,13 @@ window.OsintUIComponents = {
           </div>
         </div>
         
-        <a href="https://lin.ee/lrjVHvH" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #fff; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-          <img src="images/link.png" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid #4caf50;">
-          <div style="text-align: left;">
-            <div style="color: #2e7d32; font-weight: bold; font-size: 1.15em;">リバースハックに相談（ITインフラ）</div>
-            <div style="color: #666; font-size: 0.85em;">りんくが頼りにしている専門家 | いつでも相談OK</div>
+        <a href="https://lin.ee/lrjVHvH" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">
+          <img src="images/rev.png" style="height: 45px; width: auto;">
+          <div style="text-align: left; flex: 1;">
+            <div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>
+            <div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div>
           </div>
-          <div style="color: #4caf50; font-size: 1.5em;">→</div>
+          <div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>
         </a>
       </div>
     `;
@@ -138,7 +138,7 @@ window.OsintUIComponents = {
     const title = customTitle || (isReputation ? '風評対策' : 'ITインフラサポート');
     const description = customDescription || (isReputation ? 
       'サジェスト汚染対策・逆SEO対策の専門家' : 
-      'WordPress・PHP・セキュリティの専門家');
+      'WordPress・PHP・SEO・セキュリティの専門家');
     
     return `
       <div style="background: ${gradientColor}; border: 3px solid ${borderColor}; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); position: relative; overflow: hidden;">
@@ -151,7 +151,7 @@ window.OsintUIComponents = {
           <div style="flex: 1;">
             <div style="color: #fff; font-size: 1.3em; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.2); margin-bottom: 5px;">${title}</div>
             <div style="color: rgba(255,255,255,0.95); font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
-              <span style="background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 10px; font-size: 0.85em;">✨ りんく推薦</span>
+              <span style="background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 10px; font-size: 0.85em;">りんく推薦</span>
               <span>${description}</span>
             </div>
           </div>
@@ -168,20 +168,20 @@ window.OsintUIComponents = {
           </div>
         </div>
         
-        <a href="${linkUrl}" target="_blank" class="hover-scale-border" style="display: flex; align-items: center; justify-content: center; gap: 15px; padding: 18px 30px; background: #fff; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: relative; z-index: 1; border: 2px solid rgba(102,126,234,0.3);">
-          <img src="images/link.png" style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid #4caf50; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <a href="${linkUrl}" target="_blank" class="hover-scale-border" style="display: flex; align-items: center; justify-content: center; gap: 15px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 15px rgba(6,199,85,0.3); position: relative; z-index: 1; border: none;">
+          <img src="images/rev.png" style="height: 48px; width: auto;">
           <div style="text-align: left; flex: 1;">
-            <div style="color: ${buttonColor}; font-weight: bold; font-size: 1.15em; line-height: 1.3;">💬 LINEで無料相談する</div>
-            <div style="color: #999; font-size: 0.8em; margin-top: 2px;">24時間以内にご返信 | 完全無料</div>
+            <div style="color: #fff; font-weight: bold; font-size: 1.2em; line-height: 1.3;">${isReputation ? 'リバースハックに相談（風評対策）' : 'リバースハックに相談（ITインフラ）'}</div>
+            <div style="color: rgba(255,255,255,0.9); font-size: 0.85em; margin-top: 2px;">りんくが頼りにしている専門家 | レスポンス◎</div>
           </div>
-          <div style="color: #4caf50; font-size: 1.8em; font-weight: bold;">→</div>
+          <div style="color: #fff; font-size: 1.8em; font-weight: bold;">→</div>
         </a>
         
         <div style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.15); border-radius: 8px; backdrop-filter: blur(10px); position: relative; z-index: 1;">
           <div style="color: rgba(255,255,255,0.95); font-size: 0.85em; line-height: 1.7;">
             ✅ <strong>対応可能:</strong> ${isReputation ? 
               'サジェスト削除・逆SEO・ネガティブワード対策' : 
-              'WEBサイト高速化・WordPress/PHPアップデート・セキュリティ対策・メール設定（SPF/DKIM/DMARC）'}
+              'WEBサイト高速化・WordPress/PHPアップデート・SEO対策・セキュリティ対策・メール設定（SPF/DKIM/DMARC）'}
           </div>
         </div>
       </div>
@@ -234,7 +234,7 @@ window.OsintUIComponents = {
     }
     
     return `
-      <div style="background: linear-gradient(135deg, #ff6b6b 0%, #ff8787 100%); border: 3px solid #c92a2a; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); margin-bottom: 20px;">
+      <div style="background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%); border: 3px solid #b71c1c; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); margin-bottom: 20px;">
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
           <img src="images/link.png" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #fff;">
           <div style="flex: 1;">
@@ -269,13 +269,13 @@ window.OsintUIComponents = {
           </div>
         </div>
         
-        <a href="${LINE_URLS.IT_INFRA}" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #fff; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-          <img src="images/rev.png" style="height: 40px; width: auto;">
-          <div style="text-align: left;">
-            <div style="color: #d32f2f; font-weight: bold; font-size: 1.15em;">リバースハックに相談（ITインフラ）</div>
-            <div style="font-size: 0.8em; color: #999;">りんくが頼りにしている専門家 | レスポンス◎</div>
+        <a href="${LINE_URLS.IT_INFRA}" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">
+          <img src="images/rev.png" style="height: 45px; width: auto;">
+          <div style="text-align: left; flex: 1;">
+            <div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>
+            <div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div>
           </div>
-          <div style="color: #d32f2f; font-size: 1.5em;">→</div>
+          <div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>
         </a>
         
         <div style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.9); border-radius: 6px; border-left: 3px solid #ff9800;">
@@ -328,13 +328,13 @@ window.OsintUIComponents = {
           </div>
         </div>
         
-        <a href="https://lin.ee/X2aWSFO" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #fff; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-          <img src="images/rev.png" style="height: 40px; width: auto;">
-          <div style="text-align: left;">
-            <div style="color: #d32f2f; font-weight: bold; font-size: 1.15em;">リバースハックに相談（風評対策）</div>
-            <div style="font-size: 0.8em; color: #999;">りんくが頼りにしている専門家 | レスポンス◎</div>
+        <a href="https://lin.ee/X2aWSFO" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">
+          <img src="images/rev.png" style="height: 45px; width: auto;">
+          <div style="text-align: left; flex: 1;">
+            <div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（風評対策）</div>
+            <div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div>
           </div>
-          <div style="color: #d32f2f; font-size: 1.5em;">→</div>
+          <div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>
         </a>
       </div>
     `;

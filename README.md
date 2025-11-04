@@ -1,6 +1,6 @@
 # 🔍 DNS OSINT Pro ver2.0
 
-[![Version](https://img.shields.io/badge/version-5.2.0-blue.svg)](https://github.com/yourusername/dns-osint-pro-ver2.0)
+[![Version](https://img.shields.io/badge/version-5.6.0-blue.svg)](https://github.com/yourusername/dns-osint-pro-ver2.0)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-orange.svg)](https://chrome.google.com/webstore)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
@@ -491,10 +491,10 @@ in the Software without restriction...
 ### 無料相談
 
 #### 🚨 風評被害・サジェスト対策
-📱 [りんくが頼りにしているリバースハックに相談（風評対策）](https://lin.ee/X2aWSFO)
+📱 [リバースハックに相談（風評対策）](https://lin.ee/X2aWSFO)
 
 #### 💻 サイト診断・ITインフラサポート
-💻 [りんくが頼りにしているリバースハックに相談（ITインフラ）](https://lin.ee/lrjVHvH)
+💻 [リバースハックに相談（ITインフラ・WordPress・PHP・SEO）](https://lin.ee/lrjVHvH)
 
 ---
 
@@ -508,8 +508,8 @@ in the Software without restriction...
 
 風評被害対策やWEBサイトのセキュリティ診断の商用サポートは、以下からお問い合わせください：
 
-- 📱 **風評対策LINE**: [りんくが頼りにしているリバースハック（風評対策）](https://lin.ee/X2aWSFO)
-- 💻 **ITインフラLINE**: [りんくが頼りにしているリバースハック（ITインフラ）](https://lin.ee/lrjVHvH)
+- 📱 **風評対策LINE**: [リバースハック（風評対策・サジェスト削除）](https://lin.ee/X2aWSFO)
+- 💻 **ITインフラLINE**: [リバースハック（ITインフラ・WordPress・PHP・SEO）](https://lin.ee/lrjVHvH)
 - 🌐 **公式サイト**: https://reverse-rebirth-hack.com
 - 📧 **Email**: info@reverse-re-birth-hack.com
 

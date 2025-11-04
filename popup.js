@@ -1614,10 +1614,11 @@ async function fetchAll(domain) {
     seoAlertHtml += '<div style="background: rgba(255,255,255,0.95); padding: 15px; border-radius: 8px; margin-bottom: 15px;"><div style="color: #333; font-size: 0.95em; line-height: 1.8;">';
     seoAlertHtml += '<strong style="color: #e65100; font-size: 1.05em;">⚠️ wwwあり、wwwなしが統一されていません</strong><br><br>❌ SEO評価が2つに分散<br>❌ 検索順位が上がりにくい<br>❌ Googleが迷う<br>❌ 被リンクが分散</div></div>';
     seoAlertHtml += '<div style="background: #e3f2fd; border-left: 4px solid #1976d2; padding: 12px; border-radius: 4px; margin-bottom: 15px;"><div style="display: flex; gap: 10px; align-items: start;"><img src="images/link.png" style="width: 40px; height: 40px; border-radius: 50%;"><div style="flex: 1;">';
-    seoAlertHtml += '<strong style="color: #1565c0;">💡 りんくからの提案</strong><br><span style="font-size: 0.9em; color: #333;">「301リダイレクトでwww統一しよう！りんくが頑りにしているリバースハックに相談すればSEO対策もバッチリ！」</span></div></div></div>';
-    seoAlertHtml += '<a href="https://lin.ee/lrjVHvH" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #fff; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">';
-    seoAlertHtml += '<img src="images/rev.png" style="height: 40px;"><div style="text-align: left;"><div style="color: #e65100; font-weight: bold; font-size: 1.15em;">リバースハックに相談（SEO対策）</div>';
-    seoAlertHtml += '<div style="font-size: 0.8em; color: #999;">りんくが頑りにしているSEO専門家</div></div><div style="color: #e65100; font-size: 1.5em;">→</div></a></div>';
+    seoAlertHtml += '<strong style="color: #1565c0;">💡 りんくからの提案</strong><br><span style="font-size: 0.9em; color: #333;">「301リダイレクトでwww統一しよう！りんくが頼りにしているリバースハックに相談すればSEO対策もバッチリ！」</span></div></div></div>';
+    seoAlertHtml += '<a href="https://lin.ee/lrjVHvH" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">';
+    seoAlertHtml += '<img src="images/rev.png" style="height: 45px; width: auto;">';
+    seoAlertHtml += '<div style="text-align: left; flex: 1;"><div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>';
+    seoAlertHtml += '<div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div></div><div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div></a></div>';
     addSpecialSection("🚨 SEO警告", seoAlertHtml);
   }
 
@@ -1638,17 +1639,18 @@ async function fetchAll(domain) {
     if (mixedContentCheck && mixedContentCheck.success && mixedContentCheck.hasMixedContent) {
       console.log('⚠️ Mixed Content検出:', mixedContentCheck.count, '件');
       
-      let mixedContentHtml = '<div style="background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%); border: 3px solid #b71c1c; padding: 20px; border-radius: 12px; margin-bottom: 20px;">';
+      let mixedContentHtml = '<div style="background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%); border: 3px solid #b71c1c; padding: 20px; border-radius: 12px; margin-bottom: 20px;">';
       mixedContentHtml += '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;"><img src="images/link.png" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #fff;"><div style="flex: 1;">';
       mixedContentHtml += '<strong style="color: #fff; font-size: 1.3em;">りんく：「セキュリティが危険だよ！」</strong><br><span style="color: rgba(255,255,255,0.9); font-size: 0.95em;">Mixed Content（混在コンテンツ）が見つかったよ</span></div></div>';
       mixedContentHtml += '<div style="background: rgba(255,255,255,0.95); padding: 15px; border-radius: 8px; margin-bottom: 15px;"><div style="color: #333; font-size: 0.95em; line-height: 1.8;">';
       mixedContentHtml += `<strong style="color: #b71c1c; font-size: 1.05em;">⚠️ Mixed Contentが${mixedContentCheck.count}件検出されました</strong><br><br>`;
       mixedContentHtml += '❌ HTTPSページ内でHTTPリソースを使用<br>❌ ブラウザに警告が表示される<br>❌ セキュリティリスクがある<br>❌ SEO評価が下がる</div></div>';
       mixedContentHtml += '<div style="background: #fff3cd; border-left: 4px solid #ff9800; padding: 12px; border-radius: 4px; margin-bottom: 15px;"><div style="display: flex; gap: 10px; align-items: start;"><img src="images/link.png" style="width: 40px; height: 40px; border-radius: 50%;"><div style="flex: 1;">';
-      mixedContentHtml += '<strong style="color: #ff6f00;">💡 りんくからの提案</strong><br><span style="font-size: 0.9em; color: #333;">「すべてのリソースをHTTPSに変更しよう！りんくが頃りにしているリバースハックに相談すればセキュリティ対策もバッチリ！」</span></div></div></div>';
-      mixedContentHtml += '<a href="https://lin.ee/lrjVHvH" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #fff; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">';
-      mixedContentHtml += '<img src="images/rev.png" style="height: 40px;"><div style="text-align: left;"><div style="color: #b71c1c; font-weight: bold; font-size: 1.15em;">リバースハックに相談（セキュリティ対策）</div>';
-      mixedContentHtml += '<div style="font-size: 0.8em; color: #999;">りんくが頃りにしているセキュリティ専門家</div></div><div style="color: #b71c1c; font-size: 1.5em;">→</div></a></div>';
+      mixedContentHtml += '<strong style="color: #ff6f00;">💡 りんくからの提案</strong><br><span style="font-size: 0.9em; color: #333;">「すべてのリソースをHTTPSに変更しよう！りんくが頼りにしているリバースハックに相談すればセキュリティ対策もバッチリ！」</span></div></div></div>';
+      mixedContentHtml += '<a href="https://lin.ee/lrjVHvH" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">';
+      mixedContentHtml += '<img src="images/rev.png" style="height: 45px; width: auto;">';
+      mixedContentHtml += '<div style="text-align: left; flex: 1;"><div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>';
+      mixedContentHtml += '<div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div></div><div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div></a></div>';
       addSpecialSection("🚨 セキュリティ警告", mixedContentHtml);
     }
   } catch (e) {
@@ -1772,8 +1774,8 @@ async function fetchAll(domain) {
       indexHtml += '<strong style="color: #ff6f00;">💡 りんくからのアドバイス</strong><br><span style="font-size: 0.9em; color: #333;">「Google Search Consoleでさらに詳しい情報を確認できるよ！インデックスに問題があれば、りんくが頼りにしているSEO専門家に相談しよう！」</span></div></div></div>';
       
       indexHtml += '<a href="https://lin.ee/X2aWSFO" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #fff; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">';
-      indexHtml += '<img src="images/rev.png" style="height: 40px;"><div style="text-align: left;"><div style="color: #2e7d32; font-weight: bold; font-size: 1.15em;">リバースハックに相談（SEO対策）</div>';
-      indexHtml += '<div style="font-size: 0.8em; color: #999;">りんくが頼りにしているSEO専門家</div></div><div style="color: #2e7d32; font-size: 1.5em;">→</div></a></div>';
+      indexHtml += '<img src="images/rev.png" style="height: 40px;"><div style="text-align: left;"><div style="color: #2e7d32; font-weight: bold; font-size: 1.15em;">りんくが頼りにしているリバースハック</div>';
+      indexHtml += '<div style="font-size: 0.8em; color: #999;">SEO対策・インデックス改善 | レスポンス◎</div></div><div style="color: #2e7d32; font-size: 1.5em;">→</div></a></div>';
       
       addSpecialSection("📊 Googleインデックス状況", indexHtml);
     } else if (indexResult && !indexResult.success) {
@@ -2061,7 +2063,7 @@ async function fetchAll(domain) {
 
         if (isWpOld || isPhpOld) {
           // 🚨 WordPress/PHPのバージョンが古い場合の警告（ビジネス導線付き）
-          let wpPhpAlertHtml = '<div style="background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%); border: 3px solid #b71c1c; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); margin-bottom: 20px;">';
+          let wpPhpAlertHtml = '<div style="background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%); border: 3px solid #b71c1c; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); margin-bottom: 20px;">';
           wpPhpAlertHtml += '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">';
           wpPhpAlertHtml += '<img src="images/link.png" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #fff;">';
           wpPhpAlertHtml += '<div style="flex: 1;">';
@@ -2109,13 +2111,13 @@ async function fetchAll(domain) {
           wpPhpAlertHtml += '</div>';
 
           // 🎯 ビジネス導線：LINE相談ボタン
-          wpPhpAlertHtml += '<a href="https://lin.ee/lrjVHvH" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #fff; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">';
-          wpPhpAlertHtml += '<img src="images/rev.png" style="height: 40px; width: auto;">';
-          wpPhpAlertHtml += '<div style="text-align: left;">';
-          wpPhpAlertHtml += '<div style="color: #d32f2f; font-weight: bold; font-size: 1.15em;">リバースハックに相談（ITインフラ）</div>';
-          wpPhpAlertHtml += '<div style="font-size: 0.8em; color: #999;">りんくが頼りにしている専門家 | レスポンス◎</div>';
+          wpPhpAlertHtml += '<a href="https://lin.ee/lrjVHvH" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">';
+          wpPhpAlertHtml += '<img src="images/rev.png" style="height: 45px; width: auto;">';
+          wpPhpAlertHtml += '<div style="text-align: left; flex: 1;">';
+          wpPhpAlertHtml += '<div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>';
+          wpPhpAlertHtml += '<div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div>';
           wpPhpAlertHtml += '</div>';
-          wpPhpAlertHtml += '<div style="color: #d32f2f; font-size: 1.5em;">→</div>';
+          wpPhpAlertHtml += '<div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>';
           wpPhpAlertHtml += '</a>';
 
           wpPhpAlertHtml += '</div>';
@@ -2125,7 +2127,7 @@ async function fetchAll(domain) {
 
         // 🆕 Contact Form 7バージョンチェック
         if (healthResult.hasContactForm7 && healthResult.cf7Vulnerable) {
-          let cf7AlertHtml = '<div style="background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%); border: 3px solid #b71c1c; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); margin-bottom: 20px;">';
+          let cf7AlertHtml = '<div style="background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%); border: 3px solid #b71c1c; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); margin-bottom: 20px;">';
           cf7AlertHtml += '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">';
           cf7AlertHtml += '<img src="images/link.png" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #fff;">';
           cf7AlertHtml += '<div style="flex: 1;">';
@@ -2159,13 +2161,13 @@ async function fetchAll(domain) {
           cf7AlertHtml += '</div>';
 
           // 🎯 ビジネス導線：LINE相談ボタン
-          cf7AlertHtml += '<a href="https://lin.ee/lrjVHvH" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #fff; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">';
-          cf7AlertHtml += '<img src="images/rev.png" style="height: 40px; width: auto;">';
-          cf7AlertHtml += '<div style="text-align: left;">';
-          cf7AlertHtml += '<div style="color: #d32f2f; font-weight: bold; font-size: 1.15em;">リバースハックに相談（ITインフラ）</div>';
-          cf7AlertHtml += '<div style="font-size: 0.8em; color: #999;">りんくが頼りにしている専門家 | レスポンス◎</div>';
+          cf7AlertHtml += '<a href="https://lin.ee/lrjVHvH" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">';
+          cf7AlertHtml += '<img src="images/rev.png" style="height: 45px; width: auto;">';
+          cf7AlertHtml += '<div style="text-align: left; flex: 1;">';
+          cf7AlertHtml += '<div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>';
+          cf7AlertHtml += '<div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div>';
           cf7AlertHtml += '</div>';
-          cf7AlertHtml += '<div style="color: #d32f2f; font-size: 1.5em;">→</div>';
+          cf7AlertHtml += '<div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>';
           cf7AlertHtml += '</a>';
 
           cf7AlertHtml += '</div>';
@@ -2243,10 +2245,14 @@ async function fetchAll(domain) {
       // ========================================
       // 🔴 深刻な問題（issues）→ りんくの赤い警告
       // ========================================
-      const hasIssues = healthResult.issues && healthResult.issues.length > 0;
+      // WordPress/PHPバージョン警告は専用ボックスで表示するため除外
+      const filteredIssues = healthResult.issues ? healthResult.issues.filter(issue => {
+        return !issue.includes('PHP') && !issue.includes('WordPress');
+      }) : [];
+      const hasIssues = filteredIssues.length > 0;
       
       if (hasIssues) {
-        healthHtml += '<div style="background: linear-gradient(135deg, #f44336 0%, #e53935 100%); border: 3px solid #c62828; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); margin-bottom: 20px;">';
+        healthHtml += '<div style="background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%); border: 3px solid #b71c1c; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); margin-bottom: 20px;">';
         healthHtml += '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">';
         healthHtml += '<img src="images/link.png" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #fff;">';
         healthHtml += '<div style="flex: 1;">';
@@ -2257,7 +2263,7 @@ async function fetchAll(domain) {
         
         healthHtml += '<div style="background: rgba(255,255,255,0.95); padding: 15px; border-radius: 8px; margin-bottom: 15px;">';
         healthHtml += '<div style="color: #333; font-size: 0.95em; line-height: 1.8;">';
-        healthResult.issues.forEach(issue => {
+        filteredIssues.forEach(issue => {
           healthHtml += `⚠️ ${issue}<br>`;
         });
         healthHtml += '</div>';
@@ -2457,28 +2463,38 @@ async function fetchAll(domain) {
 
         healthHtml += '</div>'; // white box end
 
-        // アドバイスセクション
-        healthHtml += '<div style="margin-top: 12px; padding: 12px; background: rgba(255,255,255,0.8); border-radius: 6px; border-left: 3px solid #1976d2;">';
-        healthHtml += '<div style="display: flex; gap: 8px; align-items: start;">';
-        healthHtml += '<img src="images/konta.png" style="width: 28px; height: 28px; border-radius: 50%;">';
-        healthHtml += '<div style="flex: 1; font-size: 0.85em; color: #333; line-height: 1.6;">';
-        healthHtml += '<strong style="color: #1976d2;">こん太のアドバイス:</strong><br>';
-
+        // アドバイスセクション（アドバイスがある場合のみ表示）
+        let hasAdvice = false;
+        let adviceContent = '';
+        
         if (healthResult.responseTime > 1500) {
-          healthHtml += '⚡ サイトの応答が遅いぜ。サーバーの見直しやキャッシュ設定を確認だ!<br>';
+          adviceContent += '⚡ サイトの応答が遅いぜ。サーバーの見直しやキャッシュ設定を確認だ!<br>';
+          hasAdvice = true;
         }
         if (parseFloat(healthResult.htmlSizeKB) > 500) {
-          healthHtml += '📦 ページが重いな。画像の最適化やコード圧縮を検討しよう!<br>';
+          adviceContent += '📦 ページが重いな。画像の最適化やコード圧縮を検討しよう!<br>';
+          hasAdvice = true;
         }
         if (healthResult.phpVersion && parseFloat(healthResult.phpVersion) < 8.0) {
-          healthHtml += `🔧 PHP ${healthResult.phpVersion}は古いぞ。PHP 8.1以上にアップグレードで高速化できるぜ!<br>`;
+          adviceContent += `🔧 PHP ${healthResult.phpVersion}は古いぞ。PHP 8.1以上にアップグレードで高速化できるぜ!<br>`;
+          hasAdvice = true;
         }
         if (healthResult.responseTime < 800 && parseFloat(healthResult.htmlSizeKB) < 200) {
-          healthHtml += '✅ サイトの速度は良好だぜ!このまま維持しよう!';
+          adviceContent += '✅ サイトの速度は良好だぜ!このまま維持しよう!';
+          hasAdvice = true;
         }
-
-        healthHtml += '</div>';
-        healthHtml += '</div>';
+        
+        if (hasAdvice) {
+          healthHtml += '<div style="margin-top: 12px; padding: 12px; background: rgba(255,255,255,0.8); border-radius: 6px; border-left: 3px solid #1976d2;">';
+          healthHtml += '<div style="display: flex; gap: 8px; align-items: start;">';
+          healthHtml += '<img src="images/konta.png" style="width: 28px; height: 28px; border-radius: 50%;">';
+          healthHtml += '<div style="flex: 1; font-size: 0.85em; color: #333; line-height: 1.6;">';
+          healthHtml += '<strong style="color: #1976d2;">こん太のアドバイス:</strong><br>';
+          healthHtml += adviceContent;
+          healthHtml += '</div>';
+          healthHtml += '</div>';
+          healthHtml += '</div>';
+        }
 
         healthHtml += '</div>'; // main container end
       }
@@ -4074,9 +4090,10 @@ async function checkGoogleIndexStatus() {
       indexHtml += '<div style="background: #fff3cd; border-left: 4px solid #ff9800; padding: 12px; border-radius: 4px; margin-bottom: 15px;"><div style="display: flex; gap: 10px; align-items: start;"><img src="images/link.png" style="width: 40px; height: 40px; border-radius: 50%;"><div style="flex: 1;">';
       indexHtml += '<strong style="color: #ff6f00;">💡 りんくからのアドバイス</strong><br><span style="font-size: 0.9em; color: #333;">「Google Search Consoleでさらに詳しい情報を確認できるよ！インデックスに問題があれば、りんくが頼りにしているSEO専門家に相談しよう！」</span></div></div></div>';
       
-      indexHtml += '<a href="https://lin.ee/X2aWSFO" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #fff; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">';
-      indexHtml += '<img src="images/rev.png" style="height: 40px;"><div style="text-align: left;"><div style="color: #2e7d32; font-weight: bold; font-size: 1.15em;">リバースハックに相談（SEO対策）</div>';
-      indexHtml += '<div style="font-size: 0.8em; color: #999;">りんくが頼りにしているSEO専門家</div></div><div style="color: #2e7d32; font-size: 1.5em;">→</div></a></div>';
+      indexHtml += '<a href="https://lin.ee/X2aWSFO" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">';
+      indexHtml += '<img src="images/rev.png" style="height: 45px; width: auto;">';
+      indexHtml += '<div style="text-align: left; flex: 1;"><div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（風評対策）</div>';
+      indexHtml += '<div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div></div><div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div></a></div>';
       
       resultDiv.innerHTML = indexHtml;
     } else if (indexResult && !indexResult.success) {

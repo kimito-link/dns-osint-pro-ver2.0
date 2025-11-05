@@ -291,8 +291,8 @@ async function analyzeSiteHealth(domain) {
         if (altResponse.status === 301 || altResponse.status === 308) {
           goodPoints.push('WWWリダイレクトが設定されています');
         } else if (altResponse.status === 200) {
-          // 両方が200で返る場合のみ警告（Canonical URLで管理されていれば問題ない）
-          warnings.push(`www有り/無しが統一されていません。Canonical URLで管理されていなければSEOに悪影響があります。`);
+          // 両方が200で返る場合は深刻な問題として赤い警告を表示
+          issues.push(`www有り/無しが統一されていません。Canonical URLで管理されていなければSEOに悪影響があります。`);
         }
         // その他のステータスコード（403, 404など）は警告不要
       } catch {

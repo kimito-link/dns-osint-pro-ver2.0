@@ -839,8 +839,8 @@ async function fetchIPInfo(ip) {
   console.log('対象IP:', ip);
   
   try {
-    // ipapi.co の無料API を使用（月1,000リクエストまで無料）
-    const url = `https://ipapi.co/${ip}/json/`;
+    // ip-api.com の無料API を使用（1分45リクエストまで無料・キー不要）
+    const url = `http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,region,city,lat,lon,isp,org,as,query`;
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -857,26 +857,32 @@ async function fetchIPInfo(ip) {
     }
     
     const data = await res.json();
-    console.log('✅ IP情報取得成功:', data);
+    console.log('✅ IP情報レスポンス:', data);
+    
+    if (data.status === 'fail') {
+      throw new Error(data.message || 'IP情報取得失敗');
+    }
+    
+    console.log('✅ IP情報取得成功');
     
     return {
       success: true,
       data: {
-        ip: data.ip,
+        ip: data.query || ip,
         city: data.city,
         region: data.region,
-        country: data.country_name,
-        countryCode: data.country_code,
-        org: data.org,
-        asn: data.asn,
-        isp: data.org,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        hostname: data.hostname || null  // リモートホスト（逆引き）
+        country: data.country,
+        countryCode: data.countryCode,
+        org: data.org || data.isp,
+        asn: data.as,
+        isp: data.isp,
+        latitude: data.lat,
+        longitude: data.lon,
+        hostname: null  // リモートホスト（逆引き）は別途取得
       }
     };
   } catch (e) {
-    if (DEBUG_MODE) console.error('IP情報取得エラー:', e);
+    console.error('❌ IP情報取得エラー:', e);
     return {
       success: false,
       error: `IP情報を取得できませんでした: ${e.message}`

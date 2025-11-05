@@ -807,17 +807,43 @@ async function checkSuggestPollution(domain, siteTitle) {
       let yahoo = response.yahoo || [];
       let bing = response.bing || [];
       
-      // 🔧 ドメイン名で検索した場合、関係ないサジェストを除外
+      // 🔧 ドメイン名で検索した場合、明らかに関係ないサジェストを除外
       if (query === domain || query === domain.replace(/^www\./, '')) {
         // ドメイン名から主要部分を抽出（例: kimito-link.com → kimito-link）
         const domainCore = domain.replace(/^www\./, '').split('.')[0];
         
         console.log(`🔍 ドメイン検索でフィルタリング中: "${domainCore}"`);
         
-        // ドメインのコア部分を含むサジェストのみを残す
-        google = google.filter(s => s.toLowerCase().includes(domainCore.toLowerCase()));
-        yahoo = yahoo.filter(s => s.toLowerCase().includes(domainCore.toLowerCase()));
-        bing = bing.filter(s => s.toLowerCase().includes(domainCore.toLowerCase()));
+        // 明らかに無関係なサジェストのみを除外（例: 完全に異なる企業名など）
+        // フルドメイン（www.yahoo.co.jp）で始まるものは除外
+        const fullDomainPrefix = domain.toLowerCase();
+        const wwwDomainPrefix = 'www.' + domain.replace(/^www\./, '').toLowerCase();
+        
+        google = google.filter(s => {
+          const lower = s.toLowerCase();
+          // フルドメインで始まる場合は除外（例: www.yahoo.co.jp mail）
+          if (lower.startsWith(fullDomainPrefix) || lower.startsWith(wwwDomainPrefix)) {
+            return false;
+          }
+          // ドメインコアを含むかチェック（緩い条件）
+          return lower.includes(domainCore.toLowerCase());
+        });
+        
+        yahoo = yahoo.filter(s => {
+          const lower = s.toLowerCase();
+          if (lower.startsWith(fullDomainPrefix) || lower.startsWith(wwwDomainPrefix)) {
+            return false;
+          }
+          return lower.includes(domainCore.toLowerCase());
+        });
+        
+        bing = bing.filter(s => {
+          const lower = s.toLowerCase();
+          if (lower.startsWith(fullDomainPrefix) || lower.startsWith(wwwDomainPrefix)) {
+            return false;
+          }
+          return lower.includes(domainCore.toLowerCase());
+        });
         
         console.log(`✅ フィルタリング後 Google: ${google.length}, Yahoo: ${yahoo.length}, Bing: ${bing.length}`);
       }
@@ -876,9 +902,24 @@ async function checkSuggestPollution(domain, siteTitle) {
             const domainCore = domain.replace(/^www\./, '').split('.')[0];
             console.log(`🔍 ネガティブ検出時にフィルタリング中: "${domainCore}"`);
             
-            allGoogle = allGoogle.filter(s => s.toLowerCase().includes(domainCore.toLowerCase()));
-            allYahoo = allYahoo.filter(s => s.toLowerCase().includes(domainCore.toLowerCase()));
-            allBing = allBing.filter(s => s.toLowerCase().includes(domainCore.toLowerCase()));
+            const fullDomainPrefix = domain.toLowerCase();
+            const wwwDomainPrefix = 'www.' + domain.replace(/^www\./, '').toLowerCase();
+            
+            allGoogle = allGoogle.filter(s => {
+              const lower = s.toLowerCase();
+              if (lower.startsWith(fullDomainPrefix) || lower.startsWith(wwwDomainPrefix)) return false;
+              return lower.includes(domainCore.toLowerCase());
+            });
+            allYahoo = allYahoo.filter(s => {
+              const lower = s.toLowerCase();
+              if (lower.startsWith(fullDomainPrefix) || lower.startsWith(wwwDomainPrefix)) return false;
+              return lower.includes(domainCore.toLowerCase());
+            });
+            allBing = allBing.filter(s => {
+              const lower = s.toLowerCase();
+              if (lower.startsWith(fullDomainPrefix) || lower.startsWith(wwwDomainPrefix)) return false;
+              return lower.includes(domainCore.toLowerCase());
+            });
           }
 
           allGoogleTotal = allGoogle.length;
@@ -909,9 +950,24 @@ async function checkSuggestPollution(domain, siteTitle) {
           const domainCore = domain.replace(/^www\./, '').split('.')[0];
           console.log(`🔍 表示時にフィルタリング中: "${domainCore}"`);
           
-          google = google.filter(s => s.toLowerCase().includes(domainCore.toLowerCase()));
-          yahoo = yahoo.filter(s => s.toLowerCase().includes(domainCore.toLowerCase()));
-          bing = bing.filter(s => s.toLowerCase().includes(domainCore.toLowerCase()));
+          const fullDomainPrefix = domain.toLowerCase();
+          const wwwDomainPrefix = 'www.' + domain.replace(/^www\./, '').toLowerCase();
+          
+          google = google.filter(s => {
+            const lower = s.toLowerCase();
+            if (lower.startsWith(fullDomainPrefix) || lower.startsWith(wwwDomainPrefix)) return false;
+            return lower.includes(domainCore.toLowerCase());
+          });
+          yahoo = yahoo.filter(s => {
+            const lower = s.toLowerCase();
+            if (lower.startsWith(fullDomainPrefix) || lower.startsWith(wwwDomainPrefix)) return false;
+            return lower.includes(domainCore.toLowerCase());
+          });
+          bing = bing.filter(s => {
+            const lower = s.toLowerCase();
+            if (lower.startsWith(fullDomainPrefix) || lower.startsWith(wwwDomainPrefix)) return false;
+            return lower.includes(domainCore.toLowerCase());
+          });
         }
 
         allGoogleTotal = google.length;

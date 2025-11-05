@@ -1246,9 +1246,19 @@ async function checkSuggestPollution(domain, siteTitle) {
         });
         html += '</div>';
       } else {
-        html += '<div style="margin: 10px 0; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">';
-        html += '<strong>🟣 Yahoo!:</strong> サジェスト取得不可<br>';
-        html += '<span style="font-size: 0.85em; color: #666;">Yahoo!のサジェストAPIは現在公開されていないため取得できません。GoogleとBingのサジェストをご利用ください。</span>';
+        html += '<div style="margin: 10px 0; padding: 12px; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-left: 4px solid #ff6f00; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+        html += '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">';
+        html += '<strong style="color: #ff6f00; font-size: 1em;">🟣 Yahoo! サジェスト</strong>';
+        html += '<span style="background: #ff6f00; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; font-weight: bold;">🚧 開発中</span>';
+        html += '</div>';
+        html += '<p style="font-size: 0.85em; color: #666; margin: 8px 0;">Yahoo!のサジェストAPIは非公開のため、現在実装を検討中です。<br>下記のリンクからYahoo!検索をご利用いただけます。</p>';
+        
+        // Yahoo!検索へのリンクボタン
+        const yahooSearchUrl = `https://search.yahoo.co.jp/search?p=${encodeURIComponent(domain)}`;
+        html += `<a href="${yahooSearchUrl}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #ff0033; color: white; text-decoration: none; border-radius: 6px; font-size: 0.9em; font-weight: bold; margin-top: 8px; transition: background 0.3s;">`;
+        html += '🔍 Yahoo!で検索する';
+        html += '</a>';
+        
         html += '</div>';
       }
 

@@ -618,7 +618,25 @@ async function checkSuggestPollution(domain, siteTitle) {
   };
 
   // 🆕 検索パターンを生成
-  const searchVariations = [searchName];
+  const searchVariations = [];
+  
+  // === 0. ドメイン名を最優先で追加（正確なサジェスト取得のため） ===
+  if (domain) {
+    // ドメイン名を最優先で追加
+    searchVariations.push(domain);
+    
+    // www.を除去したバージョンも追加
+    const domainWithoutWww = domain.replace(/^www\./, '');
+    if (domainWithoutWww !== domain) {
+      searchVariations.push(domainWithoutWww);
+    }
+    console.log('🌐 ドメイン名を最優先で追加:', domain);
+  }
+  
+  // サイト名を2番目に追加
+  if (searchName && !searchVariations.includes(searchName)) {
+    searchVariations.push(searchName);
+  }
 
   // === 1. 表記ゆれパターンを追加 ===
   const notationVars = generateNotationVariations(searchName);
@@ -785,9 +803,24 @@ async function checkSuggestPollution(domain, siteTitle) {
 
     // 🆕 各パターンのサジェストをチェック
     for (const { query, response } of allResponses) {
-      const google = response.google || [];
-      const yahoo = response.yahoo || [];
-      const bing = response.bing || [];
+      let google = response.google || [];
+      let yahoo = response.yahoo || [];
+      let bing = response.bing || [];
+      
+      // 🔧 ドメイン名で検索した場合、関係ないサジェストを除外
+      if (query === domain || query === domain.replace(/^www\./, '')) {
+        // ドメイン名から主要部分を抽出（例: kimito-link.com → kimito-link）
+        const domainCore = domain.replace(/^www\./, '').split('.')[0];
+        
+        console.log(`🔍 ドメイン検索でフィルタリング中: "${domainCore}"`);
+        
+        // ドメインのコア部分を含むサジェストのみを残す
+        google = google.filter(s => s.toLowerCase().includes(domainCore.toLowerCase()));
+        yahoo = yahoo.filter(s => s.toLowerCase().includes(domainCore.toLowerCase()));
+        bing = bing.filter(s => s.toLowerCase().includes(domainCore.toLowerCase()));
+        
+        console.log(`✅ フィルタリング後 Google: ${google.length}, Yahoo: ${yahoo.length}, Bing: ${bing.length}`);
+      }
 
       const querySuggests = [...google, ...yahoo, ...bing];
       allSuggests.push(...querySuggests);
@@ -834,9 +867,19 @@ async function checkSuggestPollution(domain, siteTitle) {
         // ネガティブが見つかったクエリのレスポンスを取得
         const negativeResponse = allResponses.find(r => r.query === negativeQuery);
         if (negativeResponse) {
-          const allGoogle = negativeResponse.response.google || [];
-          const allYahoo = negativeResponse.response.yahoo || [];
-          const allBing = negativeResponse.response.bing || [];
+          let allGoogle = negativeResponse.response.google || [];
+          let allYahoo = negativeResponse.response.yahoo || [];
+          let allBing = negativeResponse.response.bing || [];
+          
+          // 🔧 ドメイン名で検索した場合、関係ないサジェストを除外
+          if (negativeQuery === domain || negativeQuery === domain.replace(/^www\./, '')) {
+            const domainCore = domain.replace(/^www\./, '').split('.')[0];
+            console.log(`🔍 ネガティブ検出時にフィルタリング中: "${domainCore}"`);
+            
+            allGoogle = allGoogle.filter(s => s.toLowerCase().includes(domainCore.toLowerCase()));
+            allYahoo = allYahoo.filter(s => s.toLowerCase().includes(domainCore.toLowerCase()));
+            allBing = allBing.filter(s => s.toLowerCase().includes(domainCore.toLowerCase()));
+          }
 
           allGoogleTotal = allGoogle.length;
           allYahooTotal = allYahoo.length;
@@ -859,6 +902,17 @@ async function checkSuggestPollution(domain, siteTitle) {
         google = displayResponse.response.google || [];
         yahoo = displayResponse.response.yahoo || [];
         bing = displayResponse.response.bing || [];
+        
+        // 🔧 ドメイン名で検索した場合、関係ないサジェストを除外
+        const displayQuery = displayResponse.query;
+        if (displayQuery === domain || displayQuery === domain.replace(/^www\./, '')) {
+          const domainCore = domain.replace(/^www\./, '').split('.')[0];
+          console.log(`🔍 表示時にフィルタリング中: "${domainCore}"`);
+          
+          google = google.filter(s => s.toLowerCase().includes(domainCore.toLowerCase()));
+          yahoo = yahoo.filter(s => s.toLowerCase().includes(domainCore.toLowerCase()));
+          bing = bing.filter(s => s.toLowerCase().includes(domainCore.toLowerCase()));
+        }
 
         allGoogleTotal = google.length;
         allYahooTotal = yahoo.length;

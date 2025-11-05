@@ -1,6 +1,6 @@
 # 🔍 DNS OSINT Pro ver2.0
 
-[![Version](https://img.shields.io/badge/version-5.6.6-blue.svg)](https://github.com/yourusername/dns-osint-pro-ver2.0)
+[![Version](https://img.shields.io/badge/version-5.6.7-blue.svg)](https://github.com/yourusername/dns-osint-pro-ver2.0)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-orange.svg)](https://chrome.google.com/webstore)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)

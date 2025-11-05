@@ -874,15 +874,17 @@ async function checkSuggestPollution(domain, siteTitle) {
         const negativeRatio = totalNegatives / totalSuggests;
         let score = 100;
 
-        // ネガティブの割合による減点
+        // ネガティブの割合による減点（より適切な計算式）
+        // 10%のネガティブで-20点、50%で-100点
         if (negativeRatio > 0) {
-          score = Math.max(0, 100 - (negativeRatio * 200)); // 50%以上ネガティブでス0点
+          score = Math.max(0, 100 - (negativeRatio * 100));
         }
 
         // ネガティブ絶対数による追加減点
-        if (totalNegatives >= 10) score -= 20;
-        else if (totalNegatives >= 5) score -= 10;
-        else if (totalNegatives >= 3) score -= 5;
+        if (totalNegatives >= 10) score -= 30;
+        else if (totalNegatives >= 5) score -= 20;
+        else if (totalNegatives >= 3) score -= 15;
+        else if (totalNegatives >= 1) score -= 10;
 
         score = Math.max(0, Math.round(score));
 
@@ -927,7 +929,7 @@ async function checkSuggestPollution(domain, siteTitle) {
         html += `<div style="font-size: 3em;">${levelIcon}</div>`;
         html += '<div style="flex: 1;">';
         html += `<div style="font-size: 1.4em; font-weight: bold; color: ${levelColor}; margin-bottom: 5px;">風評健全度スコア</div>`;
-        html += `<div style="font-size: 0.9em; color: #666;">${levelText}</div>`;
+        html += `<div style="font-size: 0.9em; color: #333;">${levelText}</div>`;
         html += '</div>';
         html += '</div>';
 
@@ -937,7 +939,7 @@ async function checkSuggestPollution(domain, siteTitle) {
         html += `<div style="font-size: 3em; font-weight: bold; color: ${levelColor};">${score}</div>`;
         html += `<div style="text-align: right;">`;
         html += `<div style="font-size: 1.2em; color: ${levelColor}; font-weight: bold;">${starDisplay}</div>`;
-        html += `<div style="font-size: 0.85em; color: #666; margin-top: 3px;">危険度: ${level}</div>`;
+        html += `<div style="font-size: 0.85em; color: #333; margin-top: 3px;">危険度: ${level}</div>`;
         html += `</div>`;
         html += '</div>';
 
@@ -1337,14 +1339,25 @@ async function checkSuggestPollution(domain, siteTitle) {
 function parseJpWhois(whoisText) {
   const parsed = {};
   const lines = whoisText.split('\n');
+  
+  console.log('🔍 parseJpWhois開始');
+  console.log('📄 WHOISテキスト行数:', lines.length);
+  console.log('📝 最初の10行:', lines.slice(0, 10));
 
   lines.forEach(line => {
     line = line.trim();
 
-    // [Domain Name] ARC-HD.CO.JP 形式
+    // [Domain Name] ARC-HD.CO.JP 形式（新形式）
     const domainMatch = line.match(/^\[Domain Name\]\s+(.+)$/i);
     if (domainMatch) {
       parsed['Domain Name'] = domainMatch[1].trim();
+      return;
+    }
+    
+    // domain: xxx.jp 形式（旧形式）
+    const domainOldMatch = line.match(/^domain:\s+(.+)$/i);
+    if (domainOldMatch) {
+      parsed['Domain Name'] = domainOldMatch[1].trim();
       return;
     }
 
@@ -1352,6 +1365,13 @@ function parseJpWhois(whoisText) {
     const registrantMatch = line.match(/^\[Registrant\]\s+(.+)$/i);
     if (registrantMatch) {
       parsed['Organization'] = registrantMatch[1].trim();
+      return;
+    }
+    
+    // g. [Organization] 形式（旧形式）
+    const orgOldMatch = line.match(/^[a-z]\.\s+\[Organization\]\s+(.+)$/i);
+    if (orgOldMatch) {
+      parsed['Organization'] = orgOldMatch[1].trim();
       return;
     }
 
@@ -1424,11 +1444,25 @@ function parseJpWhois(whoisText) {
       parsed['Administrative Contact'] = adminMatch[1].trim();
       return;
     }
+    
+    // m. [Administrative Contact] 形式（旧形式）
+    const adminOldMatch = line.match(/^[a-z]\.\s+\[Administrative Contact\]\s+(.+)$/i);
+    if (adminOldMatch) {
+      parsed['Administrative Contact'] = adminOldMatch[1].trim();
+      return;
+    }
 
     // [Technical Contact] 技術担当者連絡先
     const techMatch = line.match(/^\[Technical Contact\]\s+(.+)$/i);
     if (techMatch) {
       parsed['Technical Contact'] = techMatch[1].trim();
+      return;
+    }
+    
+    // n. [Technical Contact] 形式（旧形式）
+    const techOldMatch = line.match(/^[a-z]\.\s+\[Technical Contact\]\s+(.+)$/i);
+    if (techOldMatch) {
+      parsed['Technical Contact'] = techOldMatch[1].trim();
       return;
     }
 
@@ -1514,7 +1548,22 @@ function parseJpWhois(whoisText) {
       parsed['Name Server'].push(nsMatch[1].trim());
       return;
     }
+    
+    // p. [Name Server] 形式（旧形式）
+    const nsOldMatch = line.match(/^[a-z]\.\s+\[Name Server\]\s+(.+)$/i);
+    if (nsOldMatch) {
+      if (!parsed['Name Server']) {
+        parsed['Name Server'] = [];
+      }
+      parsed['Name Server'].push(nsOldMatch[1].trim());
+      return;
+    }
   });
+  
+  console.log('✅ parseJpWhois完了');
+  console.log('📊 解析されたフィールド数:', Object.keys(parsed).length);
+  console.log('🔑 解析されたキー:', Object.keys(parsed));
+  console.log('📦 解析結果:', parsed);
 
   return parsed;
 }

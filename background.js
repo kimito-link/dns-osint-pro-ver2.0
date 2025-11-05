@@ -1047,22 +1047,45 @@ async function fetchRdapDomain(domain) {
   console.log('=== RDAP Domain 取得開始 ===');
   console.log('対象ドメイン:', domain);
   
+  // サブドメインを除去してルートドメインのみを抽出
+  // 例: www.example.com → example.com
+  //     blog.example.co.jp → example.co.jp
+  const parts = domain.split('.');
+  let rootDomain = domain;
+  
+  // マルチレベルTLD（co.jp, ne.jpなど）の場合は3つのパーツが必要
+  const multiLevelTlds = ['co.jp', 'ne.jp', 'or.jp', 'ac.jp', 'go.jp', 'lg.jp', 'ed.jp', 
+                          'co.uk', 'org.uk', 'ac.uk', 'gov.uk'];
+  
+  if (parts.length >= 3) {
+    const lastTwo = parts.slice(-2).join('.').toLowerCase();
+    if (multiLevelTlds.includes(lastTwo)) {
+      // マルチレベルTLDの場合: blog.example.co.jp → example.co.jp
+      rootDomain = parts.slice(-3).join('.');
+    } else if (parts.length >= 3) {
+      // 通常のTLD: www.example.com → example.com
+      rootDomain = parts.slice(-2).join('.');
+    }
+  }
+  
+  console.log('ルートドメイン:', rootDomain);
+  domain = rootDomain; // 以降の処理ではルートドメインを使用
+  
   // TLD別のエンドポイントを判定
   // 👉 co.jp, ne.jp, or.jpなどのマルチレベルTLDに対応
-  const parts = domain.split('.');
+  const domainParts = domain.split('.');
   let tld;
   
   // 日本のマルチレベルTLDをチェック
-  if (parts.length >= 3) {
-    const lastTwo = parts.slice(-2).join('.').toLowerCase();
-    const multiLevelTlds = ['co.jp', 'ne.jp', 'or.jp', 'ac.jp', 'go.jp', 'lg.jp', 'ed.jp', 'co.uk', 'org.uk'];
+  if (domainParts.length >= 2) {
+    const lastTwo = domainParts.slice(-2).join('.').toLowerCase();
     if (multiLevelTlds.includes(lastTwo)) {
       tld = lastTwo;
     } else {
-      tld = parts[parts.length - 1].toLowerCase();
+      tld = domainParts[domainParts.length - 1].toLowerCase();
     }
   } else {
-    tld = parts[parts.length - 1].toLowerCase();
+    tld = domainParts[domainParts.length - 1].toLowerCase();
   }
   
   console.log('検出されたTLD:', tld);
@@ -1074,10 +1097,14 @@ async function fetchRdapDomain(domain) {
   switch(tld) {
     case 'com':
       // 👉 Verisignは.comの公式レジストリなので最優先
+      // より多くのフォールバックを追加
       endpoints = [
         `https://rdap.verisign.com/com/v1/domain/${domain}`,
         `https://rdap.org/domain/${domain}`,
-        `https://rdap-bootstrap.arin.net/bootstrap/domain/${domain}`
+        `https://rdap-bootstrap.arin.net/bootstrap/domain/${domain}`,
+        `https://rdap.markmonitor.com/rdap/domain/${domain}`,
+        `https://rdap.namecheap.com/domain/${domain}`,
+        `https://rdap.godaddy.com/v1/domain/${domain}`
       ];
       break;
     case 'net':
@@ -1127,7 +1154,7 @@ async function fetchRdapDomain(domain) {
       console.log('TLD:', tld);
       
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒タイムアウト
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒タイムアウト（高速化）
       
       const res = await fetch(url, {
         headers: { 
@@ -1148,16 +1175,21 @@ async function fetchRdapDomain(domain) {
         console.log('取得データ:', data);
         return { success: true, data, endpoint: url };
       } else {
-        lastError = `HTTP ${res.status}: ${res.statusText}`;
-        console.warn(`⚠️ HTTP エラー:`, lastError);
+        if (res.status === 404) {
+          lastError = `HTTP 404: Not Found`;
+          console.warn(`⚠️ WHOIS情報が見つかりません（404）:`, url);
+        } else {
+          lastError = `HTTP ${res.status}: ${res.statusText}`;
+          console.warn(`⚠️ HTTP エラー:`, lastError);
+        }
       }
     } catch (e) {
       lastError = e.message;
       console.warn(`❌ RDAP Domain エラー [${url}]:`, e.message);
       
       if (e.name === 'AbortError') {
-        console.warn('タイムアウト（10秒超過）');
-        lastError = 'タイムアウト: サーバーの応答が遅すぎます';
+        console.warn('タイムアウト（5秒超過）');
+        lastError = 'タイムアウト: サーバーの応答が遅すぎます（5秒超過）';
       }
       
       continue;
@@ -1607,7 +1639,30 @@ try {
 else if (msg?.type === "getJpWhois") {
 // 🇯🇵 日本ドメインのWHOIS取得（自前API）
 try {
-  const domain = msg.domain;
+  let domain = msg.domain;
+  
+  // サブドメインを除去してルートドメインのみを抽出
+  const parts = domain.split('.');
+  let rootDomain = domain;
+  
+  // マルチレベルTLD（co.jp, ne.jpなど）の場合は3つのパーツが必要
+  const multiLevelTlds = ['co.jp', 'ne.jp', 'or.jp', 'ac.jp', 'go.jp', 'lg.jp', 'ed.jp', 'ad.jp'];
+  
+  if (parts.length >= 3) {
+    const lastTwo = parts.slice(-2).join('.').toLowerCase();
+    if (multiLevelTlds.includes(lastTwo)) {
+      // マルチレベルTLDの場合: domain.sakura.ad.jp → sakura.ad.jp
+      rootDomain = parts.slice(-3).join('.');
+    } else if (parts.length >= 3) {
+      // 通常のTLD: www.example.jp → example.jp
+      rootDomain = parts.slice(-2).join('.');
+    }
+  }
+  
+  console.log('🇯🇵 元のドメイン:', domain);
+  console.log('🇯🇵 ルートドメイン:', rootDomain);
+  domain = rootDomain; // ルートドメインを使用
+  
   const apiUrl = `https://reverse-re-birth-hack.com/whois-api.php?domain=${encodeURIComponent(domain)}`;
   
   console.log('🇯🇵 日本ドメインWHOIS取得:', domain);

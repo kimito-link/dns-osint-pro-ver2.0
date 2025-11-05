@@ -1246,8 +1246,9 @@ async function checkSuggestPollution(domain, siteTitle) {
         });
         html += '</div>';
       } else {
-        html += '<div style="margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 4px;">';
-        html += '<strong>🟣 Yahoo!:</strong> サジェストなし（CORS制限の可能性）';
+        html += '<div style="margin: 10px 0; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">';
+        html += '<strong>🟣 Yahoo!:</strong> サジェスト取得不可<br>';
+        html += '<span style="font-size: 0.85em; color: #666;">Yahoo!のサジェストAPIは現在公開されていないため取得できません。GoogleとBingのサジェストをご利用ください。</span>';
         html += '</div>';
       }
 

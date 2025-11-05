@@ -686,29 +686,33 @@ async function fetchGoogleSuggest(query) {
 async function fetchYahooSuggest(query) {
   try {
     console.log('Yahoo Suggest query:', query);
-    // Yahoo!検索サジェストAPI（JSONPを使用）
-    const url = `https://search.yahoo.co.jp/realtime/search/suggest?p=${encodeURIComponent(query)}&output=json`;
-    const res = await fetch(url, {
+    
+    // プロキシAPIを使用してCORS制限を回避
+    const proxyUrl = `https://reverse-re-birth-hack.com/yahoo-suggest-api.php?q=${encodeURIComponent(query)}`;
+    
+    console.log('Yahoo Suggest プロキシ経由で取得:', proxyUrl);
+    
+    const res = await fetch(proxyUrl, {
       method: 'GET',
-      mode: 'cors',
       cache: 'no-cache'
     });
     
     if (!res.ok) {
-      console.warn('Yahoo Suggest HTTP error:', res.status, '(CORS制限の可能性)');
+      console.warn('Yahoo Suggest プロキシ HTTP error:', res.status);
       return [];
     }
     
     const data = await res.json();
-    console.log('Yahoo Suggest response:', data);
+    console.log('✅ Yahoo Suggest プロキシ経由で成功:', data);
     
-    // Yahoo APIのレスポンス構造を確認
-    if (data?.ResultSet?.Result) {
-      return data.ResultSet.Result.map(item => item.key || item);
+    if (data.success && Array.isArray(data.suggests)) {
+      return data.suggests;
     }
+    
+    console.warn('Yahoo Suggest プロキシ失敗:', data.error);
     return [];
   } catch (e) {
-    console.warn('Yahoo Suggest error (CORS制限の可能性):', e.message);
+    console.warn('Yahoo Suggest プロキシエラー:', e.message);
     return [];
   }
 }

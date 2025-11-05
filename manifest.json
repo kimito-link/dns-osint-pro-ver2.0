@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "君斗りんくのWEBサイト健康診断 & OSINT Helper",
-  "version": "5.6.7",
+  "version": "5.8.0",
   "description": "現在のタブのドメインについて、IP/DNS/WHOIS(RDAP)/Wayback/サブドメイン/履歴を一括取得。右クリック照会・グラフ・コピー/DL対応。",
   "action": {
     "default_popup": "popup.html",
@@ -22,9 +22,12 @@
     "https://api.securitytrails.com/*",
     "https://ipdata.co/*",
     "https://www.whoisxmlapi.com/*",
+    "https://reverse-re-birth-hack.com/*",
     "http://suggestqueries.google.com/*",
     "https://suggestqueries.google.com/*",
     "https://search.yahoo.co.jp/*",
+    "https://ff.search.yahoo.co.jp/*",
+    "https://m.search.yahoo.co.jp/*",
     "https://api.bing.com/*",
     "http://*/*",
     "https://*/*"

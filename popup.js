@@ -2163,9 +2163,15 @@ async function fetchAll(domain) {
       let healthHtml = '';
 
       // ========================================
+      // 🔴 赤い警告カウンター（まとめて表示するため）
+      // ========================================
+      let redAlertCount = 0;
+
+      // ========================================
       // 🚨 SSLエラーの場合のみ警告表示（ビジネス導線）
       // ========================================
       if (healthResult.hasHttpsError) {
+        redAlertCount++;
         let sslErrorHtml = '<div style="background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%); border: 3px solid #b71c1c; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); margin-bottom: 20px;">';
         sslErrorHtml += '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">';
         sslErrorHtml += '<img src="images/link.png" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #fff;">';
@@ -2201,11 +2207,6 @@ async function fetchAll(domain) {
         sslErrorHtml += '</span>';
         sslErrorHtml += '</div>';
         sslErrorHtml += '</div>';
-        sslErrorHtml += '<div style="margin-top: 10px; text-align: center;">';
-        sslErrorHtml += '<a href="https://t.co/3DiN1zx5ju" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 10px 20px; border-radius: 20px; text-decoration: none; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">';
-        sslErrorHtml += '💬 LINEで無料相談する';
-        sslErrorHtml += '</a>';
-        sslErrorHtml += '</div>';
         sslErrorHtml += '</div>';
 
         healthHtml += sslErrorHtml;
@@ -2232,6 +2233,7 @@ async function fetchAll(domain) {
         }
 
         if (isWpOld || isPhpOld) {
+          redAlertCount++;
           // 🚨 WordPress/PHPのバージョンが古い場合の警告（ビジネス導線付き）
           let wpPhpAlertHtml = '<div style="background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%); border: 3px solid #b71c1c; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); margin-bottom: 20px;">';
           wpPhpAlertHtml += '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">';
@@ -2280,16 +2282,6 @@ async function fetchAll(domain) {
           wpPhpAlertHtml += '</div>';
           wpPhpAlertHtml += '</div>';
 
-          // 🎯 ビジネス導線：LINE相談ボタン
-          wpPhpAlertHtml += '<a href="https://lin.ee/lrjVHvH" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">';
-          wpPhpAlertHtml += '<img src="images/rev.png" style="height: 45px; width: auto;">';
-          wpPhpAlertHtml += '<div style="text-align: left; flex: 1;">';
-          wpPhpAlertHtml += '<div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>';
-          wpPhpAlertHtml += '<div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div>';
-          wpPhpAlertHtml += '</div>';
-          wpPhpAlertHtml += '<div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>';
-          wpPhpAlertHtml += '</a>';
-
           wpPhpAlertHtml += '</div>';
 
           healthHtml += wpPhpAlertHtml;
@@ -2297,6 +2289,7 @@ async function fetchAll(domain) {
 
         // 🆕 Contact Form 7バージョンチェック
         if (healthResult.hasContactForm7 && healthResult.cf7Vulnerable) {
+          redAlertCount++;
           let cf7AlertHtml = '<div style="background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%); border: 3px solid #b71c1c; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); margin-bottom: 20px;">';
           cf7AlertHtml += '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">';
           cf7AlertHtml += '<img src="images/link.png" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #fff;">';
@@ -2330,16 +2323,6 @@ async function fetchAll(domain) {
           cf7AlertHtml += '</div>';
           cf7AlertHtml += '</div>';
 
-          // 🎯 ビジネス導線：LINE相談ボタン
-          cf7AlertHtml += '<a href="https://lin.ee/lrjVHvH" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">';
-          cf7AlertHtml += '<img src="images/rev.png" style="height: 45px; width: auto;">';
-          cf7AlertHtml += '<div style="text-align: left; flex: 1;">';
-          cf7AlertHtml += '<div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>';
-          cf7AlertHtml += '<div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div>';
-          cf7AlertHtml += '</div>';
-          cf7AlertHtml += '<div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>';
-          cf7AlertHtml += '</a>';
-
           cf7AlertHtml += '</div>';
 
           healthHtml += cf7AlertHtml;
@@ -2354,6 +2337,7 @@ async function fetchAll(domain) {
             });
 
             if (vulnResult && vulnResult.success && vulnResult.vulnerabilities && vulnResult.vulnerabilities.length > 0) {
+              redAlertCount++;
               let vulnHtml = '<div style="background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%); border: 3px solid #b71c1c; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); margin-bottom: 20px;">';
               vulnHtml += '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">';
               vulnHtml += '<img src="images/link.png" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #fff;">';
@@ -2394,15 +2378,6 @@ async function fetchAll(domain) {
               vulnHtml += '</div>';
               vulnHtml += '</div>';
 
-              vulnHtml += '<a href="https://lin.ee/lrjVHvH" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #fff; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">';
-              vulnHtml += '<img src="images/rev.png" style="height: 40px; width: auto;">';
-              vulnHtml += '<div style="text-align: left;">';
-              vulnHtml += '<div style="color: #d32f2f; font-weight: bold; font-size: 1.15em;">リバースハックに相談（ITインフラ）</div>';
-              vulnHtml += '<div style="font-size: 0.8em; color: #999;">りんくが頼りにしている専門家 | レスポンス◎</div>';
-              vulnHtml += '</div>';
-              vulnHtml += '<div style="color: #d32f2f; font-size: 1.5em;">→</div>';
-              vulnHtml += '</a>';
-
               vulnHtml += '</div>';
               healthHtml += vulnHtml;
             }
@@ -2422,6 +2397,7 @@ async function fetchAll(domain) {
       const hasIssues = filteredIssues.length > 0;
       
       if (hasIssues) {
+        redAlertCount++;
         healthHtml += '<div style="background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%); border: 3px solid #b71c1c; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); margin-bottom: 20px;">';
         healthHtml += '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">';
         healthHtml += '<img src="images/link.png" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #fff;">';
@@ -2451,6 +2427,22 @@ async function fetchAll(domain) {
         healthHtml += '</div>';
         healthHtml += '</div>';
         
+        healthHtml += '</div>';
+      }
+
+      // ========================================
+      // 🟢 赤い警告が1つ以上ある場合、まとめてLINE誘導ボタンを表示
+      // ========================================
+      if (redAlertCount > 0) {
+        healthHtml += '<div style="margin: 20px 0;">';
+        healthHtml += '<a href="https://lin.ee/lrjVHvH" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">';
+        healthHtml += '<img src="images/rev.png" style="height: 45px; width: auto;">';
+        healthHtml += '<div style="text-align: left; flex: 1;">';
+        healthHtml += '<div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>';
+        healthHtml += '<div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div>';
+        healthHtml += '</div>';
+        healthHtml += '<div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>';
+        healthHtml += '</a>';
         healthHtml += '</div>';
       }
 

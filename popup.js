@@ -1,3 +1,67 @@
+// 💫 彗星が流れる「シュイーン」音を生成
+function playSpaceSound() {
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // 彗星のメイン音（高音から低音へスーッと流れる）
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.type = 'sine';
+    // 3000Hzから200Hzへ急降下（シュイーン！）
+    oscillator.frequency.setValueAtTime(3000, audioContext.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.8);
+    
+    // 音量：急に大きくなって徐々に消える
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.05);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
+    
+    // キラキラの尾（流れ星の尾のように）
+    const oscillator2 = audioContext.createOscillator();
+    const gainNode2 = audioContext.createGain();
+    
+    oscillator2.type = 'triangle';
+    oscillator2.frequency.setValueAtTime(4000, audioContext.currentTime);
+    oscillator2.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.6);
+    
+    gainNode2.gain.setValueAtTime(0, audioContext.currentTime);
+    gainNode2.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.03);
+    gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
+    
+    // 接続
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator2.connect(gainNode2);
+    gainNode2.connect(audioContext.destination);
+    
+    // 再生
+    const now = audioContext.currentTime;
+    oscillator.start(now);
+    oscillator.stop(now + 0.8);
+    
+    oscillator2.start(now);
+    oscillator2.stop(now + 0.6);
+    
+  } catch (e) {
+    console.log('Audio not supported:', e);
+  }
+}
+
+// スプラッシュ表示時に宇宙音を再生
+setTimeout(() => {
+  playSpaceSound();
+}, 100);
+
+// ロゴスプラッシュ演出の削除
+setTimeout(() => {
+  const splash = document.getElementById('logoSplash');
+  if (splash) {
+    splash.remove();
+  }
+}, 2500);
+
 // デバッグモード設定 (background.jsと同じ)
 const DEBUG_MODE = false;
 
@@ -78,6 +142,42 @@ function getFlagEmoji(countryCode) {
     .split('')
     .map(char => 127397 + char.charCodeAt());
   return String.fromCodePoint(...codePoints);
+}
+
+/**
+ * ドメインからメインドメイン名を抽出
+ * サブドメインを考慮して正しいメインドメイン部分を返す
+ * @param {string} domain - ドメイン名（例: ec.searchfan.biz, www.yahoo.co.jp）
+ * @returns {string} メインドメイン名（例: searchfan, yahoo）
+ */
+function extractMainDomainName(domain) {
+  // www. を除去
+  const cleanDomain = domain.replace(/^www\./, '');
+  const parts = cleanDomain.split('.');
+  
+  // ドメインパーツが2つ以下の場合は最初の部分を返す
+  // 例: google.com → google
+  if (parts.length <= 2) {
+    return parts[0];
+  }
+  
+  // 複合TLDの場合（co.jp, ne.jp, ac.jp など）を考慮
+  const secondLastPart = parts[parts.length - 2];
+  
+  // 一般的な複合TLD
+  const compoundTLDs = ['co', 'ne', 'ac', 'or', 'go', 'ed', 'lg', 'gr'];
+  
+  if (compoundTLDs.includes(secondLastPart)) {
+    // 複合TLDの場合、その前の部分を返す
+    // 例: www.yahoo.co.jp → yahoo
+    // 例: sub.example.co.jp → example
+    return parts[parts.length - 3] || parts[0];
+  }
+  
+  // それ以外は最後から2番目の部分を返す
+  // 例: ec.searchfan.biz → searchfan
+  // 例: blog.example.com → example
+  return parts[parts.length - 2];
 }
 
 /**
@@ -809,8 +909,9 @@ async function checkSuggestPollution(domain, siteTitle) {
       
       // 🔧 ドメイン名で検索した場合、明らかに関係ないサジェストを除外
       if (query === domain || query === domain.replace(/^www\./, '')) {
-        // ドメイン名から主要部分を抽出（例: kimito-link.com → kimito-link）
-        const domainCore = domain.replace(/^www\./, '').split('.')[0];
+        // ドメイン名から主要部分を抽出（サブドメインを考慮）
+        // 例: ec.searchfan.biz → searchfan, www.yahoo.co.jp → yahoo
+        const domainCore = extractMainDomainName(domain);
         
         console.log(`🔍 ドメイン検索でフィルタリング中: "${domainCore}"`);
         
@@ -898,8 +999,8 @@ async function checkSuggestPollution(domain, siteTitle) {
           let allBing = negativeResponse.response.bing || [];
           
           // 🔧 ドメイン名で検索した場合、関係ないサジェストを除外
-          if (negativeQuery === domain || negativeQuery === domain.replace(/^www\./, '')) {
-            const domainCore = domain.replace(/^www\./, '').split('.')[0];
+          if (negativeQuery === domain || negativeQuery === domain.replace(/^www\.\//, '')) {
+            const domainCore = extractMainDomainName(domain);
             console.log(`🔍 ネガティブ検出時にフィルタリング中: "${domainCore}"`);
             
             const fullDomainPrefix = domain.toLowerCase();
@@ -920,54 +1021,22 @@ async function checkSuggestPollution(domain, siteTitle) {
               if (lower.startsWith(fullDomainPrefix) || lower.startsWith(wwwDomainPrefix)) return false;
               return lower.includes(domainCore.toLowerCase());
             });
+            
+            allGoogleTotal = allGoogle.length;
+            allYahooTotal = allYahoo.length;
+            allBingTotal = allBing.length;
+
+            // ネガティブキーワードを含むサジェストだけをフィルタ
+            google = allGoogle.filter(item => {
+              return negativeKeywords.some(keyword => item.includes(keyword));
+            });
+            yahoo = allYahoo.filter(item => {
+              return negativeKeywords.some(keyword => item.includes(keyword));
+            });
+            bing = allBing.filter(item => {
+              return negativeKeywords.some(keyword => item.includes(keyword));
+            });
           }
-
-          allGoogleTotal = allGoogle.length;
-          allYahooTotal = allYahoo.length;
-          allBingTotal = allBing.length;
-
-          // ネガティブキーワードを含むサジェストだけをフィルタ
-          google = allGoogle.filter(item => {
-            return negativeKeywords.some(keyword => item.includes(keyword));
-          });
-          yahoo = allYahoo.filter(item => {
-            return negativeKeywords.some(keyword => item.includes(keyword));
-          });
-          bing = allBing.filter(item => {
-            return negativeKeywords.some(keyword => item.includes(keyword));
-          });
-        }
-      } else {
-        // ネガティブがない場合は通常通り全サジェストを表示
-        const displayResponse = allResponses[0];
-        google = displayResponse.response.google || [];
-        yahoo = displayResponse.response.yahoo || [];
-        bing = displayResponse.response.bing || [];
-        
-        // 🔧 ドメイン名で検索した場合、関係ないサジェストを除外
-        const displayQuery = displayResponse.query;
-        if (displayQuery === domain || displayQuery === domain.replace(/^www\./, '')) {
-          const domainCore = domain.replace(/^www\./, '').split('.')[0];
-          console.log(`🔍 表示時にフィルタリング中: "${domainCore}"`);
-          
-          const fullDomainPrefix = domain.toLowerCase();
-          const wwwDomainPrefix = 'www.' + domain.replace(/^www\./, '').toLowerCase();
-          
-          google = google.filter(s => {
-            const lower = s.toLowerCase();
-            if (lower.startsWith(fullDomainPrefix) || lower.startsWith(wwwDomainPrefix)) return false;
-            return lower.includes(domainCore.toLowerCase());
-          });
-          yahoo = yahoo.filter(s => {
-            const lower = s.toLowerCase();
-            if (lower.startsWith(fullDomainPrefix) || lower.startsWith(wwwDomainPrefix)) return false;
-            return lower.includes(domainCore.toLowerCase());
-          });
-          bing = bing.filter(s => {
-            const lower = s.toLowerCase();
-            if (lower.startsWith(fullDomainPrefix) || lower.startsWith(wwwDomainPrefix)) return false;
-            return lower.includes(domainCore.toLowerCase());
-          });
         }
 
         allGoogleTotal = google.length;

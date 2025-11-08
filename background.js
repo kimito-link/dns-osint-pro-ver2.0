@@ -2260,7 +2260,7 @@ async function getSeoMetaInfo(tabId) {
 
         const getCharCount = (text) => text ? text.length : 0;
 
-        // 見出しタグをカウント
+        // 見出しタグをカウント＆テキスト取得
         const headingCounts = {
           h1: document.querySelectorAll('h1').length,
           h2: document.querySelectorAll('h2').length,
@@ -2268,6 +2268,16 @@ async function getSeoMetaInfo(tabId) {
           h4: document.querySelectorAll('h4').length,
           h5: document.querySelectorAll('h5').length,
           h6: document.querySelectorAll('h6').length
+        };
+        
+        // 見出しテキストを取得（最大5件まで）
+        const headingTexts = {
+          h1: Array.from(document.querySelectorAll('h1')).slice(0, 5).map(h => h.textContent.trim()),
+          h2: Array.from(document.querySelectorAll('h2')).slice(0, 5).map(h => h.textContent.trim()),
+          h3: Array.from(document.querySelectorAll('h3')).slice(0, 5).map(h => h.textContent.trim()),
+          h4: Array.from(document.querySelectorAll('h4')).slice(0, 5).map(h => h.textContent.trim()),
+          h5: Array.from(document.querySelectorAll('h5')).slice(0, 5).map(h => h.textContent.trim()),
+          h6: Array.from(document.querySelectorAll('h6')).slice(0, 5).map(h => h.textContent.trim())
         };
 
         // Title
@@ -2358,6 +2368,7 @@ async function getSeoMetaInfo(tabId) {
             exists: viewport.length > 0
           },
           headings: headingCounts,
+          headingTexts: headingTexts,
           images: {
             total: imageCount
           },

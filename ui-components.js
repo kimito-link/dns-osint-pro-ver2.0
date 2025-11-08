@@ -492,6 +492,30 @@ window.OsintUIComponents = {
             <div style="font-size: 1.3em; font-weight: bold;">${data.headings.h6}</div>
           </div>
         </div>
+        
+        <!-- 見出しテキスト表示 -->
+        ${data.headingTexts && Object.keys(data.headingTexts).some(key => data.headingTexts[key].length > 0) ? `
+          <div style="margin-top: 12px;">
+            ${['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].map(tag => {
+              const texts = data.headingTexts[tag];
+              if (!texts || texts.length === 0) return '';
+              
+              return `
+                <div style="margin-bottom: 8px;">
+                  <strong style="color: #666; font-size: 0.85em; text-transform: uppercase;">${tag}:</strong>
+                  <div style="margin-left: 12px; margin-top: 4px;">
+                    ${texts.map((text, idx) => `
+                      <div style="padding: 4px 8px; margin: 2px 0; background: #f5f5f5; border-left: 3px solid #2196f3; font-size: 0.85em; color: #333; border-radius: 2px;">
+                        ${idx + 1}. ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}
+                      </div>
+                    `).join('')}
+                    ${data.headings[tag] > texts.length ? `<div style="font-size: 0.75em; color: #999; margin-top: 4px;">他 ${data.headings[tag] - texts.length} 件</div>` : ''}
+                  </div>
+                </div>
+              `;
+            }).filter(Boolean).join('')}
+          </div>
+        ` : ''}
       </div>
     `;
 

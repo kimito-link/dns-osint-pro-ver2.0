@@ -1539,6 +1539,55 @@ window.OsintUIComponents = {
   },
 
   /**
+   * www統一チェックSEO警告
+   * @returns {string} HTML文字列
+   */
+  createWwwUnificationAlert() {
+    return `
+      <div style="background: linear-gradient(135deg, #ff9800 0%, #fb8c00 100%); border: 3px solid #e65100; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+          <img src="images/link.png" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #fff;">
+          <div style="flex: 1;">
+            <strong style="color: #fff; font-size: 1.3em;">りんく：「SEO評価が分散してるよ！」</strong><br>
+            <span style="color: rgba(255,255,255,0.9); font-size: 0.95em;">wwwあり、wwwなしの統一設定がされてないよ</span>
+          </div>
+        </div>
+        
+        <div style="background: rgba(255,255,255,0.95); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+          <div style="color: #333; font-size: 0.95em; line-height: 1.8;">
+            <strong style="color: #e65100; font-size: 1.05em;">⚠️ wwwあり、wwwなしが統一されていません</strong><br><br>
+            ❌ SEO評価が2つに分散<br>
+            ❌ 検索順位が上がりにくい<br>
+            ❌ Googleが迷う<br>
+            ❌ 被リンクが分散
+          </div>
+        </div>
+        
+        <div style="background: #e3f2fd; border-left: 4px solid #1976d2; padding: 12px; border-radius: 4px; margin-bottom: 15px;">
+          <div style="display: flex; gap: 10px; align-items: start;">
+            <img src="images/link.png" style="width: 40px; height: 40px; border-radius: 50%;">
+            <div style="flex: 1;">
+              <strong style="color: #1565c0;">💡 りんくからの提案</strong><br>
+              <span style="font-size: 0.9em; color: #333;">
+                「301リダイレクトでwww統一しよう！りんくが頼りにしているリバースハックに相談すればSEO対策もバッチリ！」
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <a href="${LINE_URLS.IT_INFRA}" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">
+          <img src="images/rev.png" style="height: 45px; width: auto;">
+          <div style="text-align: left; flex: 1;">
+            <div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>
+            <div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div>
+          </div>
+          <div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>
+        </a>
+      </div>
+    `;
+  },
+
+  /**
    * ヒントボックス
    * @param {Array<string>} hints - ヒントの配列
    * @param {string} title - タイトル（デフォルト: 💡 ヒント）

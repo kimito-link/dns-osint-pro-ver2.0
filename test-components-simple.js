@@ -32,7 +32,8 @@ const tests = [
   { name: 'createSeoLoadButton', regex: /createSeoLoadButton\s*\(/ },
   { name: 'createNoSitemapWarning', regex: /createNoSitemapWarning\s*\(/ },
   { name: 'createTimeoutError', regex: /createTimeoutError\s*\(/ },
-  { name: 'createGeneralError', regex: /createGeneralError\s*\(/ }
+  { name: 'createGeneralError', regex: /createGeneralError\s*\(/ },
+  { name: 'createWwwUnificationAlert', regex: /createWwwUnificationAlert\s*\(/ }
 ];
 
 console.log('📋 コンポーネントの存在確認:\n');

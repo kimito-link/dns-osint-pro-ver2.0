@@ -1276,6 +1276,77 @@ async function checkSuggestPollution(domain, siteTitle) {
           html += '</div>';
         }
       }
+    
+    // ⚠️ 仮でネガティブサジェストを先に取得（後で正式に計算）
+    let tempGoogle = [];
+    let tempYahoo = [];
+    let tempBing = [];
+    
+    if (hasNegativeSuggest && negativeQuery) {
+      const negativeResponse = allResponses.find(r => r.query === negativeQuery);
+      if (negativeResponse) {
+        const allGoogle = negativeResponse.response.google || [];
+        const allYahoo = negativeResponse.response.yahoo || [];
+        const allBing = negativeResponse.response.bing || [];
+        
+        tempGoogle = allGoogle.filter(item => negativeKeywords.some(keyword => item.includes(keyword)));
+        tempYahoo = allYahoo.filter(item => negativeKeywords.some(keyword => item.includes(keyword)));
+        tempBing = allBing.filter(item => negativeKeywords.some(keyword => item.includes(keyword)));
+      }
+    }
+    
+    // 🚨 警告ボックスの直後にネガティブサジェストを表示
+    if (hasNegativeSuggest && (tempGoogle.length > 0 || tempYahoo.length > 0 || tempBing.length > 0)) {
+      html += '<div style="background: #fff; border: 2px solid #e53935; border-radius: 8px; padding: 15px; margin-bottom: 20px;">';
+      html += '<h3 style="color: #e53935; margin-top: 0;">⚠️ 検出されたネガティブサジェスト</h3>';
+      
+      if (tempGoogle.length > 0) {
+        html += '<div style="margin-bottom: 10px;">';
+        html += '<strong style="color: #4285f4;">🌐 Google:</strong><br>';
+        tempGoogle.forEach(suggest => {
+          let displaySuggest = suggest;
+          negativeKeywords.forEach(keyword => {
+            if (suggest.includes(keyword)) {
+              displaySuggest = displaySuggest.replace(new RegExp(keyword, 'gi'), `<span style="color: #d32f2f; font-weight: bold; background: #ffebee; padding: 2px 4px; border-radius: 3px;">${keyword}</span>`);
+            }
+          });
+          html += `<div style="padding: 5px 0; border-bottom: 1px solid #f5f5f5;">・${displaySuggest}</div>`;
+        });
+        html += '</div>';
+      }
+      
+      if (tempYahoo.length > 0) {
+        html += '<div style="margin-bottom: 10px;">';
+        html += '<strong style="color: #ff0033;">🔴 Yahoo!:</strong><br>';
+        tempYahoo.forEach(suggest => {
+          let displaySuggest = suggest;
+          negativeKeywords.forEach(keyword => {
+            if (suggest.includes(keyword)) {
+              displaySuggest = displaySuggest.replace(new RegExp(keyword, 'gi'), `<span style="color: #d32f2f; font-weight: bold; background: #ffebee; padding: 2px 4px; border-radius: 3px;">${keyword}</span>`);
+            }
+          });
+          html += `<div style="padding: 5px 0; border-bottom: 1px solid #f5f5f5;">・${displaySuggest}</div>`;
+        });
+        html += '</div>';
+      }
+      
+      if (tempBing.length > 0) {
+        html += '<div style="margin-bottom: 10px;">';
+        html += '<strong style="color: #008373;">🔵 Bing:</strong><br>';
+        tempBing.forEach(suggest => {
+          let displaySuggest = suggest;
+          negativeKeywords.forEach(keyword => {
+            if (suggest.includes(keyword)) {
+              displaySuggest = displaySuggest.replace(new RegExp(keyword, 'gi'), `<span style="color: #d32f2f; font-weight: bold; background: #ffebee; padding: 2px 4px; border-radius: 3px;">${keyword}</span>`);
+            }
+          });
+          html += `<div style="padding: 5px 0; border-bottom: 1px solid #f5f5f5;">・${displaySuggest}</div>`;
+        });
+        html += '</div>';
+      }
+      
+      html += '</div>';
+    }
 
 
       // 🆕 ネガティブ検出時はそのサジェストだけをフィルタ
@@ -1294,50 +1365,23 @@ async function checkSuggestPollution(domain, siteTitle) {
           let allYahoo = negativeResponse.response.yahoo || [];
           let allBing = negativeResponse.response.bing || [];
           
-          // 🔧 ドメイン名で検索した場合、関係ないサジェストを除外
-          if (negativeQuery === domain || negativeQuery === domain.replace(/^www\.\//, '')) {
-            const domainCore = extractMainDomainName(domain);
-            console.log(`🔍 ネガティブ検出時にフィルタリング中: "${domainCore}"`);
-            
-            const fullDomainPrefix = domain.toLowerCase();
-            const wwwDomainPrefix = 'www.' + domain.replace(/^www\./, '').toLowerCase();
-            
-            allGoogle = allGoogle.filter(s => {
-              const lower = s.toLowerCase();
-              if (lower.startsWith(fullDomainPrefix) || lower.startsWith(wwwDomainPrefix)) return false;
-              return lower.includes(domainCore.toLowerCase());
-            });
-            allYahoo = allYahoo.filter(s => {
-              const lower = s.toLowerCase();
-              if (lower.startsWith(fullDomainPrefix) || lower.startsWith(wwwDomainPrefix)) return false;
-              return lower.includes(domainCore.toLowerCase());
-            });
-            allBing = allBing.filter(s => {
-              const lower = s.toLowerCase();
-              if (lower.startsWith(fullDomainPrefix) || lower.startsWith(wwwDomainPrefix)) return false;
-              return lower.includes(domainCore.toLowerCase());
-            });
-            
-            allGoogleTotal = allGoogle.length;
-            allYahooTotal = allYahoo.length;
-            allBingTotal = allBing.length;
+          allGoogleTotal = allGoogle.length;
+          allYahooTotal = allYahoo.length;
+          allBingTotal = allBing.length;
 
-            // ネガティブキーワードを含むサジェストだけをフィルタ
-            google = allGoogle.filter(item => {
-              return negativeKeywords.some(keyword => item.includes(keyword));
-            });
-            yahoo = allYahoo.filter(item => {
-              return negativeKeywords.some(keyword => item.includes(keyword));
-            });
-            bing = allBing.filter(item => {
-              return negativeKeywords.some(keyword => item.includes(keyword));
-            });
-          }
+          // ネガティブキーワードを含むサジェストだけをフィルタ
+          google = allGoogle.filter(item => {
+            return negativeKeywords.some(keyword => item.includes(keyword));
+          });
+          yahoo = allYahoo.filter(item => {
+            return negativeKeywords.some(keyword => item.includes(keyword));
+          });
+          bing = allBing.filter(item => {
+            return negativeKeywords.some(keyword => item.includes(keyword));
+          });
+
+          console.log(`✅ ネガティブサジェスト抽出: Google=${google.length}, Yahoo=${yahoo.length}, Bing=${bing.length}`);
         }
-
-        allGoogleTotal = google.length;
-        allYahooTotal = yahoo.length;
-        allBingTotal = bing.length;
       }
 
       // 🎯 風評健全度スコアを表示
@@ -1622,8 +1666,11 @@ async function checkSuggestPollution(domain, siteTitle) {
         html += '</div>';
       }
 
-      // Googleサジェスト
-      if (google.length > 0) {
+      // ネガティブサジェストが検出された場合は、通常のサジェスト一覧は表示しない
+      // （上の「検出されたネガティブサジェスト」ボックスに既に表示されているため）
+      if (!hasNegativeSuggest) {
+        // Googleサジェスト
+        if (google.length > 0) {
         html += `<div style="margin: 15px 0; padding: 12px; background: #f1f3f4; border-left: 4px solid #4285f4; border-radius: 4px;">`;
         html += `<strong style="color: #1a73e8; font-size: 1em;">🌐 Google サジェスト</strong>`;
         html += `<div style="margin: 8px 0 12px 0; padding: 6px 10px; background: #e8f0fe; border-radius: 4px; font-size: 0.8em; color: #1967d2;">`;
@@ -1704,9 +1751,9 @@ async function checkSuggestPollution(domain, siteTitle) {
         html += '<div style="margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 4px;">';
         html += '<strong>🔵 Bing:</strong> サジェストなし';
         html += '</div>';
-            }
+      }
+    } // if (!hasNegativeSuggest) の終わり
 
-    html += '<div style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-left: 4px solid #2196f3;">';
     html += '<div style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-left: 4px solid #2196f3;">';
     html += '<strong style="color: #1976d2;">📊 サジェストとは?</strong><br>';
     html += '<span style="font-size: 0.9em;">検索バーに入力したときに表示される予測候補です。<br>';
@@ -4281,7 +4328,7 @@ async function fetchAll(domain) {
       const firstIp = aSet[0];
       console.log('RDAP IP 取得開始:', firstIp);
       const ipRdapResult = await chrome.runtime.sendMessage({
-        type: 'getRdapIP',
+        type: 'getRdapIp',
         ip: firstIp
       });
 

@@ -741,6 +741,100 @@ async function fetchBingSuggest(query) {
   }
 }
 
+// --- Google関連検索取得 ---
+async function fetchGoogleRelatedSearches(query) {
+  try {
+    console.log('🔍 Google関連検索取得開始:', query);
+    
+    // Google検索結果ページをfetch
+    const url = `https://www.google.com/search?q=${encodeURIComponent(query)}&hl=ja`;
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8'
+      }
+    });
+    
+    if (!res.ok) {
+      console.error('❌ Google検索ページ取得エラー:', res.status);
+      return [];
+    }
+    
+    const html = await res.text();
+    console.log(`📄 HTMLサイズ: ${html.length}文字`);
+    
+    // 関連検索を抽出
+    const relatedSearches = [];
+    const seenKeywords = new Set();
+    
+    // デバッグ: HTMLに「関連する検索キーワード」が含まれているか確認
+    const hasRelatedSection = html.includes('関連する検索キーワード') || html.includes('他の人はこちらも検索');
+    console.log(`   「関連する検索キーワード」セクション: ${hasRelatedSection ? '見つかった' : '見つからない'}`);
+    
+    // <a href="/search?q=...">テキスト</a> の形式から、テキスト部分を抽出
+    const linkPattern = /<a[^>]+href="\/search\?q=([^"&]+)[^"]*"[^>]*>([^<]+)<\/a>/gi;
+    let linkMatch;
+    let matchCount = 0;
+    
+    while ((linkMatch = linkPattern.exec(html)) !== null) {
+      matchCount++;
+      try {
+        const rawKeyword = linkMatch[1]; // URL部分
+        const linkText = linkMatch[2]; // リンクテキスト
+        
+        // テキスト部分を優先して使用
+        let keyword = linkText.trim();
+        
+        // テキストが空の場合、URLからデコード
+        if (!keyword || keyword.length < 2) {
+          keyword = decodeURIComponent(rawKeyword.replace(/\+/g, ' ')).trim();
+        }
+        
+        // 除外すべきノイズワード
+        const noisePatterns = [
+          /^(www\.|https?:\/\/)/i,
+          /©|®|™/,
+          /^[a-z]{1,2}$/i,
+          /^\d+$/,
+          /[\u0000-\u001F]/,
+        ];
+        
+        // フィルタリング条件
+        const isValid = keyword && 
+                       keyword.length >= 2 && 
+                       keyword.length <= 150 &&
+                       keyword.toLowerCase() !== query.toLowerCase() &&
+                       !noisePatterns.some(pattern => pattern.test(keyword)) &&
+                       !seenKeywords.has(keyword.toLowerCase());
+        
+        if (isValid) {
+          relatedSearches.push(keyword);
+          seenKeywords.add(keyword.toLowerCase());
+          console.log(`   ✅ 関連ワード追加[${relatedSearches.length}]: ${keyword}`);
+          
+          // 最大12件
+          if (relatedSearches.length >= 12) {
+            break;
+          }
+        }
+      } catch (parseError) {
+        // 個別のパース エラーは無視
+      }
+    }
+    
+    console.log(`✅ Google関連検索取得完了: ${relatedSearches.length}件`);
+    console.log('   関連ワード一覧:', relatedSearches);
+    
+    return relatedSearches;
+    
+  } catch (e) {
+    console.error('❌ Google関連検索取得エラー:', e);
+    return [];
+  }
+}
+
 // --- SSL証明書情報取得（SSL Labs API） ---
 async function fetchSSLInfo(domain) {
   console.log('=== SSL証明書情報取得開始 ===');
@@ -1640,9 +1734,12 @@ try {
 }
 else if (msg?.type === "getRdapIp") {
 try {
+  console.log('📝 RDAP IP 取得開始:', msg.ip);
   const result = await fetchRdapIp(msg.ip);
+  console.log('📝 RDAP IP 取得結果:', result);
   sendResponse(result);
 } catch (e) {
+  console.error('📝 RDAP IP エラー:', e);
   sendResponse({ success: false, error: String(e) });
 }
 }
@@ -1797,6 +1894,16 @@ try {
     bing: [],
     error: String(e)
   });
+}
+}
+else if (msg?.type === "getRelatedSearches") {
+try {
+  console.log('🔍 getRelatedSearches リクエスト受信:', msg.query);
+  const relatedSearches = await fetchGoogleRelatedSearches(msg.query);
+  sendResponse({ success: true, relatedSearches });
+} catch (e) {
+  console.error('❌ getRelatedSearchesエラー:', e);
+  sendResponse({ success: false, relatedSearches: [], error: String(e) });
 }
 }
 else if (msg?.type === "getGoogleIndexCount") {

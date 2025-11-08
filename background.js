@@ -835,6 +835,101 @@ async function fetchGoogleRelatedSearches(query) {
   }
 }
 
+// --- Bing関連検索取得（検索結果ページから「に関連する検索」を抽出） ---
+async function fetchBingRelatedSearches(query) {
+  try {
+    console.log('🔍 Bing関連検索取得開始:', query);
+    
+    // Bing検索結果ページをfetch
+    const url = `https://www.bing.com/search?q=${encodeURIComponent(query)}&setlang=ja`;
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8'
+      }
+    });
+    
+    if (!res.ok) {
+      console.error('❌ Bing検索ページ取得エラー:', res.status);
+      return [];
+    }
+    
+    const html = await res.text();
+    console.log(`📄 HTMLサイズ: ${html.length}文字`);
+    
+    // 関連検索を抽出
+    const relatedSearches = [];
+    const seenKeywords = new Set();
+    
+    // Bingの「に関連する検索」セクションを探す
+    // ページ下部の関連検索エリア
+    const relatedSectionMatch = html.match(/に関連する検索|関連検索|Related searches/i);
+    
+    if (relatedSectionMatch) {
+      console.log('✅ 「に関連する検索」セクションを発見');
+      
+      // セクションの後ろ2000文字を取得
+      const sectionIndex = relatedSectionMatch.index;
+      const sectionHtml = html.substring(sectionIndex, sectionIndex + 2000);
+      
+      // リンクパターンで抽出
+      const linkPattern = /<a[^>]+href="\/search\?q=([^"&]+)[^"]*"[^>]*>([^<]+)<\/a>/gi;
+      let linkMatch;
+      
+      while ((linkMatch = linkPattern.exec(sectionHtml)) !== null && relatedSearches.length < 12) {
+        try {
+          const rawKeyword = linkMatch[1];
+          const linkText = linkMatch[2];
+          
+          // リンクテキストを優先
+          let keyword = linkText.trim();
+          
+          if (!keyword || keyword.length < 2) {
+            keyword = decodeURIComponent(rawKeyword.replace(/\+/g, ' ')).trim();
+          }
+          
+          // ノイズ除外
+          const noisePatterns = [
+            /^(www\.|https?:\/\/)/i,
+            /©|®|™/,
+            /^[a-z]{1,2}$/i,
+            /^\d+$/,
+            /[\u0000-\u001F]/,
+            /^(すべて|画像|動画|ニュース|地図|ショッピング|検索|もっと見る)$/i,
+          ];
+          
+          const isValid = keyword && 
+                         keyword.length >= 2 && 
+                         keyword.length <= 150 &&
+                         !noisePatterns.some(pattern => pattern.test(keyword)) &&
+                         !seenKeywords.has(keyword.toLowerCase());
+          
+          if (isValid) {
+            relatedSearches.push(keyword);
+            seenKeywords.add(keyword.toLowerCase());
+            console.log(`   ✅ 関連ワード追加[${relatedSearches.length}]: ${keyword}`);
+          }
+        } catch (parseError) {
+          // エラーは無視
+        }
+      }
+    } else {
+      console.log('⚠️ 「に関連する検索」セクションが見つかりませんでした');
+    }
+    
+    console.log(`✅ Bing関連検索取得完了: ${relatedSearches.length}件`);
+    console.log('   関連ワード一覧:', relatedSearches);
+    
+    return relatedSearches;
+    
+  } catch (e) {
+    console.error('❌ Bing関連検索取得エラー:', e);
+    return [];
+  }
+}
+
 // --- SSL証明書情報取得（SSL Labs API） ---
 async function fetchSSLInfo(domain) {
   console.log('=== SSL証明書情報取得開始 ===');
@@ -1903,6 +1998,16 @@ try {
   sendResponse({ success: true, relatedSearches });
 } catch (e) {
   console.error('❌ getRelatedSearchesエラー:', e);
+  sendResponse({ success: false, relatedSearches: [], error: String(e) });
+}
+}
+else if (msg?.type === "getBingRelatedSearches") {
+try {
+  console.log('🔍 getBingRelatedSearches リクエスト受信:', msg.query);
+  const relatedSearches = await fetchBingRelatedSearches(msg.query);
+  sendResponse({ success: true, relatedSearches });
+} catch (e) {
+  console.error('❌ getBingRelatedSearchesエラー:', e);
   sendResponse({ success: false, relatedSearches: [], error: String(e) });
 }
 }

@@ -1347,6 +1347,55 @@ async function checkSuggestPollution(domain, siteTitle) {
       
       html += '</div>';
     }
+    
+    console.log('🔷 1349行目通過 - ここまで到達');
+    
+    // 🔗 Bing関連キーワード - 「検出されたネガティブサジェスト」の直後に表示
+    // Bing検索結果ページから「に関連する検索」を取得
+    // ネガティブサジェストが検出された場合のみ実行
+    console.log('📝 Bing関連キーワードチェック - hasNegativeSuggest:', hasNegativeSuggest, 'negativeQuery:', negativeQuery, 'searchName:', searchName);
+    if (hasNegativeSuggest && negativeQuery) {
+      try {
+        console.log('🔍 Bing関連検索を取得中...', searchName);
+        const bingRelatedResponse = await chrome.runtime.sendMessage({
+          type: 'getBingRelatedSearches',
+          query: searchName
+        });
+        
+        if (bingRelatedResponse && bingRelatedResponse.success && bingRelatedResponse.relatedSearches && bingRelatedResponse.relatedSearches.length > 0) {
+          html += '<div style="background: #fff3e0; border: 2px solid #ff9800; padding: 15px; border-radius: 8px; margin-bottom: 20px;">';
+          html += '<h3 style="margin: 0 0 8px 0; color: #e65100;">🔗 Bing関連キーワード</h3>';
+          html += '<p style="margin: 0 0 12px 0; font-size: 0.85em; color: #555;">Bingの検索結果ページから取得した関連検索キーワード。サジェストだけでなく、実際の検索結果に表示される関連ワードも含まれます。ネガティブなワードが含まれる場合は赤色で表示されます。</p>';
+          html += '<div style="display: flex; flex-wrap: wrap; gap: 8px;">';
+          
+          bingRelatedResponse.relatedSearches.forEach((keyword, index) => {
+            // ネガティブキーワードをチェック
+            const isNegative = negativeKeywords.some(neg => keyword.toLowerCase().includes(neg.toLowerCase()));
+            const bingSearchUrl = `https://www.bing.com/search?q=${encodeURIComponent(keyword)}`;
+            
+            if (isNegative) {
+              // ネガティブは赤色で表示
+              html += `<a href="${bingSearchUrl}" target="_blank" style="background: #ffebee; padding: 6px 12px; border-radius: 16px; border: 2px solid #f44336; font-size: 0.9em; color: #d32f2f; font-weight: bold; text-decoration: none; display: inline-block;">🔴 ${index + 1}. ${keyword}</a>`;
+            } else {
+              // 通常はオレンジ色の枠
+              html += `<a href="${bingSearchUrl}" target="_blank" style="background: #fff; padding: 6px 12px; border-radius: 16px; border: 1px solid #ffb74d; font-size: 0.9em; color: #e65100; text-decoration: none; display: inline-block;">${index + 1}. ${keyword}</a>`;
+            }
+          });
+          
+          html += '</div>';
+          html += '</div>';
+          console.log('✅ Bing関連キーワードを表示しました:', bingRelatedResponse.relatedSearches.length, '件');
+        } else {
+          console.log('⚠️ Bing関連検索が見つかりませんでした');
+          console.log('   bingRelatedResponse:', bingRelatedResponse);
+        }
+      } catch (e) {
+        console.error('❌ Bing関連検索の取得に失敗:', e);
+        console.error('   エラー詳細:', e.message, e.stack);
+      }
+    } else {
+      console.log('⚠️ hasNegativeSuggestまたはnegativeQueryがないためBing関連検索をスキップ');
+    }
 
 
       // 🆕 ネガティブ検出時はそのサジェストだけをフィルタ

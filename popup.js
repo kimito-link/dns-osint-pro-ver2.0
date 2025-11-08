@@ -671,24 +671,7 @@ async function loadSeoMetaInfo(domain) {
   
   // ローディング表示
   if (els.seoMetaInfo) {
-    els.seoMetaInfo.innerHTML = `
-      <style>
-        @keyframes loadingPulse {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.2); opacity: 0.7; }
-        }
-        .loading-pulse {
-          animation: loadingPulse 1.5s ease-in-out infinite;
-        }
-      </style>
-      <div style="text-align: center; padding: 60px 20px;">
-        <div style="font-size: 3em; margin-bottom: 20px;" class="loading-pulse">📊</div>
-        <h3 style="color: #333; margin-bottom: 15px;">SEO情報を取得中...</h3>
-        <div class="loading-dots" style="color: #667eea; font-size: 1.1em;">
-          データを解析しています<span class="dots"></span>
-        </div>
-      </div>
-    `;
+    els.seoMetaInfo.innerHTML = UI.createLoadingSpinner('SEO情報を取得中...');
   }
   
   try {
@@ -736,19 +719,8 @@ async function loadSeoMetaInfo(domain) {
     console.error('❌ SEOメタ情報取得エラー:', e);
     
     // エラー表示
-    const errorHtml = `
-      <div style="text-align: center; padding: 60px 20px;">
-        <div style="font-size: 3em; margin-bottom: 20px;">⚠️</div>
-        <h3 style="color: #e53935; margin-bottom: 15px;">SEO情報の取得に失敗しました</h3>
-        <p style="color: #666; font-size: 0.95em; margin-bottom: 25px; line-height: 1.6;">
-          ${e.message}<br>
-          <small style="color: #999;">※ ページを再読み込みしてから再度お試しください</small>
-        </p>
-        <button id="retrySeoInfoBtn" style="padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 30px; font-size: 1em; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(102,126,234,0.4);">
-          🔄 再試行
-        </button>
-      </div>
-    `;
+    const errorHtml = UI.createErrorBox(`${e.message}<br><br>
+      <small style="color: #999;">※ ページを再読み込みしてから再度お試しください</small>`);
     
     if (els.seoMetaInfo) {
       els.seoMetaInfo.innerHTML = errorHtml;
@@ -763,25 +735,8 @@ async function loadSeoMetaInfo(domain) {
 function stopLoadingWithError(errorMessage) {
   console.error('❌ ローディング強制停止:', errorMessage);
   
-  const errorHtml = `
-    <tr>
-      <td colspan="2" style="padding: 0; border: none;">
-        <div style="padding: 30px; background: linear-gradient(135deg, #f44336 0%, #e91e63 100%); border-radius: 12px; text-align: center; color: #fff;">
-          <div style="font-size: 3em; margin-bottom: 15px;">⚠️</div>
-          <div style="font-weight: bold; font-size: 1.3em; margin-bottom: 10px;">
-            処理がタイムアウトしました
-          </div>
-          <div style="font-size: 0.95em; margin-bottom: 20px; line-height: 1.6;">
-            ${errorMessage}<br>
-            <small style="opacity: 0.9;">重いページや接続が遅いサイトでは時間がかかる場合があります</small>
-          </div>
-          <button onclick="location.reload()" style="padding: 12px 24px; background: #fff; color: #f44336; border: none; border-radius: 25px; font-weight: bold; cursor: pointer; font-size: 1em;">
-            🔄 リロードして再試行
-          </button>
-        </div>
-      </td>
-    </tr>
-  `;
+  const errorHtml = UI.createErrorBox(`${errorMessage}<br><br>
+    <small style="color: #999;">※ ページを再読み込みしてから再度お試しください</small>`);
   
   els.resultBody.innerHTML = errorHtml;
 }
@@ -793,28 +748,8 @@ function clearResults() {
   els.specialSections.innerHTML = '';
 
   // 🐫 りんくのローディング表示
-  const loadingHtml = `
-    <tr>
-      <td colspan="2" style="padding: 0; border: none;">
-        <div style="position: relative; padding: 40px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; overflow: hidden; text-align: center;">
-          <img src="images/link.png" class="main-loading-link" style="width: 80px; height: 80px; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 6px 20px rgba(102,126,234,0.5); margin-bottom: 20px;">
-          <div style="color: #fff; font-weight: bold; font-size: 1.3em; margin-bottom: 10px;">
-            🐫 りんく：「ちょっと待っててね調査中！」
-          </div>
-          <div class="main-loading-dots" style="color: rgba(255,255,255,0.9); font-size: 1em;">
-            ドメインを解析しています<span class="dots"></span>
-          </div>
-          <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.2); border-radius: 8px; backdrop-filter: blur(10px);">
-            <div style="color: #fff; font-size: 0.9em; line-height: 1.6;">
-              ✨ チェック中の項目：<br>
-              DNSレコード | SSL証明書 | メールセキュリティ | SEO設定
-            </div>
-          </div>
-        </div>
-      </td>
-    </tr>
-  `;
-
+  const loadingHtml = UI.createLoadingSpinner('🐫 りんく：「ちょっと待っててね調査中！」');
+  
   els.resultBody.innerHTML = loadingHtml;
 
   // CSS アニメーションを追加（まだ存在しない場合）
@@ -1425,55 +1360,11 @@ async function checkSuggestPollution(domain, siteTitle) {
     
     // 🚨 警告ボックスの直後にネガティブサジェストを表示
     if (hasNegativeSuggest && (tempGoogle.length > 0 || tempYahoo.length > 0 || tempBing.length > 0)) {
-      html += '<div style="background: #fff; border: 2px solid #e53935; border-radius: 8px; padding: 15px; margin-bottom: 20px;">';
-      html += '<h3 style="color: #e53935; margin-top: 0;">⚠️ 検出されたネガティブサジェスト</h3>';
-      
-      if (tempGoogle.length > 0) {
-        html += '<div style="margin-bottom: 10px;">';
-        html += '<strong style="color: #4285f4;">🌐 Google:</strong><br>';
-        tempGoogle.forEach(suggest => {
-          let displaySuggest = suggest;
-          negativeKeywords.forEach(keyword => {
-            if (suggest.includes(keyword)) {
-              displaySuggest = displaySuggest.replace(new RegExp(keyword, 'gi'), `<span style="color: #d32f2f; font-weight: bold; background: #ffebee; padding: 2px 4px; border-radius: 3px;">${keyword}</span>`);
-            }
-          });
-          html += `<div style="padding: 5px 0; border-bottom: 1px solid #f5f5f5;">・${displaySuggest}</div>`;
-        });
-        html += '</div>';
-      }
-      
-      if (tempYahoo.length > 0) {
-        html += '<div style="margin-bottom: 10px;">';
-        html += '<strong style="color: #ff0033;">🔴 Yahoo!:</strong><br>';
-        tempYahoo.forEach(suggest => {
-          let displaySuggest = suggest;
-          negativeKeywords.forEach(keyword => {
-            if (suggest.includes(keyword)) {
-              displaySuggest = displaySuggest.replace(new RegExp(keyword, 'gi'), `<span style="color: #d32f2f; font-weight: bold; background: #ffebee; padding: 2px 4px; border-radius: 3px;">${keyword}</span>`);
-            }
-          });
-          html += `<div style="padding: 5px 0; border-bottom: 1px solid #f5f5f5;">・${displaySuggest}</div>`;
-        });
-        html += '</div>';
-      }
-      
-      if (tempBing.length > 0) {
-        html += '<div style="margin-bottom: 10px;">';
-        html += '<strong style="color: #008373;">🔵 Bing:</strong><br>';
-        tempBing.forEach(suggest => {
-          let displaySuggest = suggest;
-          negativeKeywords.forEach(keyword => {
-            if (suggest.includes(keyword)) {
-              displaySuggest = displaySuggest.replace(new RegExp(keyword, 'gi'), `<span style="color: #d32f2f; font-weight: bold; background: #ffebee; padding: 2px 4px; border-radius: 3px;">${keyword}</span>`);
-            }
-          });
-          html += `<div style="padding: 5px 0; border-bottom: 1px solid #f5f5f5;">・${displaySuggest}</div>`;
-        });
-        html += '</div>';
-      }
-      
-      html += '</div>';
+      html += UI.createNegativeSuggestDetail({
+        google: tempGoogle,
+        yahoo: tempYahoo,
+        bing: tempBing
+      }, negativeKeywords);
     }
     
     // 🔗 Bing関連キーワード - 「検出されたネガティブサジェスト」の直後に表示
@@ -1556,8 +1447,7 @@ async function checkSuggestPollution(domain, siteTitle) {
         const negativeRatio = totalNegatives / totalSuggests;
         let score = 100;
 
-        // ネガティブの割合による減点（より適切な計算式）
-        // 10%のネガティブで-20点、50%で-100点
+        // ネガティブの割合による減点
         if (negativeRatio > 0) {
           score = Math.max(0, 100 - (negativeRatio * 100));
         }
@@ -1570,85 +1460,8 @@ async function checkSuggestPollution(domain, siteTitle) {
 
         score = Math.max(0, Math.round(score));
 
-        // 危険度レベル判定
-        let level, levelColor, levelBg, levelIcon, levelText, advice;
-        if (score >= 80) {
-          level = '安全';
-          levelColor = '#2e7d32';
-          levelBg = 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)';
-          levelIcon = '💚';
-          levelText = '優秀な状態です！';
-          advice = '現在の良好な状態を維持しましょう。定期的な監視をおすすめします。';
-        } else if (score >= 60) {
-          level = '注意';
-          levelColor = '#f57c00';
-          levelBg = 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)';
-          levelIcon = '⚠️';
-          levelText = 'ややネガティブが見られます';
-          advice = 'ネガティブサジェストへの対策を検討してください。';
-        } else if (score >= 40) {
-          level = '警告';
-          levelColor = '#d84315';
-          levelBg = 'linear-gradient(135deg, #fbe9e7 0%, #ffccbc 100%)';
-          levelIcon = '🚨';
-          levelText = '風評被害のリスクがあります';
-          advice = '早急な対策が必要です。専門家への相談をおすすめします。';
-        } else {
-          level = '危険';
-          levelColor = '#c62828';
-          levelBg = 'linear-gradient(135deg, #ffebee 0%, #ef9a9a 100%)';
-          levelIcon = '❌';
-          levelText = '深刻な風評被害状態です';
-          advice = '直ちに対策が必要です！専門家に相談してください。';
-        }
-
-        // 星評価
-        const stars = Math.round(score / 20); // 5段階評価
-        const starDisplay = '⭐'.repeat(stars) + '☆'.repeat(5 - stars);
-
-        html += `<div style="background: ${levelBg}; border: 3px solid ${levelColor}; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">`;
-        html += '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">';
-        html += `<div style="font-size: 3em;">${levelIcon}</div>`;
-        html += '<div style="flex: 1;">';
-        html += `<div style="font-size: 1.4em; font-weight: bold; color: ${levelColor}; margin-bottom: 5px;">風評健全度スコア</div>`;
-        html += `<div style="font-size: 0.9em; color: #333;">${levelText}</div>`;
-        html += '</div>';
-        html += '</div>';
-
-        // スコア表示
-        html += '<div style="background: rgba(255,255,255,0.9); padding: 15px; border-radius: 8px; margin-bottom: 12px;">';
-        html += `<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">`;
-        html += `<div style="font-size: 3em; font-weight: bold; color: ${levelColor};">${score}</div>`;
-        html += `<div style="text-align: right;">`;
-        html += `<div style="font-size: 1.2em; color: ${levelColor}; font-weight: bold;">${starDisplay}</div>`;
-        html += `<div style="font-size: 0.85em; color: #333; margin-top: 3px;">危険度: ${level}</div>`;
-        html += `</div>`;
-        html += '</div>';
-
-        // プログレスバー
-        const barColor = score >= 80 ? '#4caf50' : score >= 60 ? '#ff9800' : score >= 40 ? '#ff5722' : '#f44336';
-        html += `<div style="background: #e0e0e0; height: 20px; border-radius: 10px; overflow: hidden;">`;
-        html += `<div style="width: ${score}%; height: 100%; background: ${barColor}; transition: width 0.5s ease;"></div>`;
-        html += '</div>';
-        html += '</div>';
-
-        // 詳細情報
-        html += '<div style="background: rgba(255,255,255,0.7); padding: 12px; border-radius: 8px; margin-bottom: 12px;">';
-        html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em;">';
-        html += `<div><strong>🚨 ネガティブ:</strong> ${totalNegatives}個</div>`;
-        html += `<div><strong>📊 全サジェスト:</strong> ${totalSuggests}個</div>`;
-        html += `<div><strong>📈 ネガ率:</strong> ${(negativeRatio * 100).toFixed(1)}%</div>`;
-        html += `<div><strong>🎯 健全率:</strong> ${(100 - negativeRatio * 100).toFixed(1)}%</div>`;
-        html += '</div>';
-        html += '</div>';
-
-        // アドバイス
-        html += `<div style="background: rgba(255,255,255,0.7); padding: 12px; border-radius: 8px; border-left: 4px solid ${levelColor};">`;
-        html += `<strong style="color: ${levelColor};">💡 アドバイス:</strong><br>`;
-        html += `<span style="font-size: 0.9em; color: #333;">${advice}</span>`;
-        html += '</div>';
-
-        html += '</div>';
+        // コンポーネントを使用してスコア表示
+        html += UI.createReputationScore(score, totalNegatives, totalSuggests);
       }
 
       // 🌟 業種別推奨キーワードの提案（常に表示）
@@ -1774,108 +1587,19 @@ async function checkSuggestPollution(domain, siteTitle) {
         const recommended = recommendedKeywords[industry];
         console.log('🎨 業種:', industry, recommended.title);
 
-        html += '<div style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 3px solid #4caf50; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">';
-        html += '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">';
-        html += '<img src="images/link.png" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #4caf50;">';
-        html += '<div style="flex: 1;">';
-        if (hasNegativeSuggest) {
-          html += '<strong style="color: #2e7d32; font-size: 1.3em;">りんく：「風評対策と並行して、こういうキーワードを育てよう！」</strong><br>';
-        } else {
-          html += '<strong style="color: #2e7d32; font-size: 1.3em;">りんく：「この業種なら、こういうキーワードがあるとイメージが上がるよ！」</strong><br>';
-        }
-        html += '<span style="color: #1b5e20; font-size: 0.95em;">ブランドイメージにプラスになるキーワードがあるわ</span>';
-        html += '</div>';
-        html += '</div>';
-
-        html += '<div style="background: rgba(255,255,255,0.9); padding: 15px; border-radius: 8px; margin-bottom: 15px;">';
-        html += '<div style="color: #333; font-size: 0.95em; line-height: 1.8;">';
-        html += '<strong style="color: #2e7d32; font-size: 1.05em;">✨ 一般的に、こういったキーワードがあると：</strong><br><br>';
-        html += '<div style="padding-left: 10px;">';
-        html += '• <strong>企業やサービスの信頼感が高まります</strong><br>';
-        html += '• <strong>新規顧客の獲得につながりやすい</strong>です<br>';
-        html += '• <strong>ブランドイメージの向上に寄与</strong>します<br>';
-        html += '• <strong>検索ユーザーがポジティブな情報を求めている証拠</strong>です';
-        html += '</div>';
-
-        // 🎨 業種別の推奨キーワードを表示
-        html += `<br><strong style="color: #2e7d32;">💡 ${recommended.title}業界でイメージが上がるキーワード例：</strong><br>`;
-        html += '<div style="padding: 10px; background: #f1f8f4; border-radius: 4px; margin-top: 8px; font-size: 0.9em;">';
-
-        recommended.keywords.forEach(cat => {
-          html += `<div style="margin-bottom: 10px;"><strong style="color: #2e7d32;">✔️ ${cat.category}:</strong><br>`;
-          cat.items.forEach(item => {
-            html += `<span style="color: #666; font-size: 0.9em;">・ ${item}</span><br>`;
-          });
-          html += '</div>';
-        });
-
-        html += '</div>';
-        html += '</div>';
-        html += '</div>';
-
-        // 💡 たぬ姉のアドバイス
-        html += '<div style="background: #e3f2fd; border-left: 4px solid #1976d2; padding: 12px; border-radius: 4px; margin-bottom: 15px;">';
-        html += '<div style="display: flex; gap: 10px; align-items: start;">';
-        html += '<img src="images/tanu-nee.png" style="width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;">';
-        html += '<div style="flex: 1;">';
-        html += '<strong style="color: #1565c0;">💡 たぬ姉の豆知識</strong><br>';
-        html += '<span style="font-size: 0.9em; color: #333; line-height: 1.6;">';
-        html += '「ユーザーが『信頼できる』や『実績』というキーワードで検索するのは、情報収集段階だから、このタイミングで良い情報が出てくることが重要よ。特に『勤続年数が長い』や『経験豊富』というキーワードは信頼性の証明になるわ。」';
-        html += '</span>';
-        html += '</div>';
-        html += '</div>';
-        html += '</div>';
-
-        html += '</div>';
+        // コンポーネントを使用してポジティブキーワード提案を表示
+        html += UI.createPositiveKeywordSuggestion(recommended, hasNegativeSuggest);
       }
 
       // ネガティブサジェストが検出された場合は、通常のサジェスト一覧は表示しない
       // （上の「検出されたネガティブサジェスト」ボックスに既に表示されているため）
       if (!hasNegativeSuggest) {
         // Googleサジェスト
-        if (google.length > 0) {
-        html += `<div style="margin: 15px 0; padding: 12px; background: #f1f3f4; border-left: 4px solid #4285f4; border-radius: 4px;">`;
-        html += `<strong style="color: #1a73e8; font-size: 1em;">🌐 Google サジェスト</strong>`;
-        html += `<div style="margin: 8px 0 12px 0; padding: 6px 10px; background: #e8f0fe; border-radius: 4px; font-size: 0.8em; color: #1967d2;">`;
-        html += `📍 検索した地点での表示です`;
-        html += `</div>`;
-        google.slice(0, 10).forEach((item, index) => {
-          // ネガティブキーワードを赤くハイライト
-          let displayItem = item;
-          for (const keyword of negativeKeywords) {
-            if (item.includes(keyword)) {
-              displayItem = item.replace(keyword, `<span style="color: #d32f2f; font-weight: bold; background: #ffebee; padding: 2px 4px; border-radius: 3px;">${keyword}</span>`);
-            }
-          }
-          const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(item)}`;
-          html += `<div style="padding: 4px 0; font-size: 0.9em;">`;
-          html += `${index + 1}. <a href="${googleSearchUrl}" target="_blank" class="suggest-link google" style="color: #1a73e8; text-decoration: none; border-bottom: 1px dotted #1a73e8;">${displayItem}</a>`;
-          html += '</div>';
-        });
-        html += '</div>';
-      } else {
-        html += '<div style="margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 4px;">';
-        html += '<strong>🌐 Google:</strong> サジェストなし';
-        html += '</div>';
-      }
+        html += UI.createSuggestList(google, 'Google', '#4285f4', negativeKeywords);
 
       // Yahoo!サジェスト
       if (yahoo.length > 0) {
-        html += `<div style="margin: 15px 0; padding: 12px; background: #fff0f5; border-left: 4px solid #ff0033; border-radius: 4px;">`;
-        html += `<strong style="color: #ff0033; font-size: 1em;">🟣 Yahoo! サジェスト</strong><br><br>`;
-        yahoo.slice(0, 10).forEach((item, index) => {
-          let displayItem = item;
-          for (const keyword of negativeKeywords) {
-            if (item.includes(keyword)) {
-              displayItem = item.replace(keyword, `<span style="color: #d32f2f; font-weight: bold; background: #ffebee; padding: 2px 4px; border-radius: 3px;">${keyword}</span>`);
-            }
-          }
-          const yahooSearchUrl = `https://search.yahoo.co.jp/search?p=${encodeURIComponent(item)}`;
-          html += `<div style="padding: 4px 0; font-size: 0.9em;">`;
-          html += `${index + 1}. <a href="${yahooSearchUrl}" target="_blank" class="suggest-link yahoo" style="color: #c00; text-decoration: none; border-bottom: 1px dotted #c00;">${displayItem}</a>`;
-          html += '</div>';
-        });
-        html += '</div>';
+        html += UI.createSuggestList(yahoo, 'Yahoo', '#ff0033', negativeKeywords);
       } else {
         html += '<div style="margin: 10px 0; padding: 12px; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-left: 4px solid #ff6f00; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
         html += '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">';
@@ -1894,27 +1618,7 @@ async function checkSuggestPollution(domain, siteTitle) {
       }
 
       // Bingサジェスト
-      if (bing.length > 0) {
-        html += `<div style="margin: 15px 0; padding: 12px; background: #e7f3ff; border-left: 4px solid #0078d4; border-radius: 4px;">`;
-        html += `<strong style="color: #0078d4; font-size: 1em;">🔵 Bing サジェスト</strong><br><br>`;
-        bing.slice(0, 10).forEach((item, index) => {
-          let displayItem = item;
-          for (const keyword of negativeKeywords) {
-            if (item.includes(keyword)) {
-              displayItem = item.replace(keyword, `<span style="color: #d32f2f; font-weight: bold; background: #ffebee; padding: 2px 4px; border-radius: 3px;">${keyword}</span>`);
-            }
-          }
-          const bingSearchUrl = `https://www.bing.com/search?q=${encodeURIComponent(item)}`;
-          html += `<div style="padding: 4px 0; font-size: 0.9em;">`;
-          html += `${index + 1}. <a href="${bingSearchUrl}" target="_blank" class="suggest-link bing" style="color: #0078d4; text-decoration: none; border-bottom: 1px dotted #0078d4;">${displayItem}</a>`;
-          html += '</div>';
-        });
-        html += '</div>';
-      } else {
-        html += '<div style="margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 4px;">';
-        html += '<strong>🔵 Bing:</strong> サジェストなし';
-        html += '</div>';
-      }
+      html += UI.createSuggestList(bing, 'Bing', '#0078d4', negativeKeywords);
     } // if (!hasNegativeSuggest) の終わり
 
     html += '<div style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-left: 4px solid #2196f3;">';
@@ -2017,13 +1721,8 @@ async function checkSuggestPollution(domain, siteTitle) {
 
   } catch (error) {
     if (DEBUG_MODE) console.error('サジェスト取得エラー:', error);
-    loadingDiv.innerHTML = `
-      <div style="background: #ffebee; border: 2px solid #f44336; padding: 15px; border-radius: 4px;">
-        <strong style="color: #c62828;">⚠️ エラーが発生しました</strong><br>
-        <span style="font-size: 0.9em;">${error.message}</span><br><br>
-        <small>詳細はブラウザのコンソールを確認してください(F12キー)</small>
-      </div>
-    `;
+    loadingDiv.innerHTML = UI.createErrorBox(`${error.message}<br><br>
+      <small style="color: #999;">※ 詳細はブラウザのコンソールを確認してください(F12キー)</small>`);
   }
 }
 
@@ -2288,6 +1987,52 @@ async function fetchAll(domain) {
   await new Promise(resolve => setTimeout(resolve, 100));
   
   console.log('⏱️ fetchAll処理開始 - タイムスタンプ:', new Date().toISOString());
+  
+  // ========================================
+  // 🏷️ サイトタイトル取得（最優先で表示）
+  // ========================================
+  (async () => {
+    try {
+      console.log('🏷️ サイトタイトル取得開始...');
+      
+      // アクティブタブを取得
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      
+      if (!tab || !tab.id) {
+        console.warn('⚠️ タブ情報の取得に失敗しました');
+        return;
+      }
+      
+      // タイトルだけを軽量に取得（タイムアウト10秒）
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('タイムアウト')), 10000)
+      );
+      
+      const messagePromise = chrome.runtime.sendMessage({
+        type: 'getSeoMetaInfo',
+        tabId: tab.id
+      });
+      
+      const seoResult = await Promise.race([messagePromise, timeoutPromise]);
+      
+      if (seoResult && seoResult.success && seoResult.data && seoResult.data.title) {
+        const title = seoResult.data.title.text || domain;
+        
+        // サイトタイトル表示エリアを更新
+        const siteTitleDisplay = document.getElementById('siteTitleDisplay');
+        const siteTitleText = document.getElementById('siteTitleText');
+        
+        if (siteTitleDisplay && siteTitleText) {
+          siteTitleText.textContent = title;
+          siteTitleDisplay.style.display = 'block';
+          console.log('✅ サイトタイトルを表示しました:', title);
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ サイトタイトル取得失敗（スキップ）:', e.message);
+      // エラーは表示せず、タイトルなしで続行
+    }
+  })();
   
   // ⚡ 重い処理を全て非同期化して、即座にUIを操作可能にする
   // メインのローディング表示を早めに終了
@@ -3509,117 +3254,23 @@ async function fetchAll(domain) {
     if (!personDiv) {
       console.error('person-loading div not found');
     } else if (!personResult.success) {
-      personDiv.innerHTML = `
-        <div style="background: #ffebee; border: 2px solid #f44336; padding: 15px; border-radius: 8px;">
-          <strong style="color: #c62828;">⚠️ エラーが発生しました</strong><br>
-          <span style="font-size: 0.9em;">${personResult.error}</span>
-        </div>
-      `;
+      personDiv.innerHTML = UI.createErrorBox(personResult.error);
     } else {
       let personHtml = '';
 
       if (personResult.persons.length === 0) {
-        personHtml = `
-          <div style="background: #e3f2fd; border: 2px solid #2196f3; padding: 15px; border-radius: 8px;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <img src="images/tanu-nee.png" style="width: 45px; height: 45px; border-radius: 50%;">
-              <div>
-                <strong style="color: #1565c0;">たぬ姉：「個人名が検出されなかったわ」</strong><br>
-                <span style="font-size: 0.9em; color: #333;">サイトから役職付きの個人名を検出できませんでした。</span>
-              </div>
-            </div>
-          </div>
-        `;
+        // 個人名が検出されなかった
+        personHtml = UI.createCharacterMessage(
+          'tanu-nee',
+          'たぬ姉：「個人名が検出されなかったわ」',
+          'サイトから役職付きの個人名を検出できませんでした。'
+        );
       } else if (!personResult.hasNegative) {
         // ネガティブなし
-        personHtml = `
-          <div style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 3px solid #4caf50; padding: 20px; border-radius: 12px;">
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
-              <img src="images/link.png" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #4caf50;">
-              <div style="flex: 1;">
-                <strong style="color: #2e7d32; font-size: 1.3em;">りんく：「個人名に問題は見つからなかったよ！」</strong><br>
-                <span style="color: #1b5e20; font-size: 0.95em;">${personResult.totalChecked}名の人物をチェックしました</span>
-              </div>
-            </div>
-            <div style="background: rgba(255,255,255,0.9); padding: 15px; border-radius: 8px;">
-              <strong style="color: #2e7d32;">✅ チェック完了</strong><br>
-              <div style="margin-top: 10px; font-size: 0.9em; color: #333; line-height: 1.6;">
-        `;
-
-        // チェックした人物一覧
-        personResult.persons.forEach(person => {
-          personHtml += `• ${person.title}：<strong>${person.name}</strong> → 問題なし<br>`;
-        });
-
-        personHtml += `
-              </div>
-            </div>
-          </div>
-        `;
+        personHtml = UI.createPersonCheckSuccess(personResult.persons);
       } else {
         // ⚠️ ネガティブ検出
-        personHtml = `
-          <div style="background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%); border: 3px solid #b71c1c; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15);">
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
-              <img src="images/konta.png" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #fff;">
-              <div style="flex: 1;">
-                <strong style="color: #fff; font-size: 1.3em;">こん太：「個人名にネガティブ情報が見つかったぜ！」</strong><br>
-                <span style="color: rgba(255,255,255,0.9); font-size: 0.95em;">${personResult.negativeCount}名の人物に問題が検出されました</span>
-              </div>
-            </div>
-        `;
-
-        // ネガティブが見つかった人物の詳細
-        const negativePersons = personResult.persons.filter(p => p.hasNegative);
-        for (const person of negativePersons) {
-          personHtml += `
-            <div style="background: rgba(255,255,255,0.95); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-              <div style="color: #333; font-size: 0.95em; line-height: 1.8;">
-                <strong style="color: #d32f2f; font-size: 1.1em;">⚠️ ${person.title}：${person.name}</strong><br><br>
-                <div style="padding-left: 10px;">
-          `;
-
-          person.negativeSuggests.forEach(neg => {
-            const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(neg.suggest)}`;
-            personHtml += `
-              • <strong style="color: #d32f2f;">${neg.keyword}</strong> →
-              <a href="${searchUrl}" target="_blank" style="color: #1976d2; text-decoration: none; border-bottom: 1px dotted #1976d2;">
-                ${neg.suggest}
-              </a><br>
-            `;
-          });
-
-          personHtml += `
-                </div>
-              </div>
-            </div>
-          `;
-        }
-
-        // りんくのアドバイス
-        personHtml += `
-            <div style="background: #e3f2fd; border-left: 4px solid #1976d2; padding: 12px; border-radius: 4px; margin-bottom: 15px;">
-              <div style="display: flex; gap: 10px; align-items: start;">
-                <img src="images/link.png" style="width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;">
-                <div style="flex: 1;">
-                  <strong style="color: #1565c0;">💎 りんくからの提案</strong><br>
-                  <span style="font-size: 0.9em; color: #333; line-height: 1.6;">
-                    「個人名のネガティブサジェストは早急な対策が必要よ！リバースハックに相談してみて！」
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <a href="https://lin.ee/X2aWSFO" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #fff; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-              <img src="images/rev.png" style="height: 40px; width: auto;">
-              <div style="text-align: left;">
-                <div style="color: #d32f2f; font-weight: bold; font-size: 1.15em;">リバースハックに相談（風評対策）</div>
-                <div style="font-size: 0.8em; color: #999;">個人名の風評被害対策専門</div>
-              </div>
-              <div style="color: #d32f2f; font-size: 1.5em;">→</div>
-            </a>
-          </div>
-        `;
+        personHtml = UI.createPersonCheckNegative(personResult.persons);
       }
 
       personDiv.innerHTML = personHtml;
@@ -3628,18 +3279,10 @@ async function fetchAll(domain) {
     console.error('個人名チェックエラー:', error);
     const personDiv = document.getElementById('person-loading');
     if (personDiv) {
-      personDiv.innerHTML = `
-        <div style="background: #fff3e0; border: 2px solid #ff9800; padding: 15px; border-radius: 8px;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <img src="images/tanu-nee.png" style="width: 40px; height: 40px; border-radius: 50%;">
-            <strong style="color: #e65100;">たぬ姉：「個人名チェックができなかったわ」</strong>
-          </div>
-          <div style="margin-top: 10px; font-size: 0.9em; color: #333;">
-            サイトへのアクセス制限により個人名を取得できませんでした。<br>
-            他の機能は正常に動作します。
-          </div>
-        </div>
-      `;
+      personDiv.innerHTML = UI.createWarningBox(
+        'サイトへのアクセス制限により個人名を取得できませんでした。<br>他の機能は正常に動作します。',
+        'たぬ姉：「個人名チェックができなかったわ」'
+      );
     }
   }
   } // if (checkPersonNamesEnabled)
@@ -4731,11 +4374,7 @@ async function loadHeadingTexts() {
     }
   } catch (e) {
     console.error('❌ 見出しテキスト取得エラー:', e);
-    content.innerHTML = `
-      <div style="padding: 12px; background: #ffebee; border-radius: 6px; color: #c62828;">
-        ❌ ${e.message}
-      </div>
-    `;
+    content.innerHTML = UI.createErrorBox(e.message, '❌ エラー');
     content.style.display = 'block';
     btn.innerHTML = '<span>🔄</span><span>再試行</span>';
     btn.disabled = false;

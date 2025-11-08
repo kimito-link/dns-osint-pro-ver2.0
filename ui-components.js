@@ -500,16 +500,25 @@ window.OsintUIComponents = {
               const texts = data.headingTexts[tag];
               if (!texts || texts.length === 0) return '';
               
+              const tagColors = {
+                h1: '#4caf50',
+                h2: '#2196f3',
+                h3: '#ff9800',
+                h4: '#9c27b0',
+                h5: '#00bcd4',
+                h6: '#607d8b'
+              };
+              
               return `
-                <div style="margin-bottom: 8px;">
-                  <strong style="color: #666; font-size: 0.85em; text-transform: uppercase;">${tag}:</strong>
-                  <div style="margin-left: 12px; margin-top: 4px;">
+                <div style="margin-bottom: 12px;">
+                  <strong style="color: #333; font-size: 1em; text-transform: uppercase; background: ${tagColors[tag]}; color: #fff; padding: 4px 10px; border-radius: 4px; display: inline-block;">${tag.toUpperCase()}</strong>
+                  <div style="margin-left: 0; margin-top: 8px;">
                     ${texts.map((text, idx) => `
-                      <div style="padding: 4px 8px; margin: 2px 0; background: #f5f5f5; border-left: 3px solid #2196f3; font-size: 0.85em; color: #333; border-radius: 2px;">
-                        ${idx + 1}. ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}
+                      <div style="padding: 10px 14px; margin: 6px 0; background: linear-gradient(to right, #f8f9fa 0%, #ffffff 100%); border-left: 4px solid ${tagColors[tag]}; font-size: 0.95em; color: #222; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); line-height: 1.6;">
+                        <strong style="color: ${tagColors[tag]}; font-size: 1.05em;">${idx + 1}.</strong> ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}
                       </div>
                     `).join('')}
-                    ${data.headings[tag] > texts.length ? `<div style="font-size: 0.75em; color: #999; margin-top: 4px;">他 ${data.headings[tag] - texts.length} 件</div>` : ''}
+                    ${data.headings[tag] > texts.length ? `<div style="font-size: 0.85em; color: #666; margin-top: 6px; padding-left: 14px;">📌 他 ${data.headings[tag] - texts.length} 件の${tag.toUpperCase()}見出しがあります</div>` : ''}
                   </div>
                 </div>
               `;

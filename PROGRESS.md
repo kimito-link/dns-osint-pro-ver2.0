@@ -1,6 +1,15 @@
 # 🚀 DNS OSINT Pro ver2.0 - 作業進捗状況
 
-**最終更新**: 2025年11月7日 19:12
+**最終更新**: 2025年11月8日 18:44
+
+## 🎉 NEW: Chrome DevTools MCP統合完了！
+
+**開発効率化ツールを追加しました:**
+- ✅ `test-devtools-mcp.js` - 完全自動テストスイート
+- ✅ `dev-helper.js` - 対話型開発ヘルパー
+- ✅ `DEVTOOLS_MCP.md` - 使い方ガイド
+
+**詳細は [DEVTOOLS_MCP.md](./DEVTOOLS_MCP.md) を参照**
 
 ---
 

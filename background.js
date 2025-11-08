@@ -2249,7 +2249,18 @@ async function getSitemapPageCount(domain) {
  */
 async function getSeoMetaInfo(tabId) {
   try {
-    const results = await chrome.scripting.executeScript({
+    console.log('🔍 getSeoMetaInfo開始 - tabId:', tabId);
+    
+    // タイムアウト設定（60秒）
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => {
+        console.error('⏰ SEO情報取得がタイムアウト（60秒）');
+        reject(new Error('SEO情報の取得がタイムアウトしました（60秒）。このサイトは非常に大規模なため、SEO情報を取得できません。'));
+      }, 60000)
+    );
+    
+    console.log('📝 executeScript実行中...');
+    const executePromise = chrome.scripting.executeScript({
       target: { tabId },
       func: () => {
         // ページからSEO情報を抽出
@@ -2270,14 +2281,15 @@ async function getSeoMetaInfo(tabId) {
           h6: document.querySelectorAll('h6').length
         };
         
-        // 見出しテキストを取得（最大5件まで）
+        // 見出しテキスト取得を無効化（パフォーマンス重視）
+        // 大規模サイトでタイムアウトを防ぐため、見出しの数のみカウント
         const headingTexts = {
-          h1: Array.from(document.querySelectorAll('h1')).slice(0, 5).map(h => h.textContent.trim()),
-          h2: Array.from(document.querySelectorAll('h2')).slice(0, 5).map(h => h.textContent.trim()),
-          h3: Array.from(document.querySelectorAll('h3')).slice(0, 5).map(h => h.textContent.trim()),
-          h4: Array.from(document.querySelectorAll('h4')).slice(0, 5).map(h => h.textContent.trim()),
-          h5: Array.from(document.querySelectorAll('h5')).slice(0, 5).map(h => h.textContent.trim()),
-          h6: Array.from(document.querySelectorAll('h6')).slice(0, 5).map(h => h.textContent.trim())
+          h1: [],
+          h2: [],
+          h3: [],
+          h4: [],
+          h5: [],
+          h6: []
         };
 
         // Title
@@ -2397,9 +2409,15 @@ async function getSeoMetaInfo(tabId) {
       }
     });
 
+    // タイムアウトとexecuteScriptをレース
+    const results = await Promise.race([executePromise, timeoutPromise]);
+    console.log('✅ executeScript完了 - results:', results);
+
     if (results && results[0] && results[0].result) {
+      console.log('✅ SEO情報取得成功');
       return { success: true, data: results[0].result };
     } else {
+      console.warn('⚠️ SEO情報が空です');
       return { success: false, error: 'SEO情報の取得に失敗しました' };
     }
   } catch (e) {

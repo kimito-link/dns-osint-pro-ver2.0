@@ -659,6 +659,134 @@ function addSpecialSection(title, content) {
 }
 
 /**
+ * SEO情報を取得（ボタンクリック時）
+ */
+async function loadSeoMetaInfo(domain) {
+  console.log('🔍 SEO情報取得開始（ボタンクリック） - domain:', domain);
+  
+  if (!domain) {
+    console.error('❌ domainが未定義です');
+    return;
+  }
+  
+  // ローディング表示
+  if (els.seoMetaInfo) {
+    els.seoMetaInfo.innerHTML = `
+      <style>
+        @keyframes loadingPulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.2); opacity: 0.7; }
+        }
+        .loading-pulse {
+          animation: loadingPulse 1.5s ease-in-out infinite;
+        }
+      </style>
+      <div style="text-align: center; padding: 60px 20px;">
+        <div style="font-size: 3em; margin-bottom: 20px;" class="loading-pulse">📊</div>
+        <h3 style="color: #333; margin-bottom: 15px;">SEO情報を取得中...</h3>
+        <div class="loading-dots" style="color: #667eea; font-size: 1.1em;">
+          データを解析しています<span class="dots"></span>
+        </div>
+      </div>
+    `;
+  }
+  
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || !tab.id) {
+      throw new Error('タブ情報の取得に失敗しました');
+    }
+    
+    // タイムアウト設定（60秒）
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('タイムアウト: SEO情報の取得に60秒以上かかりました。このサイトは非常に大規模なため、SEO情報を取得できません。')), 60000)
+    );
+    
+    const messagePromise = chrome.runtime.sendMessage({
+      type: 'getSeoMetaInfo',
+      tabId: tab.id
+    });
+    
+    const seoResult = await Promise.race([messagePromise, timeoutPromise]);
+    
+    console.log('SEOメタ情報取得結果:', seoResult);
+    
+    if (seoResult && seoResult.success) {
+      const seoHtmlContent = UI.createSeoMetaSection(seoResult);
+      
+      if (els.seoMetaInfo) {
+        els.seoMetaInfo.innerHTML = seoHtmlContent;
+        console.log('✅ SEO情報を表示しました');
+      }
+      
+      // サイトタイトル表示エリアを更新
+      const siteTitleDisplay = document.getElementById('siteTitleDisplay');
+      const siteTitleText = document.getElementById('siteTitleText');
+      
+      if (siteTitleDisplay && siteTitleText) {
+        const title = seoResult.data.title?.text || domain;
+        siteTitleText.textContent = title;
+        siteTitleDisplay.style.display = 'block';
+        console.log('✅ サイトタイトル表示エリアを更新しました:', title);
+      }
+    } else {
+      throw new Error(seoResult?.error || 'SEO情報の取得に失敗しました');
+    }
+  } catch (e) {
+    console.error('❌ SEOメタ情報取得エラー:', e);
+    
+    // エラー表示
+    const errorHtml = `
+      <div style="text-align: center; padding: 60px 20px;">
+        <div style="font-size: 3em; margin-bottom: 20px;">⚠️</div>
+        <h3 style="color: #e53935; margin-bottom: 15px;">SEO情報の取得に失敗しました</h3>
+        <p style="color: #666; font-size: 0.95em; margin-bottom: 25px; line-height: 1.6;">
+          ${e.message}<br>
+          <small style="color: #999;">※ ページを再読み込みしてから再度お試しください</small>
+        </p>
+        <button id="retrySeoInfoBtn" style="padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 30px; font-size: 1em; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(102,126,234,0.4);">
+          🔄 再試行
+        </button>
+      </div>
+    `;
+    
+    if (els.seoMetaInfo) {
+      els.seoMetaInfo.innerHTML = errorHtml;
+      console.log('✅ エラー画面を表示しました');
+    }
+  }
+}
+
+/**
+ * ローディングを強制停止してエラー表示
+ */
+function stopLoadingWithError(errorMessage) {
+  console.error('❌ ローディング強制停止:', errorMessage);
+  
+  const errorHtml = `
+    <tr>
+      <td colspan="2" style="padding: 0; border: none;">
+        <div style="padding: 30px; background: linear-gradient(135deg, #f44336 0%, #e91e63 100%); border-radius: 12px; text-align: center; color: #fff;">
+          <div style="font-size: 3em; margin-bottom: 15px;">⚠️</div>
+          <div style="font-weight: bold; font-size: 1.3em; margin-bottom: 10px;">
+            処理がタイムアウトしました
+          </div>
+          <div style="font-size: 0.95em; margin-bottom: 20px; line-height: 1.6;">
+            ${errorMessage}<br>
+            <small style="opacity: 0.9;">重いページや接続が遅いサイトでは時間がかかる場合があります</small>
+          </div>
+          <button onclick="location.reload()" style="padding: 12px 24px; background: #fff; color: #f44336; border: none; border-radius: 25px; font-weight: bold; cursor: pointer; font-size: 1em;">
+            🔄 リロードして再試行
+          </button>
+        </div>
+      </td>
+    </tr>
+  `;
+  
+  els.resultBody.innerHTML = errorHtml;
+}
+
+/**
  * 結果をクリア
  */
 function clearResults() {
@@ -2136,10 +2264,16 @@ function parseJpWhois(whoisText) {
   return parsed;
 }
 
+// グローバル変数として現在のドメインを保存
+let currentDomain = '';
+
 async function fetchAll(domain) {
   console.log('🚀 fetchAll開始 - ドメイン:', domain);
 
   if (!domain) return;
+  
+  // 現在のドメインを保存
+  currentDomain = domain;
   
   // Googleインデックスボタンを表示（SEO関連機能）
   const googleIndexSection = document.getElementById('googleIndexSection');
@@ -2152,67 +2286,49 @@ async function fetchAll(domain) {
 
   // 👀 ブラウザがローディングを描画する時間を与える（重要！）
   await new Promise(resolve => setTimeout(resolve, 100));
-
-  // ========================================
-  // 📊 SEOメタ情報取得
-  // ========================================
-  console.log('=== SEOメタ情報取得開始 ===');
   
-  let seoHtmlContent = '';
+  console.log('⏱️ fetchAll処理開始 - タイムスタンプ:', new Date().toISOString());
   
-  try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab && tab.id) {
-      const seoResult = await chrome.runtime.sendMessage({
-        type: 'getSeoMetaInfo',
-        tabId: tab.id
-      });
-      
-      console.log('SEOメタ情報取得結果:', seoResult);
-      
-      if (seoResult && seoResult.success) {
-        seoHtmlContent = UI.createSeoMetaSection(seoResult);
-        console.log('✅ SEO情報を生成しました');
-        
-        // サイトタイトル表示エリアを更新
-        const siteTitleDisplay = document.getElementById('siteTitleDisplay');
-        const siteTitleText = document.getElementById('siteTitleText');
-        
-        if (siteTitleDisplay && siteTitleText) {
-          const title = seoResult.data.title?.text || domain;
-          
-          // タイトルのみを更新（「だよ！」は既にHTMLに含まれている）
-          siteTitleText.textContent = title;
-          siteTitleDisplay.style.display = 'block';
-          
-          console.log('✅ サイトタイトル表示エリアを更新しました:', title);
-        }
-      } else {
-        // エラー時の表示
-        seoHtmlContent = `
-          <div style="text-align: center; padding: 40px 20px; color: #999;">
-            <p style="font-size: 1.2em;">⚠️</p>
-            <p>SEO情報の取得に失敗しました</p>
-            <p style="font-size: 0.9em; margin-top: 10px;">ページを再読み込みしてから再度お試しください</p>
+  // ⚡ 重い処理を全て非同期化して、即座にUIを操作可能にする
+  // メインのローディング表示を早めに終了
+  setTimeout(() => {
+    // ローディングを基本情報表示に切り替え
+    const loadingHtml = `
+      <tr>
+        <td colspan="2" style="padding: 20px; text-align: center;">
+          <div style="padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: #fff;">
+            <div style="font-size: 1.2em; margin-bottom: 10px;">📊 診断を実行中</div>
+            <div style="font-size: 0.9em; opacity: 0.9;">DNS、WHOIS、セキュリティチェックなどを実行しています...</div>
           </div>
-        `;
-      }
-    }
-  } catch (e) {
-    console.log('SEOメタ情報取得エラー:', e);
-    seoHtmlContent = `
-      <div style="text-align: center; padding: 40px 20px; color: #999;">
-        <p style="font-size: 1.2em;">⚠️</p>
-        <p>SEO情報の取得に失敗しました</p>
-        <p style="font-size: 0.9em; margin-top: 10px; color: #666;">${e.message}</p>
-      </div>
+        </td>
+      </tr>
     `;
-  }
+    els.resultBody.innerHTML = loadingHtml;
+  }, 1000); // 1秒後にローディングを軽量化
 
-  // SEOタブに初期コンテンツを表示（サイトマップ読み込み前）
+  // ========================================
+  // 📊 SEOメタ情報取得（ボタンクリック式に変更）
+  // ========================================
+  console.log('=== SEOメタ情報：ボタン表示モード ===');
+  
+  // SEOタブに「取得ボタン」を表示
+  const seoButtonHtml = `
+    <div style="text-align: center; padding: 60px 20px;">
+      <div style="font-size: 3em; margin-bottom: 20px;">📊</div>
+      <h3 style="color: #333; margin-bottom: 15px;">SEO情報を取得</h3>
+      <p style="color: #666; font-size: 0.95em; margin-bottom: 25px; line-height: 1.6;">
+        サイトのSEO情報（タイトル、メタタグ、見出し構造など）を取得します。<br>
+        <small style="color: #999;">※ 重いサイトでは時間がかかる場合があります</small>
+      </p>
+      <button id="loadSeoInfoBtn" style="padding: 15px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 30px; font-size: 1.1em; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(102,126,234,0.4); transition: all 0.3s ease;">
+        🔍 SEO情報を取得する
+      </button>
+    </div>
+  `;
+  
   if (els.seoMetaInfo) {
-    els.seoMetaInfo.innerHTML = seoHtmlContent;
-    console.log('✅ SEO基本情報をSEOタブに表示しました');
+    els.seoMetaInfo.innerHTML = seoButtonHtml;
+    console.log('✅ SEO情報取得ボタンを表示しました - currentDomain:', currentDomain);
   }
 
   // ========================================
@@ -4485,16 +4601,27 @@ async function init() {
   }
 
   const run = () => {
-    // UIをブロックしないようにsetTimeoutで非同期実行
-    setTimeout(() => {
+    // UIをブロックしないようにPromiseで非同期実行
+    Promise.resolve().then(() => {
       fetchAll(normalizeDomain(els.domain.value));
-    }, 0);
+    });
   };
   
   els.go.addEventListener("click", run);
   els.domain.addEventListener("keydown", (e) => { if (e.key === "Enter") run(); });
 
   if (els.domain.value) run();
+  
+  // SEO情報取得ボタンのグローバルイベントリスナー
+  if (els.seoMetaInfo) {
+    els.seoMetaInfo.addEventListener('click', (e) => {
+      if (e.target && (e.target.id === 'loadSeoInfoBtn' || e.target.id === 'retrySeoInfoBtn')) {
+        console.log('🔘 SEO情報ボタンがクリックされました - id:', e.target.id, 'currentDomain:', currentDomain);
+        loadSeoMetaInfo(currentDomain);
+      }
+    });
+    console.log('✅ SEO情報エリアにイベントリスナーを設定しました');
+  }
 }
 
 document.addEventListener("DOMContentLoaded", init);

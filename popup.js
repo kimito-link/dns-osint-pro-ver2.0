@@ -1668,71 +1668,16 @@ async function checkSuggestPollution(domain, siteTitle) {
     html += '<strong style="color: #e65100; font-size: 1.05em;">口コミサイトで評判を確認:</strong>';
     html += '</div>';
 
-    // 総合口コミ
-    html += '<div style="margin-bottom: 12px;">';
-    html += '<div style="font-size: 0.85em; color: #666; margin-bottom: 6px; font-weight: 600;">💬 総合口コミ:</div>';
-    html += '<div style="display: flex; flex-wrap: wrap; gap: 6px;">';
-
-    // Googleマップ
-    const googleMapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(searchName + ' 口コミ')}`;
-    html += `<a href="${googleMapsUrl}" target="_blank" class="review-btn google-maps" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #4285f4; border-radius: 4px; text-decoration: none; color: #1a73e8; font-size: 0.85em; font-weight: 500;">`;
-    html += '🗺️ Googleマップ';
-    html += '</a>';
-
-    // Yahoo!知恵袋
-    const yahooChiebukuroUrl = `https://www.google.com/search?q=${encodeURIComponent(searchName + ' site:detail.chiebukuro.yahoo.co.jp')}`;
-    html += `<a href="${yahooChiebukuroUrl}" target="_blank" class="review-btn yahoo-chiebukuro" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #ff0033; border-radius: 4px; text-decoration: none; color: #c00; font-size: 0.85em; font-weight: 500;">`;
-    html += '❓ Yahoo!知恵袋';
-    html += '</a>';
-
-    // みん評
-    const minhyoUrl = `https://www.google.com/search?q=${encodeURIComponent(searchName + ' site:minhyo.jp')}`;
-    html += `<a href="${minhyoUrl}" target="_blank" class="review-btn minhyo" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #ff9800; border-radius: 4px; text-decoration: none; color: #e65100; font-size: 0.85em; font-weight: 500;">`;
-    html += '⭐ みん評';
-    html += '</a>';
-
-    html += '</div></div>';
-
-    // 企業評判
-    html += '<div>';
-    html += '<div style="font-size: 0.85em; color: #666; margin-bottom: 6px; font-weight: 600;">💼 企業評判:</div>';
-    html += '<div style="display: flex; flex-wrap: wrap; gap: 6px;">';
-
-    // 転職会議
-    const jobtalkUrl = `https://www.google.com/search?q=${encodeURIComponent(searchName + ' site:jobtalk.jp')}`;
-    html += `<a href="${jobtalkUrl}" target="_blank" class="review-btn jobtalk" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #00a95f; border-radius: 4px; text-decoration: none; color: #00a95f; font-size: 0.85em; font-weight: 500;">`;
-    html += '💼 転職会議';
-    html += '</a>';
-
-    // OpenWork
-    const openworkUrl = `https://www.google.com/search?q=${encodeURIComponent(searchName + ' site:openwork.jp')}`;
-    html += `<a href="${openworkUrl}" target="_blank" class="review-btn openwork" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #00a8e1; border-radius: 4px; text-decoration: none; color: #0288d1; font-size: 0.85em; font-weight: 500;">`;
-    html += '💼 OpenWork';
-    html += '</a>';
-
-    // エン ライトハウス
-    const enlighthouseUrl = `https://www.google.com/search?q=${encodeURIComponent(searchName + ' site:en-hyouban.com')}`;
-    html += `<a href="${enlighthouseUrl}" target="_blank" class="review-btn enlighthouse" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #ff6b35; border-radius: 4px; text-decoration: none; color: #d84315; font-size: 0.85em; font-weight: 500;">`;
-    html += '💼 エン ライトハウス';
-    html += '</a>';
-
-    // Indeed
-    const indeedUrl = `https://www.google.com/search?q=${encodeURIComponent(searchName + ' site:indeed.com 口コミ')}`;
-    html += `<a href="${indeedUrl}" target="_blank" class="review-btn indeed" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #2164f3; border-radius: 4px; text-decoration: none; color: #2164f3; font-size: 0.85em; font-weight: 500;">`;
-    html += '💼 Indeed';
-    html += '</a>';
-
-    html += '</div></div>';
-
-    // ヒント
-    html += '<div style="margin-top: 12px; padding: 10px; background: rgba(255,255,255,0.7); border-radius: 4px; border-left: 3px solid #ff9800;">';
-    html += '<div style="font-size: 0.85em; color: #333; line-height: 1.6;">';
-    html += '💡 <strong>ヒント:</strong><br>';
-    html += '・ネガティブな口コミが多い場合は早急な対策が必要<br>';
-    html += '・複数のサイトで同じ内容がある場合は注意<br>';
-    html += '・口コミ対策も風評被害対策の一環です';
-    html += '</div>';
-    html += '</div>';
+    // 💡 総合口コミと企業評判のボタン群（コンポーネント化）
+    html += UI.createGeneralReviewButtons(searchName);
+    html += UI.createCompanyReviewButtons(searchName);
+    
+    // ヒント（コンポーネント化）
+    html += UI.createHintBox([
+      'ネガティブな口コミが多い場合は早急な対策が必要',
+      '複数のサイトで同じ内容がある場合は注意',
+      '口コミ対策も風評被害対策の一環です'
+    ]);
 
     html += '</div>';
 

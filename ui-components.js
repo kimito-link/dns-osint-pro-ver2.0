@@ -1250,6 +1250,115 @@ window.OsintUIComponents = {
   },
 
   /**
+   * 口コミサイトリンクボタン群
+   * @param {string} companyName - 会社名
+   * @returns {string} HTML文字列
+   */
+  createReviewSiteButtons(companyName) {
+    const searchName = companyName;
+    
+    // 転職会議
+    const jobtalkUrl = `https://www.google.com/search?q=${encodeURIComponent(searchName + ' site:jobtalk.jp')}`;
+    // OpenWork
+    const openworkUrl = `https://www.google.com/search?q=${encodeURIComponent(searchName + ' site:openwork.jp')}`;
+    // エン ライトハウス
+    const enlighthouseUrl = `https://www.google.com/search?q=${encodeURIComponent(searchName + ' site:en-hyouban.com')}`;
+    // Indeed
+    const indeedUrl = `https://www.google.com/search?q=${encodeURIComponent(searchName + ' site:indeed.com 口コミ')}`;
+    
+    return `
+      <div style="margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.9); border-radius: 8px; border-left: 3px solid #2196f3;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <img src="images/tanu-nee.png" style="width: 40px; height: 40px; border-radius: 50%;">
+          <strong style="color: #1565c0;">💡 たぬ姉：「口コミサイトも確認しましょう」</strong>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <a href="${jobtalkUrl}" target="_blank" class="review-btn jobtalk" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #00a95f; border-radius: 4px; text-decoration: none; color: #00a95f; font-size: 0.85em; font-weight: 500;">💼 転職会議</a>
+          <a href="${openworkUrl}" target="_blank" class="review-btn openwork" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #00a8e1; border-radius: 4px; text-decoration: none; color: #0288d1; font-size: 0.85em; font-weight: 500;">💼 OpenWork</a>
+          <a href="${enlighthouseUrl}" target="_blank" class="review-btn enlighthouse" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #ff6b35; border-radius: 4px; text-decoration: none; color: #d84315; font-size: 0.85em; font-weight: 500;">💼 エン ライトハウス</a>
+          <a href="${indeedUrl}" target="_blank" class="review-btn indeed" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #2164f3; border-radius: 4px; text-decoration: none; color: #2164f3; font-size: 0.85em; font-weight: 500;">💼 Indeed</a>
+        </div>
+      </div>
+    `;
+  },
+
+  /**
+   * 総合口コミサイトリンクボタン群
+   * @param {string} companyName - 会社名
+   * @returns {string} HTML文字列
+   */
+  createGeneralReviewButtons(companyName) {
+    const searchName = companyName;
+    
+    // Googleマップ
+    const googleMapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(searchName + ' 口コミ')}`;
+    // Yahoo!知恵袋
+    const yahooChiebukuroUrl = `https://www.google.com/search?q=${encodeURIComponent(searchName + ' site:detail.chiebukuro.yahoo.co.jp')}`;
+    // みん評
+    const minhyoUrl = `https://www.google.com/search?q=${encodeURIComponent(searchName + ' site:minhyo.jp')}`;
+    
+    return `
+      <div style="margin-bottom: 12px;">
+        <div style="font-size: 0.85em; color: #666; margin-bottom: 6px; font-weight: 600;">💬 総合口コミ:</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <a href="${googleMapsUrl}" target="_blank" class="review-btn google-maps" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #4285f4; border-radius: 4px; text-decoration: none; color: #1a73e8; font-size: 0.85em; font-weight: 500;">🗺️ Googleマップ</a>
+          <a href="${yahooChiebukuroUrl}" target="_blank" class="review-btn yahoo-chiebukuro" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #ff0033; border-radius: 4px; text-decoration: none; color: #c00; font-size: 0.85em; font-weight: 500;">❓ Yahoo!知恵袋</a>
+          <a href="${minhyoUrl}" target="_blank" class="review-btn minhyo" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #ff9800; border-radius: 4px; text-decoration: none; color: #e65100; font-size: 0.85em; font-weight: 500;">⭐ みん評</a>
+        </div>
+      </div>
+    `;
+  },
+
+  /**
+   * 企業評判サイトリンクボタン群
+   * @param {string} companyName - 会社名
+   * @returns {string} HTML文字列
+   */
+  createCompanyReviewButtons(companyName) {
+    const searchName = companyName;
+    
+    // 転職会議
+    const jobtalkUrl = `https://www.google.com/search?q=${encodeURIComponent(searchName + ' site:jobtalk.jp')}`;
+    // OpenWork
+    const openworkUrl = `https://www.google.com/search?q=${encodeURIComponent(searchName + ' site:openwork.jp')}`;
+    // エン ライトハウス
+    const enlighthouseUrl = `https://www.google.com/search?q=${encodeURIComponent(searchName + ' site:en-hyouban.com')}`;
+    // Indeed
+    const indeedUrl = `https://www.google.com/search?q=${encodeURIComponent(searchName + ' site:indeed.com 口コミ')}`;
+    
+    return `
+      <div>
+        <div style="font-size: 0.85em; color: #666; margin-bottom: 6px; font-weight: 600;">💼 企業評判:</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <a href="${jobtalkUrl}" target="_blank" class="review-btn jobtalk" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #00a95f; border-radius: 4px; text-decoration: none; color: #00a95f; font-size: 0.85em; font-weight: 500;">💼 転職会議</a>
+          <a href="${openworkUrl}" target="_blank" class="review-btn openwork" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #00a8e1; border-radius: 4px; text-decoration: none; color: #0288d1; font-size: 0.85em; font-weight: 500;">💼 OpenWork</a>
+          <a href="${enlighthouseUrl}" target="_blank" class="review-btn enlighthouse" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #ff6b35; border-radius: 4px; text-decoration: none; color: #d84315; font-size: 0.85em; font-weight: 500;">💼 エン ライトハウス</a>
+          <a href="${indeedUrl}" target="_blank" class="review-btn indeed" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #2164f3; border-radius: 4px; text-decoration: none; color: #2164f3; font-size: 0.85em; font-weight: 500;">💼 Indeed</a>
+        </div>
+      </div>
+    `;
+  },
+
+  /**
+   * ヒントボックス
+   * @param {Array<string>} hints - ヒントの配列
+   * @param {string} title - タイトル（デフォルト: 💡 ヒント）
+   * @returns {string} HTML文字列
+   */
+  createHintBox(hints, title = '💡 ヒント') {
+    const hintItems = Array.isArray(hints) ? hints.map(h => `・${h}`).join('<br>') : hints;
+    
+    return `
+      <div style="margin-top: 12px; padding: 10px; background: rgba(255,255,255,0.7); border-radius: 4px; border-left: 3px solid #ff9800;">
+        <div style="font-size: 0.85em; color: #333; line-height: 1.6;">
+          <strong>${title}</strong><br>
+          ${hintItems}
+        </div>
+      </div>
+    `;
+  },
+
+  /**
    * サイトカテゴリ構造表示（マインドマップ風）
    * @param {Object} structureData - サイト構造データ
    * @returns {string} HTML文字列

@@ -26,7 +26,13 @@ const tests = [
   { name: 'createYahooSuggestPlaceholder', regex: /createYahooSuggestPlaceholder\s*\(/ },
   { name: 'createSuggestExplanation', regex: /createSuggestExplanation\s*\(/ },
   { name: 'createReviewSiteSection', regex: /createReviewSiteSection\s*\(/ },
-  { name: 'createBingRelatedKeywords', regex: /createBingRelatedKeywords\s*\(/ }
+  { name: 'createBingRelatedKeywords', regex: /createBingRelatedKeywords\s*\(/ },
+  { name: 'createSuggestHeader', regex: /createSuggestHeader\s*\(/ },
+  { name: 'createDetectedPatternAlert', regex: /createDetectedPatternAlert\s*\(/ },
+  { name: 'createSeoLoadButton', regex: /createSeoLoadButton\s*\(/ },
+  { name: 'createNoSitemapWarning', regex: /createNoSitemapWarning\s*\(/ },
+  { name: 'createTimeoutError', regex: /createTimeoutError\s*\(/ },
+  { name: 'createGeneralError', regex: /createGeneralError\s*\(/ }
 ];
 
 console.log('📋 コンポーネントの存在確認:\n');

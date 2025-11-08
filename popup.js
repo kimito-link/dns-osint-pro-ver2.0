@@ -1252,14 +1252,8 @@ async function checkSuggestPollution(domain, siteTitle) {
     .filter(v => v && v.length >= 2) // 1文字の検索は除外
     .slice(0, 15);
   console.log('🔍 検索パターン:', uniqueVariations);
-  let html = '<div style="background: #fff; border: 2px solid #4caf50; padding: 15px; border-radius: 4px;">';
-  html += `<h3 style="margin: 0 0 15px 0; color: #2e7d32;">🔍 "${searchName}" のサジェスト</h3>`;
-
-  if (siteName) {
-    html += '<div style="padding: 10px; background: #e8f5e9; border-left: 4px solid #4caf50; margin-bottom: 15px;">';
-    html += `<strong>🎯 タイトルから抽出:</strong> ${siteName}`;
-    html += '</div>';
-  }
+  // サジェストヘッダー（コンポーネント化）
+  let html = UI.createSuggestHeader(searchName, siteName);
 
     try {
     // 🆕 複数パターンでサジェストを取得
@@ -1366,11 +1360,9 @@ async function checkSuggestPollution(domain, siteTitle) {
     if (hasNegativeSuggest) {
         html += UI.createReputationAlert();
 
-        // 検出されたパターンを表示
+        // 検出されたパターンを表示（コンポーネント化）
         if (negativeQuery && negativeQuery !== searchName) {
-          html += '<div style="padding: 10px; background: #fff3e0; border-left: 4px solid #ff9800; margin-bottom: 15px;">';
-          html += `<strong>⚠️ 検出された表記:</strong> "${negativeQuery}" でネガティブサジェストが見つかりました`;
-          html += '</div>';
+          html += UI.createDetectedPatternAlert(negativeQuery);
         }
       }
     
@@ -1989,23 +1981,9 @@ async function fetchAll(domain) {
   // ========================================
   console.log('=== SEOメタ情報：ボタン表示モード ===');
   
-  // SEOタブに「取得ボタン」を表示
-  const seoButtonHtml = `
-    <div style="text-align: center; padding: 60px 20px;">
-      <div style="font-size: 3em; margin-bottom: 20px;">📊</div>
-      <h3 style="color: #333; margin-bottom: 15px;">SEO情報を取得</h3>
-      <p style="color: #666; font-size: 0.95em; margin-bottom: 25px; line-height: 1.6;">
-        サイトのSEO情報（タイトル、メタタグ、見出し構造など）を取得します。<br>
-        <small style="color: #999;">※ 重いサイトでは時間がかかる場合があります</small>
-      </p>
-      <button id="loadSeoInfoBtn" style="padding: 15px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 30px; font-size: 1.1em; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(102,126,234,0.4); transition: all 0.3s ease;">
-        🔍 SEO情報を取得する
-      </button>
-    </div>
-  `;
-  
+  // SEOタブに「取得ボタン」を表示（コンポーネント化）
   if (els.seoMetaInfo) {
-    els.seoMetaInfo.innerHTML = seoButtonHtml;
+    els.seoMetaInfo.innerHTML = UI.createSeoLoadButton();
     console.log('✅ SEO情報取得ボタンを表示しました - currentDomain:', currentDomain);
   }
 
@@ -2061,20 +2039,8 @@ async function fetchAll(domain) {
         console.log('✅ サイト構造情報を生成しました');
       } else {
         console.log('⚠️ サイト構造解析失敗:', structureResult?.error);
-        // サイトマップがない場合は警告を表示
-        structureHtml = `
-          <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <span style="font-size: 2em;">⚠️</span>
-              <div>
-                <strong style="color: #856404; font-size: 1.1em;">サイトマップが見つかりません</strong>
-                <p style="margin: 5px 0 0 0; color: #856404; font-size: 0.9em;">
-                  サイトマップ（sitemap.xml）を設置すると、カテゴリ構造を可視化できます。
-                </p>
-              </div>
-            </div>
-          </div>
-        `;
+        // サイトマップがない場合は警告を表示（コンポーネント化）
+        structureHtml = UI.createNoSitemapWarning();
       }
       
       // サイトマップ情報をSEO情報の後に追加（IDで囲む）
@@ -2093,36 +2059,12 @@ async function fetchAll(domain) {
       
       let errorHtml = '';
       
-      // タイムアウトエラーの場合
+      // タイムアウトエラーの場合（コンポーネント化）
       if (e.message.includes('タイムアウト')) {
-        errorHtml = `
-          <div style="background: #fff3e0; border: 2px solid #ff9800; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <span style="font-size: 2em;">⏱️</span>
-              <div>
-                <strong style="color: #e65100; font-size: 1.1em;">読み込みに時間がかかりすぎています</strong>
-                <p style="margin: 5px 0 0 0; color: #e65100; font-size: 0.9em;">
-                  サイトマップが大きすぎるか、サーバーの応答が遅い可能性があります。
-                </p>
-              </div>
-            </div>
-          </div>
-        `;
+        errorHtml = UI.createTimeoutError();
       } else {
-        // その他のエラー
-        errorHtml = `
-          <div style="background: #ffebee; border: 2px solid #f44336; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <span style="font-size: 2em;">❌</span>
-              <div>
-                <strong style="color: #c62828; font-size: 1.1em;">エラーが発生しました</strong>
-                <p style="margin: 5px 0 0 0; color: #c62828; font-size: 0.9em;">
-                  ${e.message || '不明なエラー'}
-                </p>
-              </div>
-            </div>
-          </div>
-        `;
+        // その他のエラー（コンポーネント化）
+        errorHtml = UI.createGeneralError(e.message);
       }
       
       if (els.seoMetaInfo) {

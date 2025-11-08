@@ -493,8 +493,17 @@ window.OsintUIComponents = {
           </div>
         </div>
         
-        <!-- 見出しテキスト表示 -->
-        ${data.headingTexts && Object.keys(data.headingTexts).some(key => data.headingTexts[key].length > 0) ? `
+        <!-- 見出しテキスト表示（アコーディオン） -->
+        <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+          <button id="loadHeadingTextsBtn" style="width: 100%; padding: 10px; background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color: #fff; border: none; border-radius: 6px; font-size: 0.95em; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <span>▼</span>
+            <span>見出しテキストを表示</span>
+          </button>
+          <div id="headingTextsContent" style="display: none; margin-top: 12px;"></div>
+        </div>
+        
+        <!-- 以下は削除（非表示） -->
+        ${false && data.headingTexts && Object.keys(data.headingTexts).some(key => data.headingTexts[key].length > 0) ? `
           <div style="margin-top: 12px;">
             ${['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].map(tag => {
               const texts = data.headingTexts[tag];
@@ -770,13 +779,23 @@ window.OsintUIComponents = {
           <div style="overflow: hidden;">
             <h3 style="margin: 0; color: #fff; font-size: 1.4em;">サイトカテゴリ構造</h3>
             <p style="margin: 5px 0 0 0; color: rgba(255,255,255,0.9); font-size: 0.9em;">
-              全 ${totalUrls}ページの階層構造
+              全 ${totalUrls}ページ
             </p>
           </div>
         </div>
 
-        <div style="background: rgba(255,255,255,0.98); padding: 18px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow-x: hidden;">
-          <div class="site-structure-tree" style="max-width: 100%; overflow-x: hidden;">
+        <!-- アコーディオンボタン -->
+        <div style="margin-bottom: 15px; padding: 12px; background: rgba(255,255,255,0.25); border-radius: 8px; backdrop-filter: blur(10px);">
+          <button id="toggleSiteStructureBtn" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 6px; font-size: 0.95em; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <span>▼</span>
+            <span>カテゴリツリーを表示</span>
+          </button>
+        </div>
+
+        <!-- ツリーコンテンツ（初期非表示） -->
+        <div id="siteStructureContent" style="display: none;">
+          <div style="background: rgba(255,255,255,0.98); padding: 18px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow-x: hidden;">
+            <div class="site-structure-tree" style="max-width: 100%; overflow-x: hidden;">
     `;
 
     // ルートからツリーを展開
@@ -788,6 +807,7 @@ window.OsintUIComponents = {
           </div>
         </div>
 
+        <!-- 全て展開/折りたたむボタン -->
         <div style="background: rgba(255,255,255,0.95); padding: 12px; border-radius: 8px; margin-top: 15px;">
           <div style="display: flex; gap: 10px; margin-bottom: 10px;">
             <button id="expandAllBtn" style="
@@ -824,6 +844,8 @@ window.OsintUIComponents = {
             各ページのタイトルとURLも表示されます。
           </div>
         </div>
+        </div>
+        <!-- siteStructureContent 終了 -->
       </div>
     `;
 

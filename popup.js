@@ -4614,13 +4614,131 @@ async function init() {
   
   // SEO情報取得ボタンのグローバルイベントリスナー
   if (els.seoMetaInfo) {
-    els.seoMetaInfo.addEventListener('click', (e) => {
+    els.seoMetaInfo.addEventListener('click', async (e) => {
+      // SEO情報取得ボタン
       if (e.target && (e.target.id === 'loadSeoInfoBtn' || e.target.id === 'retrySeoInfoBtn')) {
         console.log('🔘 SEO情報ボタンがクリックされました - id:', e.target.id, 'currentDomain:', currentDomain);
         loadSeoMetaInfo(currentDomain);
       }
+      
+      // 見出しテキスト表示ボタン
+      if (e.target && (e.target.id === 'loadHeadingTextsBtn' || e.target.closest('#loadHeadingTextsBtn'))) {
+        console.log('🔘 見出しテキスト表示ボタンがクリックされました');
+        await loadHeadingTexts();
+      }
+      
+      // サイト構造アコーディオンボタン
+      if (e.target && (e.target.id === 'toggleSiteStructureBtn' || e.target.closest('#toggleSiteStructureBtn'))) {
+        console.log('🔘 サイト構造トグルボタンがクリックされました');
+        toggleSiteStructure();
+      }
     });
     console.log('✅ SEO情報エリアにイベントリスナーを設定しました');
+  }
+}
+
+/**
+ * サイト構造アコーディオンのトグル
+ */
+function toggleSiteStructure() {
+  const btn = document.getElementById('toggleSiteStructureBtn');
+  const content = document.getElementById('siteStructureContent');
+  
+  if (!btn || !content) return;
+  
+  if (content.style.display === 'none') {
+    // 展開
+    content.style.display = 'block';
+    btn.innerHTML = '<span>▲</span><span>カテゴリツリーを非表示</span>';
+  } else {
+    // 折りたたみ
+    content.style.display = 'none';
+    btn.innerHTML = '<span>▼</span><span>カテゴリツリーを表示</span>';
+  }
+}
+
+/**
+ * 見出しテキストを取得して表示
+ */
+async function loadHeadingTexts() {
+  const btn = document.getElementById('loadHeadingTextsBtn');
+  const content = document.getElementById('headingTextsContent');
+  
+  if (!btn || !content) return;
+  
+  // ローディング表示
+  btn.innerHTML = '<span>⏳</span><span>取得中...</span>';
+  btn.disabled = true;
+  
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || !tab.id) {
+      throw new Error('タブ情報の取得に失敗しました');
+    }
+    
+    const result = await chrome.runtime.sendMessage({
+      type: 'getHeadingTexts',
+      tabId: tab.id
+    });
+    
+    console.log('見出しテキスト取得結果:', result);
+    
+    if (result && result.success) {
+      const data = result.data;
+      
+      // 見出しテキストを表示
+      let html = '';
+      ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].forEach(tag => {
+        const texts = data[tag];
+        if (!texts || texts.length === 0) return;
+        
+        const tagColors = {
+          h1: '#4caf50',
+          h2: '#2196f3',
+          h3: '#ff9800',
+          h4: '#9c27b0',
+          h5: '#673ab7',
+          h6: '#3f51b5'
+        };
+        
+        html += `
+          <div style="margin-bottom: 12px; padding: 10px; background: #fff; border-radius: 6px; border-left: 3px solid ${tagColors[tag]};">
+            <strong style="color: ${tagColors[tag]}; font-size: 1em;">${tag.toUpperCase()}</strong>
+            <div style="margin-top: 8px; display: grid; gap: 6px;">
+              ${texts.map((text, idx) => `
+                <div style="padding: 6px 10px; background: #f8f9fa; border-radius: 4px; font-size: 0.9em;">
+                  <strong style="color: ${tagColors[tag]}; font-size: 1.05em;">${idx + 1}.</strong> ${text}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      });
+      
+      content.innerHTML = html;
+      content.style.display = 'block';
+      
+      // ボタンを折りたたみに変更
+      btn.innerHTML = '<span>▲</span><span>見出しテキストを非表示</span>';
+      btn.disabled = false;
+      btn.onclick = () => {
+        content.style.display = 'none';
+        btn.innerHTML = '<span>▼</span><span>見出しテキストを表示</span>';
+        btn.onclick = null;
+      };
+    } else {
+      throw new Error(result?.error || '見出しテキストの取得に失敗しました');
+    }
+  } catch (e) {
+    console.error('❌ 見出しテキスト取得エラー:', e);
+    content.innerHTML = `
+      <div style="padding: 12px; background: #ffebee; border-radius: 6px; color: #c62828;">
+        ❌ ${e.message}
+      </div>
+    `;
+    content.style.display = 'block';
+    btn.innerHTML = '<span>🔄</span><span>再試行</span>';
+    btn.disabled = false;
   }
 }
 

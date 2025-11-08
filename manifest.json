@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "君斗りんくのWEBサイト健康診断 & OSINT Helper",
-  "version": "6.9.0",
+  "version": "7.1.0",
   "description": "現在のタブのドメインについて、IP/DNS/WHOIS(RDAP)/Wayback/サブドメイン/履歴を一括取得。右クリック照会・グラフ・コピー/DL対応。",
   "action": {
     "default_popup": "popup.html",

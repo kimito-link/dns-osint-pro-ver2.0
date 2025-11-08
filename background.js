@@ -2047,6 +2047,15 @@ try {
   sendResponse({ success: false, error: String(e) });
 }
 }
+else if (msg?.type === "getHeadingTexts") {
+try {
+  const result = await getHeadingTexts(msg.tabId);
+  sendResponse(result);
+} catch (e) {
+  console.error('❌ getHeadingTextsエラー:', e);
+  sendResponse({ success: false, error: String(e) });
+}
+}
 else if (msg?.type === "analyzeSiteStructure") {
 try {
   const result = await analyzeSiteStructure(msg.domain);
@@ -2241,6 +2250,47 @@ async function getSitemapPageCount(domain) {
 // ========================================
 // SEOメタ情報取得
 // ========================================
+
+/**
+ * 見出しテキストのみを取得（別処理）
+ * @param {number} tabId - タブID
+ * @returns {Promise<Object>} 見出しテキスト
+ */
+async function getHeadingTexts(tabId) {
+  try {
+    console.log('🔍 getHeadingTexts開始 - tabId:', tabId);
+    
+    const results = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => {
+        // 見出しテキストを取得（最大3件、50文字まで）
+        const getHeadingText = (element) => {
+          const text = element.textContent.trim();
+          return text.substring(0, 50);
+        };
+        
+        return {
+          h1: Array.from(document.querySelectorAll('h1')).slice(0, 3).map(getHeadingText),
+          h2: Array.from(document.querySelectorAll('h2')).slice(0, 3).map(getHeadingText),
+          h3: Array.from(document.querySelectorAll('h3')).slice(0, 3).map(getHeadingText),
+          h4: Array.from(document.querySelectorAll('h4')).slice(0, 3).map(getHeadingText),
+          h5: Array.from(document.querySelectorAll('h5')).slice(0, 3).map(getHeadingText),
+          h6: Array.from(document.querySelectorAll('h6')).slice(0, 3).map(getHeadingText)
+        };
+      }
+    });
+
+    if (results && results[0] && results[0].result) {
+      console.log('✅ 見出しテキスト取得成功');
+      return { success: true, data: results[0].result };
+    } else {
+      return { success: false, error: '見出しテキストの取得に失敗しました' };
+    }
+  } catch (e) {
+    console.error('❌ 見出しテキスト取得エラー:', e);
+    return { success: false, error: e.message };
+  }
+}
 
 /**
  * ページのSEOメタ情報を取得

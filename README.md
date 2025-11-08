@@ -1,6 +1,6 @@
 # 🔍 DNS OSINT Pro ver2.0
 
-[![Version](https://img.shields.io/badge/version-5.8.1-blue.svg)](https://github.com/yourusername/dns-osint-pro-ver2.0)
+[![Version](https://img.shields.io/badge/version-6.5.1-blue.svg)](https://github.com/yourusername/dns-osint-pro-ver2.0)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-orange.svg)](https://chrome.google.com/webstore)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
@@ -39,15 +39,15 @@ Chrome拡張機能として動作する、ドメイン情報の総合分析ツ�
 
 ---
 
-## 📌 最新バージョン: v5.2.0 (2025-10-05)
+## 📌 最新バージョン: v6.5.1 (2025-11-08)
 
 ### 🎉 新機能ハイライト
 
-- 🔍 **サイト名抽出機能の大幅強化**: 医療機関名（〜医院、〜クリニック）や施設名を優先的に検出
-- 🔗 **サジェストのリンク化**: Google/Yahoo!/Bingの検索結果へワンクリックでアクセス
-- 💬 **口コミサイトリンク**: Googleマップ、転職会議、OpenWorkなど主要口コミサイトへの直接リンク
-- 🎮 **パックマンアニメーション改善**: りんくのサイズ拡大とバウンドする動き
-- 🎨 **UI/UXの大幅改善**: より見やすく、使いやすいレイアウトに
+- ✨ **サイトタイトル常時表示**: 検索窓の下にサイト情報を表示（りんくの画像付き）
+- 🐛 **デバッグログ機能**: コンソールログを統合表示、トラブルシューティングが簡単に
+- ⚡ **サイトマップ処理の高速化**: 並列処理により約15倍の速度改善
+- ✅ **タブ切り替え問題の修正**: SEO情報タブと診断結果タブの切り替えを改善
+- 🔧 **CSPエラー解決**: Manifest V3完全準拠
 
 ---
 
@@ -397,9 +397,16 @@ async dohQuery(name, type) {
 
 ## 📝 変更履歴
 
-詳細は [CHANGELOG.md](CHANGELOG.md) を参照してください。
+詳細は [docs/CHANGELOG.md](docs/CHANGELOG.md) を参照してください。
 
-### v5.2.0 (2025-10-05) - **Current**
+### v6.5.1 (2025-11-08) - **Current**
+- ✨ **サイトタイトル常時表示**: 検索窓の下にサイト情報を表示
+- 🐛 **デバッグログ機能**: コンソールログを統合表示
+- ⚡ **サイトマップ処理の高速化**: 並列処理により約15倍高速化
+- ✅ **タブ切り替え問題の修正**: SEO情報タブと診断結果タブの切り替えを改善
+- 🔧 **CSPエラー解決**: Manifest V3完全準拠
+
+### v5.2.0 (2025-10-05)
 - ✨ **サイト名抽出機能の大幅強化**: 医療機関・施設名を優先検出
 - ✨ **サジェストのリンク化**: クリックで各検索エンジンへジャンプ
 - ✨ **口コミサイトリンク追加**: Googleマップ、転職会議など主要サイトへの直接リンク

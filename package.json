@@ -30,8 +30,10 @@
   },
   "homepage": "https://github.com/yourusername/dns-osint-pro-ver2.0#readme",
   "devDependencies": {
+    "@modelcontextprotocol/server-puppeteer": "^2025.5.12",
     "eslint": "^8.50.0",
-    "prettier": "^3.0.3"
+    "prettier": "^3.0.3",
+    "puppeteer": "^24.29.1"
   },
   "engines": {
     "node": ">=18.0.0",

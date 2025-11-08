@@ -2499,14 +2499,47 @@ async function analyzeSiteStructure(domain) {
       console.warn(`⚠️ ページ数が多いため、処理に時間がかかります: ${urlList.length}ページ`);
     }
 
-    // 実際のページタイトルを取得（最大10ページまで、並列処理で高速化）
-    const pageTitles = {};
-    const maxTitleFetch = Math.min(10, urlList.length);
+    // カテゴリURL（ディレクトリ、index.html）を優先的に並び替え
+    const prioritizedUrls = urlList.sort((a, b) => {
+      const aPriority = getPriority(a);
+      const bPriority = getPriority(b);
+      return aPriority - bPriority; // 優先度が高い順（数値が小さい順）
+    });
     
-    console.log(`🚀 ${maxTitleFetch}ページのタイトルを並列取得中...`);
+    // URL優先度を計算
+    function getPriority(url) {
+      try {
+        const urlObj = new URL(url);
+        const pathname = urlObj.pathname;
+        
+        // 1. ディレクトリURL（/shimitry/ など）
+        if (pathname.endsWith('/')) {
+          return 1;
+        }
+        
+        // 2. index.html、default.html などのデフォルトページ
+        if (pathname.match(/\/(index|default|home)\.(html|htm|php)$/i)) {
+          return 2;
+        }
+        
+        // 3. その他のページ
+        return 3;
+      } catch (e) {
+        return 999; // エラー時は最後尾
+      }
+    }
+    
+    console.log(`📊 優先度順に並び替え完了`);
+    console.log(`📊 優先URL例: ${prioritizedUrls.slice(0, 5).join(', ')}`);
+
+    // 実際のページタイトルを取得（最大50ページまで、並列処理で高速化）
+    const pageTitles = {};
+    const maxTitleFetch = Math.min(50, prioritizedUrls.length);
+    
+    console.log(`🚀 ${maxTitleFetch}ページのタイトルを並列取得中...（カテゴリ優先）`);
     
     // 並列処理でタイトルを取得（高速化）
-    const titlePromises = urlList.slice(0, maxTitleFetch).map(async (url) => {
+    const titlePromises = prioritizedUrls.slice(0, maxTitleFetch).map(async (url) => {
       try {
         const response = await fetch(url, { 
           method: 'GET',

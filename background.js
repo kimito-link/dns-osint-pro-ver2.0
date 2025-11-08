@@ -1826,6 +1826,24 @@ try {
   sendResponse({ success: false, error: String(e) });
 }
 }
+else if (msg?.type === "getSeoMetaInfo") {
+try {
+  const result = await getSeoMetaInfo(msg.tabId);
+  sendResponse(result);
+} catch (e) {
+  console.error('❌ getSeoMetaInfoエラー:', e);
+  sendResponse({ success: false, error: String(e) });
+}
+}
+else if (msg?.type === "analyzeSiteStructure") {
+try {
+  const result = await analyzeSiteStructure(msg.domain);
+  sendResponse(result);
+} catch (e) {
+  console.error('❌ analyzeSiteStructureエラー:', e);
+  sendResponse({ success: false, error: String(e) });
+}
+}
 })();
 return true; // async
 });
@@ -1923,18 +1941,68 @@ async function getSitemapPageCount(domain) {
       `https://${domain}/sitemap_index.xml`,
       `https://${domain}/wp-sitemap.xml`
     ];
+    
     for (const sitemapUrl of sitemapUrls) {
       try {
         const response = await fetch(sitemapUrl, { method: 'GET', signal: AbortSignal.timeout(5000) });
         if (!response.ok) continue;
         const text = await response.text();
         
-        // URL一覧を抽出
-        const urlList = [];
-        const locRegex = /<loc>(.*?)<\/loc>/g;
-        let match;
-        while ((match = locRegex.exec(text)) !== null) {
-          urlList.push(match[1]);
+        // サイトマップインデックスかどうかをチェック
+        const isSitemapIndex = text.includes('<sitemapindex');
+        
+        let urlList = [];
+        
+        if (isSitemapIndex) {
+          console.log(`📑 サイトマップインデックス検出: ${sitemapUrl}`);
+          
+          // サイトマップインデックスから個別のサイトマップURLを取得
+          const sitemapLocRegex = /<loc>(.*?)<\/loc>/g;
+          let match;
+          const childSitemaps = [];
+          
+          while ((match = sitemapLocRegex.exec(text)) !== null) {
+            childSitemaps.push(match[1]);
+          }
+          
+          console.log(`📚 子サイトマップ数: ${childSitemaps.length}`);
+          
+          // 各子サイトマップからURLを取得（最大50個まで）
+          const maxSitemaps = Math.min(50, childSitemaps.length);
+          for (let i = 0; i < maxSitemaps; i++) {
+            const childUrl = childSitemaps[i];
+            try {
+              console.log(`📖 読み込み中: ${childUrl}`);
+              const childResponse = await fetch(childUrl, { method: 'GET', signal: AbortSignal.timeout(5000) });
+              if (childResponse.ok) {
+                const childText = await childResponse.text();
+                const childLocRegex = /<loc>(.*?)<\/loc>/g;
+                let childMatch;
+                
+                while ((childMatch = childLocRegex.exec(childText)) !== null) {
+                  const url = childMatch[1];
+                  // サイトマップファイル自体を除外
+                  if (!url.includes('sitemap') && !url.includes('.xml')) {
+                    urlList.push(url);
+                  }
+                }
+              }
+            } catch (e) {
+              console.log(`⚠️ 子サイトマップ読み込み失敗: ${childUrl}`);
+            }
+          }
+        } else {
+          // 通常のサイトマップ
+          const locRegex = /<loc>(.*?)<\/loc>/g;
+          let match;
+          
+          while ((match = locRegex.exec(text)) !== null) {
+            const url = match[1];
+            // サイトマップファイル自体を除外
+            if (!url.includes('sitemap') && !url.includes('.xml')) {
+              urlList.push(url);
+            }
+          }
         }
         
         const urlCount = urlList.length;
@@ -1944,7 +2012,7 @@ async function getSitemapPageCount(domain) {
             success: true, 
             pageCount: urlCount, 
             sitemapUrl: sitemapUrl,
-            urlList: urlList // URL一覧を追加
+            urlList: urlList
           };
         }
       } catch (e) {
@@ -1955,5 +2023,441 @@ async function getSitemapPageCount(domain) {
     return { success: false, error: 'サイトマップが見つかりませんでした' };
   } catch (e) {
     return { success: false, error: e.message };
+  }
+}
+
+// ========================================
+// SEOメタ情報取得
+// ========================================
+
+/**
+ * ページのSEOメタ情報を取得
+ * @param {number} tabId - タブID
+ * @returns {Promise<Object>} SEO情報
+ */
+async function getSeoMetaInfo(tabId) {
+  try {
+    const results = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => {
+        // ページからSEO情報を抽出
+        const getMetaContent = (name) => {
+          const meta = document.querySelector(`meta[name="${name}"], meta[property="${name}"]`);
+          return meta ? meta.content : null;
+        };
+
+        const getCharCount = (text) => text ? text.length : 0;
+
+        // 見出しタグをカウント
+        const headingCounts = {
+          h1: document.querySelectorAll('h1').length,
+          h2: document.querySelectorAll('h2').length,
+          h3: document.querySelectorAll('h3').length,
+          h4: document.querySelectorAll('h4').length,
+          h5: document.querySelectorAll('h5').length,
+          h6: document.querySelectorAll('h6').length
+        };
+
+        // Title
+        const title = document.title || '';
+        
+        // Description
+        const description = getMetaContent('description') || '';
+        
+        // Keywords
+        const keywords = getMetaContent('keywords') || '';
+        
+        // Canonical
+        const canonical = document.querySelector('link[rel="canonical"]')?.href || '';
+        
+        // Robots
+        const robots = getMetaContent('robots') || '';
+        
+        // Author
+        const author = getMetaContent('author') || '';
+        
+        // Publisher
+        const publisher = getMetaContent('publisher') || '';
+        
+        // Lang
+        const lang = document.documentElement.lang || document.querySelector('html')?.getAttribute('lang') || '';
+        
+        // OGP情報
+        const ogTitle = getMetaContent('og:title') || '';
+        const ogDescription = getMetaContent('og:description') || '';
+        const ogImage = getMetaContent('og:image') || '';
+        const ogType = getMetaContent('og:type') || '';
+        const ogUrl = getMetaContent('og:url') || '';
+        
+        // Twitter Card
+        const twitterCard = getMetaContent('twitter:card') || '';
+        const twitterSite = getMetaContent('twitter:site') || '';
+        const twitterTitle = getMetaContent('twitter:title') || '';
+        const twitterDescription = getMetaContent('twitter:description') || '';
+        const twitterImage = getMetaContent('twitter:image') || '';
+        
+        // 画像数
+        const imageCount = document.querySelectorAll('img').length;
+        
+        // リンク数
+        const linkCount = document.querySelectorAll('a').length;
+        const internalLinks = Array.from(document.querySelectorAll('a'))
+          .filter(a => a.href && (a.href.startsWith(window.location.origin) || a.href.startsWith('/'))).length;
+        const externalLinks = linkCount - internalLinks;
+        
+        // viewport
+        const viewport = getMetaContent('viewport') || '';
+
+        return {
+          title: {
+            text: title,
+            length: getCharCount(title)
+          },
+          description: {
+            text: description,
+            length: getCharCount(description)
+          },
+          keywords: {
+            text: keywords,
+            exists: keywords.length > 0
+          },
+          canonical: {
+            url: canonical,
+            exists: canonical.length > 0
+          },
+          robots: {
+            text: robots,
+            exists: robots.length > 0
+          },
+          author: {
+            text: author,
+            exists: author.length > 0
+          },
+          publisher: {
+            text: publisher,
+            exists: publisher.length > 0
+          },
+          lang: {
+            code: lang,
+            exists: lang.length > 0
+          },
+          viewport: {
+            text: viewport,
+            exists: viewport.length > 0
+          },
+          headings: headingCounts,
+          images: {
+            total: imageCount
+          },
+          links: {
+            total: linkCount,
+            internal: internalLinks,
+            external: externalLinks
+          },
+          ogp: {
+            title: ogTitle,
+            description: ogDescription,
+            image: ogImage,
+            type: ogType,
+            url: ogUrl,
+            exists: ogTitle.length > 0 || ogDescription.length > 0
+          },
+          twitter: {
+            card: twitterCard,
+            site: twitterSite,
+            title: twitterTitle,
+            description: twitterDescription,
+            image: twitterImage,
+            exists: twitterCard.length > 0
+          }
+        };
+      }
+    });
+
+    if (results && results[0] && results[0].result) {
+      return { success: true, data: results[0].result };
+    } else {
+      return { success: false, error: 'SEO情報の取得に失敗しました' };
+    }
+  } catch (e) {
+    return createErrorResponse(e, 'getSeoMetaInfo');
+  }
+}
+
+/**
+ * サイトマップからカテゴリ構造を解析
+ * @param {string} domain - ドメイン名
+ * @returns {Promise<Object>} カテゴリ構造
+ */
+async function analyzeSiteStructure(domain) {
+  try {
+    console.log(`🗺️ サイト構造解析開始: ${domain}`);
+    
+    // サイトマップを取得
+    const sitemapResult = await getSitemapPageCount(domain);
+    
+    if (!sitemapResult.success || !sitemapResult.urlList) {
+      return { success: false, error: 'サイトマップが見つかりません' };
+    }
+
+    const urlList = sitemapResult.urlList;
+    console.log(`📊 解析対象URL数: ${urlList.length}`);
+    
+    // ページ数が多い場合は警告
+    if (urlList.length > 100) {
+      console.warn(`⚠️ ページ数が多いため、処理に時間がかかります: ${urlList.length}ページ`);
+    }
+
+    // 実際のページタイトルを取得（最大10ページまで、並列処理で高速化）
+    const pageTitles = {};
+    const maxTitleFetch = Math.min(10, urlList.length);
+    
+    console.log(`🚀 ${maxTitleFetch}ページのタイトルを並列取得中...`);
+    
+    // 並列処理でタイトルを取得（高速化）
+    const titlePromises = urlList.slice(0, maxTitleFetch).map(async (url) => {
+      try {
+        const response = await fetch(url, { 
+          method: 'GET',
+          signal: AbortSignal.timeout(2000) // 3秒→2秒に短縮
+        });
+        
+        if (response.ok) {
+          const html = await response.text();
+          const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+          if (titleMatch && titleMatch[1]) {
+            return { url, title: titleMatch[1].trim() };
+          }
+        }
+      } catch (e) {
+        console.log(`⚠️ タイトル取得失敗: ${url}`);
+      }
+      return null;
+    });
+    
+    // 全ての取得が完了するまで待つ
+    const results = await Promise.all(titlePromises);
+    
+    // 結果を格納
+    results.forEach(result => {
+      if (result) {
+        pageTitles[result.url] = result.title;
+        console.log(`✅ タイトル取得: ${result.title}`);
+      }
+    });
+
+    console.log(`📊 タイトル取得完了: ${Object.keys(pageTitles).length}/${maxTitleFetch}件`);
+
+    // ディレクトリ構造を構築
+    const structure = {};
+    const pathCounts = {};
+
+    urlList.forEach(url => {
+      try {
+        const urlObj = new URL(url);
+        const pathname = urlObj.pathname;
+        
+        // URLからタイトルを推測（パスの最後の部分を使用）
+        const getEstimatedTitle = (path) => {
+          const parts = path.split('/').filter(p => p.length > 0);
+          if (parts.length === 0) return 'トップページ';
+          
+          const lastPart = parts[parts.length - 1];
+          
+          // index.htmlなどの場合は親ディレクトリ名を使用
+          if (lastPart.match(/^(index|default|home)\.(html|htm|php)$/i)) {
+            if (parts.length > 1) {
+              const parentPart = parts[parts.length - 2];
+              const cleaned = decodeURIComponent(parentPart);
+              return cleaned.replace(/[-_]/g, ' ').trim() || 'ページ';
+            }
+            return 'トップページ';
+          }
+          
+          // HTMLファイル名を除去
+          let cleanPart = lastPart.replace(/\.(html|htm|php|asp|aspx|jsp)$/i, '');
+          
+          // URLデコード
+          cleanPart = decodeURIComponent(cleanPart);
+          
+          // ハイフンやアンダースコアをスペースに
+          cleanPart = cleanPart.replace(/[-_]/g, ' ');
+          
+          // 先頭を大文字に
+          cleanPart = cleanPart.charAt(0).toUpperCase() + cleanPart.slice(1);
+          
+          return cleanPart.trim() || 'ページ';
+        };
+        
+        // パスを分解
+        const parts = pathname.split('/').filter(p => p.length > 0);
+        
+        if (parts.length === 0) {
+          // ルートページ
+          if (!structure['/']) {
+            structure['/'] = { count: 0, pages: [] };
+          }
+          structure['/'].count++;
+          structure['/'].pages.push({
+            url: url,
+            title: pageTitles[url] || getEstimatedTitle(pathname)
+          });
+        } else {
+          // 階層構造を解析
+          // /manga/ と /manga-010/ のような関係を検出
+          const actualParts = [];
+          
+          for (let i = 0; i < parts.length; i++) {
+            const part = parts[i];
+            
+            // manga-010 のようなパターンを manga/manga-010 に分解
+            const match = part.match(/^([a-z]+)[-_](\d+|[a-z0-9]+)$/i);
+            if (match) {
+              const basePart = match[1]; // manga
+              const subPart = part;      // manga-010
+              
+              console.log(`🔗 階層構造検出: ${part} → 親: ${basePart}, 子: ${subPart}`);
+              
+              // 親カテゴリが既に存在するかチェック
+              if (actualParts.length === 0 || actualParts[actualParts.length - 1] !== basePart) {
+                actualParts.push(basePart);
+              }
+              actualParts.push(subPart);
+            } else {
+              actualParts.push(part);
+            }
+          }
+          
+          // 各階層をカウント
+          let currentPath = '';
+          actualParts.forEach((part, index) => {
+            currentPath += '/' + part;
+            
+            if (!pathCounts[currentPath]) {
+              pathCounts[currentPath] = {
+                path: currentPath,
+                depth: index + 1,
+                name: part,
+                count: 0,
+                pages: [],
+                children: {}
+              };
+            }
+            
+            pathCounts[currentPath].count++;
+            
+            // 最終階層の場合はページURLとタイトルを保存
+            if (index === actualParts.length - 1) {
+              const lastPart = actualParts[actualParts.length - 1];
+              // index.htmlなどのデフォルトページは個別ページとして表示しない
+              const isDefaultPage = lastPart.match(/^(index|default|home)\.(html|htm|php)$/i);
+              
+              // ディレクトリ形式のURL（/features/など）もデフォルトページとして扱う
+              const isDirectoryUrl = pathname.endsWith('/');
+              
+              if (!isDefaultPage && !isDirectoryUrl) {
+                // 通常のページ（/about.htmlなど）
+                pathCounts[currentPath].pages.push({
+                  url: url,
+                  title: pageTitles[url] || getEstimatedTitle(pathname)
+                });
+              } else {
+                // デフォルトページまたはディレクトリURL
+                console.log(`📄 デフォルトページ検出: ${url} (isDefaultPage: ${!!isDefaultPage}, isDirectory: ${isDirectoryUrl})`);
+                
+                // 自分自身にタイトルを設定
+                pathCounts[currentPath].defaultPageTitle = pageTitles[url] || getEstimatedTitle(pathname);
+                pathCounts[currentPath].defaultPageUrl = url;
+                console.log(`✅ カテゴリ自身にタイトル設定: ${currentPath} → ${pathCounts[currentPath].defaultPageTitle}`);
+              }
+            }
+          });
+        }
+      } catch (e) {
+        console.warn('URL解析エラー:', url, e);
+      }
+    });
+
+    // ツリー構造を構築
+    const buildTree = () => {
+      const tree = {
+        '/': {
+          name: 'トップページ',
+          path: '/',
+          count: structure['/']?.count || 0,
+          children: {}
+        }
+      };
+
+      // パスをソート（浅い順）
+      const sortedPaths = Object.keys(pathCounts).sort((a, b) => {
+        const depthA = pathCounts[a].depth;
+        const depthB = pathCounts[b].depth;
+        return depthA - depthB;
+      });
+
+      sortedPaths.forEach(path => {
+        const data = pathCounts[path];
+        let parts = path.split('/').filter(p => p.length > 0);
+        
+        // 親パスを特定
+        let current = tree['/'].children;
+        
+        for (let i = 0; i < parts.length; i++) {
+          const part = parts[i];
+          let currentPath = '/' + parts.slice(0, i + 1).join('/');
+          
+          if (i === parts.length - 1) {
+            // 最終階層
+            current[part] = {
+              name: part,
+              path: currentPath,
+              count: data.count,
+              pages: data.pages,
+              defaultPageTitle: data.defaultPageTitle,
+              defaultPageUrl: data.defaultPageUrl,
+              children: {}
+            };
+            if (data.defaultPageTitle) {
+              console.log(`🌳 ツリーノード作成: ${currentPath} → タイトル: ${data.defaultPageTitle}`);
+            }
+          } else {
+            // 中間階層
+            if (!current[part]) {
+              const intermediateData = pathCounts['/' + parts.slice(0, i + 1).join('/')];
+              current[part] = {
+                name: part,
+                path: currentPath,
+                count: 0,
+                defaultPageTitle: intermediateData?.defaultPageTitle,
+                defaultPageUrl: intermediateData?.defaultPageUrl,
+                children: {}
+              };
+              if (intermediateData?.defaultPageTitle) {
+                console.log(`🌳 中間ツリーノード作成: ${currentPath} → タイトル: ${intermediateData.defaultPageTitle}`);
+              }
+            }
+            current = current[part].children;
+          }
+        }
+      });
+
+      return tree;
+    };
+
+    const tree = buildTree();
+
+    console.log(`✅ サイト構造解析完了`);
+    
+    return {
+      success: true,
+      totalUrls: urlList.length,
+      structure: tree,
+      pathCounts: pathCounts
+    };
+
+  } catch (e) {
+    console.error('❌ サイト構造解析エラー:', e);
+    return createErrorResponse(e, 'analyzeSiteStructure');
   }
 }

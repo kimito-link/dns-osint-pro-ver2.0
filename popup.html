@@ -5,14 +5,23 @@
   <title>君斗りんくのWEBサイト健康診断</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body {
+    html, body {
       width: 800px !important;
       height: 600px !important;
       max-width: 800px !important;
       max-height: 600px !important;
-      overflow: hidden !important;
+      overflow-x: hidden !important;
+      overflow-y: hidden !important;
       margin: 0 !important;
       padding: 0 !important;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    img, video, iframe, table {
+      max-width: 100% !important;
     }
     
     /* Hover効果用クラス (CSP対応) */
@@ -93,6 +102,11 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <!-- ロゴスプラッシュ演出 -->
+  <div id="logoSplash" class="logo-splash">
+    <img src="images/logo/logo_kimitolink_RGB_ginga_color.jpg" alt="Kimitolink Logo" class="splash-logo" />
+  </div>
+  
   <header>
     <div class="header-content">
       <img src="images/link.png" alt="君斗りんく" class="header-logo" />
@@ -105,11 +119,31 @@
       <input id="domain" placeholder="ドメイン名を入力" />
       <button id="go">検索</button>
     </div>
+    
+    <!-- サイトタイトル表示エリア -->
+    <div id="siteTitleDisplay" style="display: none; padding: 15px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-bottom: 2px solid #5a67d8;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <img src="images/yukkuri-link-kuchiake.png" alt="りんく" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid #fff; flex-shrink: 0;">
+        <div style="flex: 1; line-height: 1.5;">
+          <div style="color: rgba(255,255,255,0.95); font-size: 0.95em; font-weight: 500; margin-bottom: 4px;">このサイトのタイトルは</div>
+          <div id="siteTitleText" style="color: #333; font-weight: bold; font-size: 1.2em; background: #fff; padding: 6px 12px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+          <div style="color: rgba(255,255,255,0.95); font-size: 0.9em; font-weight: 500; margin-top: 4px;">だよ！</div>
+        </div>
+      </div>
+    </div>
   </header>
 
+  <!-- タブナビゲーション -->
+  <nav class="tab-navigation">
+    <button class="tab-button active" data-tab="diagnosisTab">🔍 診断結果</button>
+    <button class="tab-button" data-tab="seoTab">📊 SEO情報</button>
+  </nav>
+
   <main>
-    <!-- 特別なセクション（1列表示） -->
-    <div id="specialSections"></div>
+    <!-- 診断結果タブ -->
+    <div id="diagnosisTab" class="tab-content active">
+      <!-- 特別なセクション（1列表示） -->
+      <div id="specialSections"></div>
     
     <!-- Googleインデックス状況チェックボタン（SEO関連） -->
     <div id="googleIndexSection" style="margin: 15px 0; display: none;">
@@ -135,20 +169,101 @@
       <div id="googleIndexResult" style="margin-top: 15px;"></div>
     </div>
     
-    <!-- 通常のDNS情報テーブル（2列表示） -->
-    <table id="resultTable">
-      <thead>
-        <tr>
-          <th>タイプ</th>
-          <th>値</th>
-        </tr>
-      </thead>
-      <tbody id="resultBody">
-        <tr>
-          <td colspan="2" class="loading">ドメインを入力して検索してください</td>
-        </tr>
-      </tbody>
-    </table>
+      <!-- 通常のDNS情報テーブル（2列表示） -->
+      <table id="resultTable">
+        <thead>
+          <tr>
+            <th>タイプ</th>
+            <th>値</th>
+          </tr>
+        </thead>
+        <tbody id="resultBody">
+          <tr>
+            <td colspan="2" class="loading">ドメインを入力して検索してください</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SEO情報タブ -->
+    <div id="seoTab" class="tab-content">
+      <!-- ローディングアニメーション -->
+      <div id="seoLoadingAnimation" style="display: none; position: relative; z-index: 10;">
+        <div style="text-align: center; padding: 40px 20px;">
+          <div class="rinku-loader">
+            <div class="rinku-character">
+              <img src="images/link.png" alt="りんく" class="rinku-img">
+            </div>
+            <div class="loading-dots">
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+            </div>
+          </div>
+          <p style="margin-top: 30px; font-size: 1.2em; color: #667eea; font-weight: bold;">
+            🗺️ サイトマップを読み込んでいます...
+          </p>
+          <p style="color: #999; font-size: 0.9em; margin-top: 10px;" id="loadingProgress">
+            準備中...
+          </p>
+        </div>
+      </div>
+      
+      <div id="seoMetaInfo" style="display: block; visibility: visible;">
+        <div style="text-align: center; padding: 40px 20px; color: #999;">
+          <p style="font-size: 1.2em;">📊</p>
+          <p>ドメインを検索するとSEO情報が表示されます</p>
+        </div>
+      </div>
+      
+      <!-- デバッグログ表示エリア（SEO情報タブ内に配置） -->
+      <div style="margin: 20px;">
+        <button id="toggleDebugLogBtn" style="
+          width: 100%;
+          padding: 10px;
+          background: #4a5568;
+          color: #fff;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 0.9em;
+          font-weight: bold;
+          margin-bottom: 10px;
+        ">🐛 デバッグログを表示</button>
+        
+        <div id="debugLogSection" style="display: none;">
+          <div style="background: #2d3748; border-radius: 12px; padding: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <h3 style="color: #fff; margin: 0; font-size: 1.1em;">🐛 デバッグログ</h3>
+              <button id="copyLogBtn" style="
+                padding: 8px 16px;
+                background: #4299e1;
+                color: #fff;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 0.9em;
+                font-weight: bold;
+              ">📋 コピー</button>
+            </div>
+          <textarea id="debugLogArea" readonly style="
+            width: 100%;
+            height: 150px;
+            background: #1a202c;
+            color: #48bb78;
+            border: 1px solid #4a5568;
+            border-radius: 6px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            resize: vertical;
+            box-sizing: border-box;
+          "></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 
   <script src="utils.js"></script>

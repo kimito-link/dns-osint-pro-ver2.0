@@ -338,6 +338,463 @@ window.OsintUIComponents = {
         </a>
       </div>
     `;
+  },
+
+  /**
+   * SEOメタ情報表示セクション生成
+   * @param {Object} seoData - SEO情報オブジェクト
+   * @returns {string} HTML文字列
+   */
+  createSeoMetaSection(seoData) {
+    if (!seoData || !seoData.success) {
+      return '';
+    }
+
+    const data = seoData.data;
+    const issues = [];
+
+    // SEO問題のチェック
+    if (data.title.length === 0) {
+      issues.push({ type: 'error', text: 'Titleタグがありません' });
+    } else if (data.title.length < 30) {
+      issues.push({ type: 'warning', text: 'Titleが短すぎます（30文字以上推奨）' });
+    } else if (data.title.length > 60) {
+      issues.push({ type: 'warning', text: 'Titleが長すぎます（60文字以下推奨）' });
+    }
+
+    if (data.description.length === 0) {
+      issues.push({ type: 'error', text: 'Descriptionが設定されていません' });
+    } else if (data.description.length < 80) {
+      issues.push({ type: 'warning', text: 'Descriptionが短すぎます（80-160文字推奨）' });
+    } else if (data.description.length > 160) {
+      issues.push({ type: 'warning', text: 'Descriptionが長すぎます（80-160文字推奨）' });
+    }
+
+    if (data.headings.h1 === 0) {
+      issues.push({ type: 'error', text: 'H1タグがありません' });
+    } else if (data.headings.h1 > 1) {
+      issues.push({ type: 'warning', text: 'H1タグが複数あります（1つが推奨）' });
+    }
+
+    if (!data.canonical.exists) {
+      issues.push({ type: 'info', text: 'Canonical URLが設定されていません' });
+    }
+
+    if (!data.ogp.exists) {
+      issues.push({ type: 'info', text: 'OGP（SNSシェア用）が設定されていません' });
+    }
+
+    if (!data.viewport.exists) {
+      issues.push({ type: 'warning', text: 'Viewportが設定されていません（モバイル対応）' });
+    }
+
+    // 問題の色分け
+    const getIssueColor = (type) => {
+      switch(type) {
+        case 'error': return { bg: '#ffebee', border: '#f44336', icon: '❌' };
+        case 'warning': return { bg: '#fff3e0', border: '#ff9800', icon: '⚠️' };
+        case 'info': return { bg: '#e3f2fd', border: '#2196f3', icon: 'ℹ️' };
+        default: return { bg: '#f5f5f5', border: '#9e9e9e', icon: '•' };
+      }
+    };
+
+    let html = `
+      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.1);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+          <span style="font-size: 2em;">📊</span>
+          <div>
+            <h3 style="margin: 0; color: #fff; font-size: 1.4em;">SEO メタ情報</h3>
+            <p style="margin: 5px 0 0 0; color: rgba(255,255,255,0.9); font-size: 0.9em;">ページのSEO状態を診断</p>
+          </div>
+        </div>
+    `;
+
+    // 問題がある場合は警告表示
+    if (issues.length > 0) {
+      html += `<div style="background: rgba(255,255,255,0.95); padding: 15px; border-radius: 8px; margin-bottom: 15px;">`;
+      html += `<strong style="color: #d32f2f; font-size: 1.1em;">🚨 検出された問題 (${issues.length}件)</strong><br><br>`;
+      
+      issues.forEach(issue => {
+        const color = getIssueColor(issue.type);
+        html += `
+          <div style="padding: 8px 12px; margin: 8px 0; background: ${color.bg}; border-left: 3px solid ${color.border}; border-radius: 4px;">
+            <span style="font-size: 0.9em;">${color.icon} ${issue.text}</span>
+          </div>
+        `;
+      });
+      html += `</div>`;
+    } else {
+      html += `
+        <div style="background: rgba(255,255,255,0.95); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+          <strong style="color: #4caf50; font-size: 1.1em;">✅ SEOの基本設定は良好です！</strong>
+        </div>
+      `;
+    }
+
+    // メタ情報の詳細表示
+    html += `
+      <div style="background: rgba(255,255,255,0.98); padding: 18px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+        <div style="display: grid; gap: 12px;">
+    `;
+
+    // Title
+    const titleColor = data.title.length === 0 ? '#f44336' : (data.title.length >= 30 && data.title.length <= 60) ? '#4caf50' : '#ff9800';
+    html += `
+      <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid ${titleColor};">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <strong style="color: #333; font-size: 1.1em;">📝 Title</strong>
+          <span style="background: ${titleColor}; color: #fff; padding: 4px 12px; border-radius: 12px; font-size: 0.9em; font-weight: bold;">${data.title.length}文字</span>
+        </div>
+        <div style="color: #333; font-size: 1.05em; line-height: 1.6; word-break: break-word; font-weight: 500;">${data.title.text || '<span style="color: #999;">未設定</span>'}</div>
+      </div>
+    `;
+
+    // Description
+    const descColor = data.description.length === 0 ? '#f44336' : (data.description.length >= 80 && data.description.length <= 160) ? '#4caf50' : '#ff9800';
+    html += `
+      <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid ${descColor};">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <strong style="color: #333; font-size: 1.1em;">📄 Description</strong>
+          <span style="background: ${descColor}; color: #fff; padding: 4px 12px; border-radius: 12px; font-size: 0.9em; font-weight: bold;">${data.description.length}文字</span>
+        </div>
+        <div style="color: #333; font-size: 1.05em; line-height: 1.6; word-break: break-word;">${data.description.text || '<span style="color: #999;">未設定</span>'}</div>
+      </div>
+    `;
+
+    // 見出しタグ
+    const h1Color = data.headings.h1 === 1 ? '#4caf50' : (data.headings.h1 === 0 ? '#f44336' : '#ff9800');
+    html += `
+      <div style="padding: 12px; background: #f8f9fa; border-radius: 8px;">
+        <strong style="color: #333; margin-bottom: 8px; display: block;">🏷️ 見出しタグ構造</strong>
+        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 8px;">
+          <div style="text-align: center; padding: 8px; background: ${h1Color}; color: #fff; border-radius: 6px;">
+            <div style="font-size: 0.8em;">H1</div>
+            <div style="font-size: 1.3em; font-weight: bold;">${data.headings.h1}</div>
+          </div>
+          <div style="text-align: center; padding: 8px; background: #90caf9; color: #fff; border-radius: 6px;">
+            <div style="font-size: 0.8em;">H2</div>
+            <div style="font-size: 1.3em; font-weight: bold;">${data.headings.h2}</div>
+          </div>
+          <div style="text-align: center; padding: 8px; background: #64b5f6; color: #fff; border-radius: 6px;">
+            <div style="font-size: 0.8em;">H3</div>
+            <div style="font-size: 1.3em; font-weight: bold;">${data.headings.h3}</div>
+          </div>
+          <div style="text-align: center; padding: 8px; background: #42a5f5; color: #fff; border-radius: 6px;">
+            <div style="font-size: 0.8em;">H4</div>
+            <div style="font-size: 1.3em; font-weight: bold;">${data.headings.h4}</div>
+          </div>
+          <div style="text-align: center; padding: 8px; background: #2196f3; color: #fff; border-radius: 6px;">
+            <div style="font-size: 0.8em;">H5</div>
+            <div style="font-size: 1.3em; font-weight: bold;">${data.headings.h5}</div>
+          </div>
+          <div style="text-align: center; padding: 8px; background: #1976d2; color: #fff; border-radius: 6px;">
+            <div style="font-size: 0.8em;">H6</div>
+            <div style="font-size: 1.3em; font-weight: bold;">${data.headings.h6}</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // その他の情報
+    html += `
+      <div style="padding: 12px; background: #f8f9fa; border-radius: 8px;">
+        <strong style="color: #333; margin-bottom: 8px; display: block;">🔍 その他のSEO要素</strong>
+        <div style="display: grid; gap: 6px; font-size: 0.9em;">
+          <div style="display: flex; justify-content: space-between;">
+            <span>🔗 Canonical URL</span>
+            <span style="color: ${data.canonical.exists ? '#4caf50' : '#999'};">${data.canonical.exists ? '✓ あり' : '✗ なし'}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>🤖 Robots</span>
+            <span style="color: ${data.robots.exists ? '#4caf50' : '#999'};">${data.robots.exists ? data.robots.text : '✗ なし'}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>🌐 Lang</span>
+            <span style="color: ${data.lang.exists ? '#4caf50' : '#999'};">${data.lang.exists ? data.lang.code : '✗ なし'}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>📱 Viewport</span>
+            <span style="color: ${data.viewport.exists ? '#4caf50' : '#f44336'};">${data.viewport.exists ? '✓ あり' : '✗ なし'}</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // 画像・リンク統計
+    html += `
+      <div style="padding: 12px; background: #f8f9fa; border-radius: 8px;">
+        <strong style="color: #333; margin-bottom: 8px; display: block;">📊 コンテンツ統計</strong>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px;">
+          <div style="text-align: center; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border-radius: 8px;">
+            <div style="font-size: 0.85em; opacity: 0.9;">画像</div>
+            <div style="font-size: 1.5em; font-weight: bold;">${data.images.total}</div>
+          </div>
+          <div style="text-align: center; padding: 10px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: #fff; border-radius: 8px;">
+            <div style="font-size: 0.85em; opacity: 0.9;">内部リンク</div>
+            <div style="font-size: 1.5em; font-weight: bold;">${data.links.internal}</div>
+          </div>
+          <div style="text-align: center; padding: 10px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #fff; border-radius: 8px;">
+            <div style="font-size: 0.85em; opacity: 0.9;">外部リンク</div>
+            <div style="font-size: 1.5em; font-weight: bold;">${data.links.external}</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // OGP・Twitter Card
+    if (data.ogp.exists || data.twitter.exists) {
+      html += `
+        <div style="padding: 12px; background: #f8f9fa; border-radius: 8px;">
+          <strong style="color: #333; margin-bottom: 8px; display: block;">🌐 SNSシェア設定</strong>
+          <div style="display: grid; gap: 6px; font-size: 0.9em; margin-top: 8px;">
+      `;
+      
+      if (data.ogp.exists) {
+        html += `
+          <div style="padding: 8px; background: #e8f5e9; border-left: 3px solid #4caf50; border-radius: 4px;">
+            ✓ OGP（Facebook等）設定済み
+          </div>
+        `;
+      }
+      
+      if (data.twitter.exists) {
+        html += `
+          <div style="padding: 8px; background: #e1f5fe; border-left: 3px solid #03a9f4; border-radius: 4px;">
+            ✓ Twitter Card設定済み
+          </div>
+        `;
+      }
+      
+      html += `
+          </div>
+        </div>
+      `;
+    }
+
+    html += `
+        </div>
+      </div>
+    </div>
+    `;
+
+    return html;
+  },
+
+  /**
+   * サイトカテゴリ構造表示（マインドマップ風）
+   * @param {Object} structureData - サイト構造データ
+   * @returns {string} HTML文字列
+   */
+  createSiteStructureSection(structureData) {
+    if (!structureData || !structureData.success) {
+      return '';
+    }
+
+    const { structure, totalUrls } = structureData;
+
+    // ツリーノードを再帰的にレンダリング（折りたたみ可能）
+    const renderTree = (node, depth = 0, isLast = false, nodeId = '') => {
+      const indent = depth * 25;
+      const hasChildren = Object.keys(node.children || {}).length > 0;
+      const hasPages = node.pages && node.pages.length > 0;
+      
+      // index.htmlだけのカテゴリは、ページとして表示（カテゴリとして扱わない）
+      // 条件: 子カテゴリなし AND (ページなし OR ページが1個だけでdefaultPageTitleと同じ)
+      const isIndexOnlyCategory = !hasChildren && node.defaultPageTitle && 
+        (!hasPages || (node.pages && node.pages.length === 1 && node.pages[0].title === node.defaultPageTitle));
+      
+      if (isIndexOnlyCategory) {
+        console.log('✅ index.htmlのみのカテゴリをページとして表示:', node.path, node.defaultPageTitle);
+      }
+      
+      console.log(`🔍 判定: ${node.path} - hasChildren: ${hasChildren}, hasPages: ${hasPages}, defaultPageTitle: ${node.defaultPageTitle}, isIndexOnly: ${isIndexOnlyCategory}`);
+      
+      // 色を階層ごとに変える
+      const colors = [
+        '#667eea', // 紫
+        '#f093fb', // ピンク
+        '#4facfe', // 青
+        '#43e97b', // 緑
+        '#fa709a', // 赤
+        '#feca57'  // 黄
+      ];
+      const color = colors[depth % colors.length];
+      
+      // ユニークIDを生成
+      const uniqueId = nodeId || 'node-' + Math.random().toString(36).substr(2, 9);
+      
+      // index.htmlだけのカテゴリは単独ページとして表示
+      if (isIndexOnlyCategory) {
+        return `
+          <div style="
+            margin-left: ${indent}px;
+            margin-bottom: 6px;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.7);
+            border-left: 3px solid ${color}80;
+            border-radius: 6px;
+            transition: all 0.2s;
+          " class="page-item">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+              <span style="font-size: 1em;">📄</span>
+              <a href="${node.defaultPageUrl}" target="_blank" style="color: #333; text-decoration: none; flex: 1; font-size: 0.95em; font-weight: 500; word-break: break-word;" class="page-link">
+                ${node.defaultPageTitle}
+              </a>
+            </div>
+            <div style="color: #999; font-size: 0.7em; margin-left: 26px; word-break: break-all; max-width: 100%;">
+              ${node.defaultPageUrl}
+            </div>
+          </div>
+        `;
+      }
+      
+      let html = `
+        <div class="tree-node" style="margin-left: ${indent}px; margin-bottom: 6px;" data-node-id="${uniqueId}">
+          <div style="
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: linear-gradient(135deg, ${color}25 0%, ${color}12 100%);
+            border-left: 4px solid ${color};
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            user-select: none;
+          " class="category-header" data-toggle-id="${uniqueId}" data-color="${color}">
+            ${hasChildren || hasPages ? 
+              '<span class="toggle-icon" style="font-size: 0.9em; transition: transform 0.3s;">▶</span>' : 
+              '<span style="width: 14px; display: inline-block;"></span>'}
+            ${hasChildren ? '<span style="font-size: 1.1em;">📁</span>' : '<span style="font-size: 1.1em;">📄</span>'}
+            <div style="flex: 1; overflow: hidden;">
+              <strong style="color: #333; font-size: 0.95em; word-break: break-all;">${node.path}</strong>
+              ${node.defaultPageTitle ? `<div style="color: #666; font-size: 0.8em; margin-top: 2px; word-break: break-word;">${node.defaultPageTitle}</div>` : ''}
+            </div>
+            <div style="
+              background: ${color};
+              color: #fff;
+              padding: 3px 10px;
+              border-radius: 10px;
+              font-size: 0.75em;
+              font-weight: bold;
+            ">
+              ${node.count || 0}
+            </div>
+          </div>
+      `;
+
+      // 折りたたみ可能なコンテナ
+      html += `<div class="tree-content" style="display: none; margin-top: 6px;">`;
+
+      // 個別ページを表示（ただしindex.htmlだけのページは除外）
+      if (hasPages && !isIndexOnlyCategory) {
+        node.pages.forEach((page, index) => {
+          const pageTitle = page.title || 'Untitled';
+          const pageUrl = page.url || page;
+          html += `
+            <div style="
+              margin-left: ${indent + 35}px;
+              margin-bottom: 6px;
+              padding: 10px 12px;
+              background: rgba(255,255,255,0.7);
+              border-left: 3px solid ${color}80;
+              border-radius: 6px;
+              transition: all 0.2s;
+            " class="page-item">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <span style="font-size: 1em;">📄</span>
+                <a href="${pageUrl}" target="_blank" style="color: #333; text-decoration: none; flex: 1; font-size: 0.95em; font-weight: 500;" class="page-link">
+                  ${pageTitle}
+                </a>
+              </div>
+              <div style="color: #999; font-size: 0.7em; margin-left: 26px; word-break: break-all; max-width: 100%;">
+                ${pageUrl}
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      // 子カテゴリを再帰的にレンダリング
+      if (hasChildren) {
+        const childKeys = Object.keys(node.children);
+        childKeys.forEach((key, index) => {
+          const child = node.children[key];
+          const childId = `${uniqueId}-${index}`;
+          html += renderTree(child, depth + 1, index === childKeys.length - 1, childId);
+        });
+      }
+
+      html += '</div>'; // tree-content終了
+      html += '</div>'; // tree-node終了
+      return html;
+    };
+
+    let html = `
+      <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); overflow-x: hidden; max-width: 100%;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+          <span style="font-size: 2em;">🗺️</span>
+          <div style="overflow: hidden;">
+            <h3 style="margin: 0; color: #fff; font-size: 1.4em;">サイトカテゴリ構造</h3>
+            <p style="margin: 5px 0 0 0; color: rgba(255,255,255,0.9); font-size: 0.9em;">
+              全 ${totalUrls}ページの階層構造
+            </p>
+          </div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.98); padding: 18px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow-x: hidden;">
+          <div class="site-structure-tree" style="max-width: 100%; overflow-x: hidden;">
+    `;
+
+    // ルートからツリーを展開
+    if (structure['/']) {
+      html += renderTree(structure['/'], 0);
+    }
+
+    html += `
+          </div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.95); padding: 12px; border-radius: 8px; margin-top: 15px;">
+          <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <button id="expandAllBtn" style="
+              flex: 1;
+              padding: 8px 16px;
+              background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+              color: #fff;
+              border: none;
+              border-radius: 6px;
+              font-size: 0.85em;
+              font-weight: bold;
+              cursor: pointer;
+              transition: transform 0.2s;
+            ">
+              ⬇ 全て展開
+            </button>
+            <button id="collapseAllBtn" style="
+              flex: 1;
+              padding: 8px 16px;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: #fff;
+              border: none;
+              border-radius: 6px;
+              font-size: 0.85em;
+              font-weight: bold;
+              cursor: pointer;
+              transition: transform 0.2s;
+            ">
+              ⬆ 全て折りたたむ
+            </button>
+          </div>
+          <div style="color: #666; font-size: 0.85em; line-height: 1.6;">
+            💡 <strong>ヒント:</strong> カテゴリをクリックして展開/折りたたみできます。<br>
+            各ページのタイトルとURLも表示されます。
+          </div>
+        </div>
+      </div>
+    `;
+
+    return html;
   }
 };
 

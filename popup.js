@@ -63,7 +63,7 @@ setTimeout(() => {
 }, 2500);
 
 // デバッグモード設定 (background.jsと同じ)
-const DEBUG_MODE = false;
+const DEBUG_MODE = true; // デバッグログ表示ON
 
 // 外部モジュールの読み込み
 const U = window.OsintUtils;
@@ -117,8 +117,304 @@ const els = {
   domain: document.getElementById("domain"),
   go: document.getElementById("go"),
   specialSections: document.getElementById("specialSections"),
-  resultBody: document.getElementById("resultBody")
+  resultBody: document.getElementById("resultBody"),
+  seoMetaInfo: document.getElementById("seoMetaInfo"),
+  debugLogArea: document.getElementById("debugLogArea"),
+  debugLogSection: document.getElementById("debugLogSection"),
+  copyLogBtn: document.getElementById("copyLogBtn"),
+  seoLoadingAnimation: document.getElementById("seoLoadingAnimation"),
+  loadingProgress: document.getElementById("loadingProgress")
 };
+
+// ========================================
+// デバッグログ収集システム
+// ========================================
+const debugLogs = [];
+
+// ログ追加ヘルパー関数
+function addToDebugLog(level, args) {
+  if (DEBUG_MODE) {
+    const timestamp = new Date().toLocaleTimeString('ja-JP');
+    const prefix = {
+      'log': '📝',
+      'warn': '⚠️',
+      'error': '❌',
+      'info': 'ℹ️'
+    }[level] || '📝';
+    
+    const message = args.map(arg => 
+      typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+    ).join(' ');
+    
+    debugLogs.push(`[${timestamp}] ${prefix} ${message}`);
+    
+    // デバッグエリアに表示
+    if (els.debugLogArea) {
+      els.debugLogArea.value = debugLogs.join('\n');
+      // 自動スクロール
+      els.debugLogArea.scrollTop = els.debugLogArea.scrollHeight;
+    }
+  }
+}
+
+// console.logをオーバーライド
+const originalConsoleLog = console.log;
+console.log = function(...args) {
+  originalConsoleLog.apply(console, args);
+  addToDebugLog('log', args);
+};
+
+// console.warnをオーバーライド
+const originalConsoleWarn = console.warn;
+console.warn = function(...args) {
+  originalConsoleWarn.apply(console, args);
+  addToDebugLog('warn', args);
+};
+
+// console.errorをオーバーライド
+const originalConsoleError = console.error;
+console.error = function(...args) {
+  originalConsoleError.apply(console, args);
+  addToDebugLog('error', args);
+};
+
+// console.infoをオーバーライド
+const originalConsoleInfo = console.info;
+console.info = function(...args) {
+  originalConsoleInfo.apply(console, args);
+  addToDebugLog('info', args);
+};
+
+// デバッグログセクションは初期状態では非表示（必要に応じて表示）
+// トグルボタンのイベントリスナー（CSP準拠）
+window.addEventListener('load', () => {
+  const toggleDebugLogBtn = document.getElementById('toggleDebugLogBtn');
+  const debugLogSection = document.getElementById('debugLogSection');
+  
+  if (toggleDebugLogBtn && debugLogSection) {
+    toggleDebugLogBtn.addEventListener('click', () => {
+      const isVisible = debugLogSection.style.display === 'block';
+      if (isVisible) {
+        debugLogSection.style.display = 'none';
+        toggleDebugLogBtn.textContent = '🐛 デバッグログを表示';
+        toggleDebugLogBtn.style.background = '#4a5568';
+      } else {
+        debugLogSection.style.display = 'block';
+        toggleDebugLogBtn.textContent = '✖️ デバッグログを非表示';
+        toggleDebugLogBtn.style.background = '#718096';
+      }
+    });
+  }
+});
+
+// コピーボタンのイベントリスナー
+if (els.copyLogBtn) {
+  els.copyLogBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(els.debugLogArea.value);
+      els.copyLogBtn.textContent = '✅ コピー完了';
+      els.copyLogBtn.style.background = '#48bb78';
+      setTimeout(() => {
+        els.copyLogBtn.textContent = '📋 コピー';
+        els.copyLogBtn.style.background = '#4299e1';
+      }, 2000);
+    } catch (err) {
+      console.error('コピー失敗:', err);
+      els.copyLogBtn.textContent = '❌ 失敗';
+    }
+  });
+}
+
+// タブ切り替え処理
+document.addEventListener('DOMContentLoaded', () => {
+  const tabButtons = document.querySelectorAll('.tab-button');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  tabButtons.forEach(button => {
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const targetTab = button.getAttribute('data-tab');
+      console.log(`🔄 タブクリック: ${targetTab}`);
+
+      // すべてのタブボタンとコンテンツから active を削除
+      tabButtons.forEach(btn => {
+        btn.classList.remove('active');
+        console.log(`📝 activeを削除: ${btn.getAttribute('data-tab')}`);
+      });
+      
+      tabContents.forEach(content => {
+        content.classList.remove('active');
+        console.log(`📝 コンテンツのactiveを削除: ${content.id}`);
+      });
+
+      // クリックされたタブをアクティブに
+      button.classList.add('active');
+      console.log(`📝 ボタンにactiveを追加: ${targetTab}`);
+      
+      // 対応するコンテンツを表示
+      const targetElement = document.getElementById(targetTab);
+      if (targetElement) {
+        targetElement.classList.add('active');
+        console.log(`✅ タブ切り替え成功: ${targetTab}`);
+        console.log(`📝 クラスリスト:`, targetElement.classList.toString());
+        console.log(`📝 表示状態:`, window.getComputedStyle(targetElement).display);
+      } else {
+        console.error(`❌ タブが見つかりません: ${targetTab}`);
+      }
+    });
+  });
+});
+
+// ========================================
+// ツリー構造の開閉処理（グローバル関数）
+// ========================================
+
+/**
+ * カテゴリの開閉トグル
+ * @param {string} nodeId - ノードID
+ */
+window.toggleCategory = function(nodeId) {
+  const node = document.querySelector(`[data-node-id="${nodeId}"]`);
+  if (!node) return;
+  
+  const content = node.querySelector('.tree-content');
+  const toggleIcon = node.querySelector('.toggle-icon');
+  
+  if (!content) return;
+  
+  if (content.style.display === 'none') {
+    // 展開
+    content.style.display = 'block';
+    if (toggleIcon) {
+      toggleIcon.style.transform = 'rotate(90deg)';
+      toggleIcon.textContent = '▼';
+    }
+  } else {
+    // 折りたたむ
+    content.style.display = 'none';
+    if (toggleIcon) {
+      toggleIcon.style.transform = 'rotate(0deg)';
+      toggleIcon.textContent = '▶';
+    }
+  }
+};
+
+/**
+ * 全てのカテゴリを展開
+ */
+window.expandAll = function() {
+  const allContents = document.querySelectorAll('.tree-content');
+  const allIcons = document.querySelectorAll('.toggle-icon');
+  
+  allContents.forEach(content => {
+    content.style.display = 'block';
+  });
+  
+  allIcons.forEach(icon => {
+    icon.style.transform = 'rotate(90deg)';
+    icon.textContent = '▼';
+  });
+};
+
+/**
+ * 全てのカテゴリを折りたたむ
+ */
+window.collapseAll = function() {
+  const allContents = document.querySelectorAll('.tree-content');
+  const allIcons = document.querySelectorAll('.toggle-icon');
+  
+  allContents.forEach(content => {
+    content.style.display = 'none';
+  });
+  
+  allIcons.forEach(icon => {
+    icon.style.transform = 'rotate(0deg)';
+    icon.textContent = '▶';
+  });
+};
+
+/**
+ * ツリー構造のイベントリスナーを設定
+ */
+function setupTreeEventListeners() {
+  console.log('🔧 ツリーイベントリスナーを設定中...');
+  
+  // カテゴリヘッダーのクリックイベント
+  const categoryHeaders = document.querySelectorAll('.category-header');
+  categoryHeaders.forEach(header => {
+    header.addEventListener('click', function() {
+      const nodeId = this.getAttribute('data-toggle-id');
+      if (nodeId) {
+        window.toggleCategory(nodeId);
+      }
+    });
+    
+    // ホバー効果
+    header.addEventListener('mouseenter', function() {
+      const color = this.getAttribute('data-color');
+      this.style.background = `linear-gradient(135deg, ${color}35 0%, ${color}20 100%)`;
+    });
+    
+    header.addEventListener('mouseleave', function() {
+      const color = this.getAttribute('data-color');
+      this.style.background = `linear-gradient(135deg, ${color}25 0%, ${color}12 100%)`;
+    });
+  });
+  
+  // ページアイテムのホバー効果
+  const pageItems = document.querySelectorAll('.page-item');
+  pageItems.forEach(item => {
+    item.addEventListener('mouseenter', function() {
+      this.style.background = 'rgba(255,255,255,0.95)';
+      this.style.borderLeftWidth = '4px';
+    });
+    
+    item.addEventListener('mouseleave', function() {
+      this.style.background = 'rgba(255,255,255,0.7)';
+      this.style.borderLeftWidth = '3px';
+    });
+  });
+  
+  // ページリンクのホバー効果
+  const pageLinks = document.querySelectorAll('.page-link');
+  pageLinks.forEach(link => {
+    link.addEventListener('mouseenter', function() {
+      this.style.textDecoration = 'underline';
+    });
+    
+    link.addEventListener('mouseleave', function() {
+      this.style.textDecoration = 'none';
+    });
+  });
+  
+  // 全て展開ボタン
+  const expandAllBtn = document.getElementById('expandAllBtn');
+  if (expandAllBtn) {
+    expandAllBtn.addEventListener('click', window.expandAll);
+    expandAllBtn.addEventListener('mouseenter', function() {
+      this.style.transform = 'scale(1.05)';
+    });
+    expandAllBtn.addEventListener('mouseleave', function() {
+      this.style.transform = 'scale(1)';
+    });
+  }
+  
+  // 全て折りたたむボタン
+  const collapseAllBtn = document.getElementById('collapseAllBtn');
+  if (collapseAllBtn) {
+    collapseAllBtn.addEventListener('click', window.collapseAll);
+    collapseAllBtn.addEventListener('mouseenter', function() {
+      this.style.transform = 'scale(1.05)';
+    });
+    collapseAllBtn.addEventListener('mouseleave', function() {
+      this.style.transform = 'scale(1)';
+    });
+  }
+  
+  console.log(`✅ イベントリスナー設定完了: ${categoryHeaders.length}個のカテゴリ`);
+}
 
 async function getActiveTabUrl() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -1774,6 +2070,196 @@ async function fetchAll(domain) {
 
   // 👀 ブラウザがローディングを描画する時間を与える（重要！）
   await new Promise(resolve => setTimeout(resolve, 100));
+
+  // ========================================
+  // 📊 SEOメタ情報取得
+  // ========================================
+  console.log('=== SEOメタ情報取得開始 ===');
+  
+  let seoHtmlContent = '';
+  
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab && tab.id) {
+      const seoResult = await chrome.runtime.sendMessage({
+        type: 'getSeoMetaInfo',
+        tabId: tab.id
+      });
+      
+      console.log('SEOメタ情報取得結果:', seoResult);
+      
+      if (seoResult && seoResult.success) {
+        seoHtmlContent = UI.createSeoMetaSection(seoResult);
+        console.log('✅ SEO情報を生成しました');
+        
+        // サイトタイトル表示エリアを更新
+        const siteTitleDisplay = document.getElementById('siteTitleDisplay');
+        const siteTitleText = document.getElementById('siteTitleText');
+        
+        if (siteTitleDisplay && siteTitleText) {
+          const title = seoResult.data.title?.text || domain;
+          
+          // タイトルのみを更新（「だよ！」は既にHTMLに含まれている）
+          siteTitleText.textContent = title;
+          siteTitleDisplay.style.display = 'block';
+          
+          console.log('✅ サイトタイトル表示エリアを更新しました:', title);
+        }
+      } else {
+        // エラー時の表示
+        seoHtmlContent = `
+          <div style="text-align: center; padding: 40px 20px; color: #999;">
+            <p style="font-size: 1.2em;">⚠️</p>
+            <p>SEO情報の取得に失敗しました</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">ページを再読み込みしてから再度お試しください</p>
+          </div>
+        `;
+      }
+    }
+  } catch (e) {
+    console.log('SEOメタ情報取得エラー:', e);
+    seoHtmlContent = `
+      <div style="text-align: center; padding: 40px 20px; color: #999;">
+        <p style="font-size: 1.2em;">⚠️</p>
+        <p>SEO情報の取得に失敗しました</p>
+        <p style="font-size: 0.9em; margin-top: 10px; color: #666;">${e.message}</p>
+      </div>
+    `;
+  }
+
+  // SEOタブに初期コンテンツを表示（サイトマップ読み込み前）
+  if (els.seoMetaInfo) {
+    els.seoMetaInfo.innerHTML = seoHtmlContent;
+    console.log('✅ SEO基本情報をSEOタブに表示しました');
+  }
+
+  // ========================================
+  // 🗺️ サイトカテゴリ構造解析（非同期・UIブロックなし）
+  // ========================================
+  console.log('=== サイトカテゴリ構造解析開始（非同期） ===');
+  
+  // 非同期でサイトマップを読み込む（UIをブロックしない）
+  (async () => {
+    // ローディングアニメーション表示
+    if (els.seoLoadingAnimation) {
+      els.seoLoadingAnimation.style.display = 'block';
+    }
+    
+    if (els.loadingProgress) {
+      els.loadingProgress.innerHTML = '🚀 サイトマップを読み込んでいます...<br><span style="font-size: 0.85em; color: #999;">ページ数が多い場合は時間がかかることがあります</span>';
+    }
+    
+    try {
+      // 進捗表示更新
+      let progressCount = 0;
+      const progressInterval = setInterval(() => {
+        progressCount++;
+        if (els.loadingProgress) {
+          const dots = '.'.repeat((progressCount % 3) + 1);
+          els.loadingProgress.textContent = `サイトマップを検索中${dots}`;
+        }
+      }, 500);
+      
+      // タイムアウト処理（30秒）
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          clearInterval(progressInterval);
+          reject(new Error('タイムアウト: サイトマップの読み込みに時間がかかりすぎています'));
+        }, 30000);
+      });
+      
+      const messagePromise = chrome.runtime.sendMessage({
+        type: 'analyzeSiteStructure',
+        domain: domain
+      });
+      
+      const structureResult = await Promise.race([messagePromise, timeoutPromise]);
+      clearInterval(progressInterval);
+      
+      console.log('サイト構造解析結果:', structureResult);
+      
+      let structureHtml = '';
+      
+      if (structureResult && structureResult.success) {
+        structureHtml = UI.createSiteStructureSection(structureResult);
+        console.log('✅ サイト構造情報を生成しました');
+      } else {
+        console.log('⚠️ サイト構造解析失敗:', structureResult?.error);
+        // サイトマップがない場合は警告を表示
+        structureHtml = `
+          <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 2em;">⚠️</span>
+              <div>
+                <strong style="color: #856404; font-size: 1.1em;">サイトマップが見つかりません</strong>
+                <p style="margin: 5px 0 0 0; color: #856404; font-size: 0.9em;">
+                  サイトマップ（sitemap.xml）を設置すると、カテゴリ構造を可視化できます。
+                </p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      // サイトマップ情報をSEO情報の後に追加
+      if (els.seoMetaInfo) {
+        els.seoMetaInfo.innerHTML += structureHtml;
+        
+        // イベントリスナーを設定
+        setTimeout(() => {
+          setupTreeEventListeners();
+        }, 100);
+      }
+      
+    } catch (e) {
+      console.log('サイト構造解析エラー:', e);
+      
+      let errorHtml = '';
+      
+      // タイムアウトエラーの場合
+      if (e.message.includes('タイムアウト')) {
+        errorHtml = `
+          <div style="background: #fff3e0; border: 2px solid #ff9800; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 2em;">⏱️</span>
+              <div>
+                <strong style="color: #e65100; font-size: 1.1em;">読み込みに時間がかかりすぎています</strong>
+                <p style="margin: 5px 0 0 0; color: #e65100; font-size: 0.9em;">
+                  サイトマップが大きすぎるか、サーバーの応答が遅い可能性があります。
+                </p>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        // その他のエラー
+        errorHtml = `
+          <div style="background: #ffebee; border: 2px solid #f44336; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 2em;">❌</span>
+              <div>
+                <strong style="color: #c62828; font-size: 1.1em;">エラーが発生しました</strong>
+                <p style="margin: 5px 0 0 0; color: #c62828; font-size: 0.9em;">
+                  ${e.message || '不明なエラー'}
+                </p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      if (els.seoMetaInfo) {
+        els.seoMetaInfo.innerHTML += errorHtml;
+      }
+      
+    } finally {
+      // 必ずローディングアニメーション非表示
+      if (els.seoLoadingAnimation) {
+        els.seoLoadingAnimation.style.display = 'none';
+        console.log('🎬 ローディングアニメーション非表示');
+      }
+    }
+  })(); // 即座に実行（非同期）
 
   // ========================================
   // 🌐 wwwあり・nashiの301リダイレクトチェック
@@ -3916,7 +4402,13 @@ async function init() {
     els.domain.value = U.hostnameFromUrl(url) || "";
   }
 
-  const run = () => fetchAll(normalizeDomain(els.domain.value));
+  const run = () => {
+    // UIをブロックしないようにsetTimeoutで非同期実行
+    setTimeout(() => {
+      fetchAll(normalizeDomain(els.domain.value));
+    }, 0);
+  };
+  
   els.go.addEventListener("click", run);
   els.domain.addEventListener("keydown", (e) => { if (e.key === "Enter") run(); });
 

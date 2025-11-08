@@ -6,6 +6,99 @@
   padding: 0;
 }
 
+/* ロゴスプラッシュ演出 */
+.logo-splash {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: splashFadeOut 0.5s ease-out 1.8s forwards;
+  overflow: hidden;
+}
+
+/* 初音ミク風キラキラ粒子 */
+.logo-splash::before,
+.logo-splash::after {
+  content: '';
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  background-image: 
+    radial-gradient(circle, #00ffff 1px, transparent 1px),
+    radial-gradient(circle, #ff00ff 1px, transparent 1px),
+    radial-gradient(circle, #39ff14 1px, transparent 1px);
+  background-size: 50px 50px, 80px 80px, 100px 100px;
+  background-position: 0 0, 40px 60px, 130px 270px;
+  animation: sparkle 4s linear infinite;
+  opacity: 0.6;
+}
+
+.logo-splash::after {
+  animation-duration: 6s;
+  animation-direction: reverse;
+}
+
+@keyframes sparkle {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(-50px, -50px) rotate(360deg); }
+}
+
+.splash-logo {
+  width: 400px;
+  height: auto;
+  object-fit: contain;
+  animation: splashBounce 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards, neonGlow 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 20px #00ffff) drop-shadow(0 0 40px #ff00ff) drop-shadow(0 15px 40px rgba(0, 0, 0, 0.5));
+  border-radius: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes neonGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 20px #00ffff) drop-shadow(0 0 40px #ff00ff) drop-shadow(0 15px 40px rgba(0, 0, 0, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 30px #00ffff) drop-shadow(0 0 60px #ff00ff) drop-shadow(0 0 20px #39ff14) drop-shadow(0 15px 40px rgba(0, 0, 0, 0.5));
+  }
+}
+
+@keyframes splashBounce {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(-180deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2) rotate(10deg);
+  }
+  70% {
+    transform: scale(0.95) rotate(-5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes splashFadeOut {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+    pointer-events: none;
+  }
+}
+
 body {
   width: 800px !important;
   height: 600px !important;
@@ -20,7 +113,7 @@ body {
 /* ヘッダー */
 header {
   padding: 15px 20px;
-  background: #5b3a8f;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
   color: white;
   flex-shrink: 0;
 }
@@ -39,6 +132,81 @@ header {
   object-fit: cover;
   border: 3px solid white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.header-logos-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-logo-funlink {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 5px 10px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+  border: 2px solid rgba(255, 215, 0, 0.7);
+  transition: all 0.3s;
+  animation: slideInFade 0.8s ease-out 0.3s both;
+}
+
+.header-logo-funlink:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
+  border-color: #ffd700;
+}
+
+.header-logo-maru {
+  height: 38px;
+  width: 38px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: white;
+  padding: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  transition: all 0.3s;
+  animation: popIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) both;
+}
+
+.header-logo-maru:nth-child(2) {
+  animation-delay: 0.6s;
+}
+
+.header-logo-maru:nth-child(3) {
+  animation-delay: 0.8s;
+}
+
+.header-logo-maru:hover {
+  transform: scale(1.15) rotate(10deg);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 215, 0, 0.8);
+}
+
+/* ロゴ登場アニメーション */
+@keyframes slideInFade {
+  0% {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(-180deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
 }
 
 .header-text {
@@ -67,27 +235,32 @@ input {
 
 input:focus {
   outline: none;
-  border-color: #5b3a8f;
+  border-color: #2196f3;
 }
 
 button {
   padding: 10px 25px;
   font-size: 14px;
   font-weight: 600;
-  background: #8b5fb8;
+  background: linear-gradient(135deg, #00bcd4 0%, #2196f3 100%);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 button:hover {
-  background: #7a4fa7;
+  background: linear-gradient(135deg, #0097a7 0%, #1976d2 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 
 button:active {
-  background: #693e96;
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 /* メインコンテナ */
@@ -105,7 +278,7 @@ table {
 }
 
 thead {
-  background: #e8e0f0;
+  background: linear-gradient(135deg, #e3f2fd 0%, #fff3e0 100%);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -116,8 +289,9 @@ th {
   text-align: left;
   font-size: 14px;
   font-weight: 600;
-  color: #5b3a8f;
-  border-bottom: 2px solid #5b3a8f;
+  color: #333;
+  border-bottom: 2px solid #333;
+  text-shadow: none;
 }
 
 th:first-child {
@@ -141,8 +315,9 @@ td {
 
 td:first-child {
   font-weight: 600;
-  color: #5b3a8f;
-  background: #fafafa;
+  color: #333;
+  background-color: #fafafa;
+  text-shadow: none;
 }
 
 .loading {
@@ -158,7 +333,15 @@ td:first-child {
   line-height: 1.6;
 }
 
-/* スクロールバー */
+main {
+  padding: 20px;
+  background: #ffffff;
+  max-height: calc(600px - 200px);
+  overflow-y: auto;
+  overflow-x: hidden !important;
+  line-height: 1.6;
+}
+
 main::-webkit-scrollbar {
   width: 8px;
 }
@@ -191,13 +374,176 @@ main::-webkit-scrollbar-thumb:hover {
 .section-title {
   font-size: 16px;
   font-weight: 600;
-  color: #5b3a8f;
+  color: #333;
   margin-bottom: 12px;
   padding-bottom: 8px;
-  border-bottom: 2px solid #e8e0f0;
+  border-bottom: 2px solid #333;
+  text-shadow: none;
 }
 
 .section-content {
   font-size: 13px;
   line-height: 1.6;
+}
+
+/* タブナビゲーション */
+.tab-navigation {
+  display: flex;
+  background: #f5f5f5;
+  border-bottom: 2px solid #e0e0e0;
+  padding: 0;
+  margin: 0;
+  position: relative;
+  z-index: 1000; /* 常に最前面に配置 */
+}
+
+.tab-button {
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #666;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: bold;
+  transition: all 0.3s;
+  position: relative;
+  z-index: 1000; /* 常に最前面に表示 */
+  pointer-events: auto; /* 常にクリック可能 */
+}
+
+.tab-button.active {
+  background: #fff;
+  color: #1976d2;
+  border-bottom-color: #1976d2;
+  z-index: 1001; /* アクティブタブはさらに前面 */
+}
+
+/* タブコンテンツ */
+.tab-content {
+  display: none !important;
+  overflow-x: hidden !important;
+  max-width: 800px;
+  width: 100%;
+}
+
+.tab-content.active {
+  display: block !important;
+  overflow-x: hidden !important;
+  max-width: 800px !important;
+  width: 100% !important;
+  visibility: visible !important;
+}
+
+/* サイト構造ツリーの横スクロール防止 */
+.site-structure-tree,
+.site-structure-tree * {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.tree-node {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.category-header {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.page-item {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* ========================================
+   りんくローディングアニメーション
+   ======================================== */
+
+.rinku-loader {
+  position: relative;
+  width: 350px;
+  height: 120px;
+  margin: 0 auto;
+}
+
+.rinku-character {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+}
+
+.rinku-img {
+  width: 100px;
+  height: 100px;
+  animation: rinku-yukkuri 1.5s ease-in-out infinite;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+}
+
+.loading-dots {
+  position: absolute;
+  top: 50%;
+  left: 120px;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 10px;
+}
+
+.loading-dots > div {
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  animation: dots-move 1.2s infinite ease-in-out;
+}
+
+.loading-dots > div:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.loading-dots > div:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.loading-dots > div:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.loading-dots > div:nth-child(4) {
+  animation-delay: 0.45s;
+}
+
+@keyframes rinku-yukkuri {
+  0%, 100% {
+    transform: translateY(-50%) scale(1) rotate(-2deg);
+  }
+  25% {
+    transform: translateY(-55%) scale(1.02) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-45%) scale(0.98) rotate(2deg);
+  }
+  75% {
+    transform: translateY(-55%) scale(1.02) rotate(0deg);
+  }
+}
+
+@keyframes dots-move {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  50% {
+    transform: translateX(-20px) scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-120px) scale(0.5);
+  }
 }

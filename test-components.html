@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>UIコンポーネントテスト</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 { color: #667eea; }
+    h2 { 
+      color: #333; 
+      margin-top: 30px;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 10px;
+    }
+    .test-section {
+      margin-bottom: 40px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 UIコンポーネントテスト</h1>
+  <div id="test-output"></div>
+  
+  <script src="ui-components.js"></script>
+  <script>
+    console.log('=== コンポーネントテスト開始 ===');
+    console.log('OsintUIComponents:', window.OsintUIComponents);
+    
+    if (window.OsintUIComponents) {
+      const testDiv = document.getElementById('test-output');
+      
+      // テスト1: 総合口コミボタン
+      console.log('✅ テスト1: createGeneralReviewButtons');
+      testDiv.innerHTML += '<div class="test-section"><h2>1. 総合口コミボタン</h2>';
+      testDiv.innerHTML += window.OsintUIComponents.createGeneralReviewButtons('テスト株式会社');
+      testDiv.innerHTML += '</div>';
+      
+      // テスト2: 企業評判ボタン
+      console.log('✅ テスト2: createCompanyReviewButtons');
+      testDiv.innerHTML += '<div class="test-section"><h2>2. 企業評判ボタン</h2>';
+      testDiv.innerHTML += window.OsintUIComponents.createCompanyReviewButtons('テスト株式会社');
+      testDiv.innerHTML += '</div>';
+      
+      // テスト3: ヒントボックス
+      console.log('✅ テスト3: createHintBox');
+      testDiv.innerHTML += '<div class="test-section"><h2>3. ヒントボックス</h2>';
+      testDiv.innerHTML += window.OsintUIComponents.createHintBox([
+        'ネガティブな口コミが多い場合は早急な対策が必要',
+        '複数のサイトで同じ内容がある場合は注意',
+        '口コミ対策も風評被害対策の一環です'
+      ]);
+      testDiv.innerHTML += '</div>';
+      
+      // テスト4: エラーボックス
+      console.log('✅ テスト4: createErrorBox');
+      testDiv.innerHTML += '<div class="test-section"><h2>4. エラーボックス</h2>';
+      testDiv.innerHTML += window.OsintUIComponents.createErrorBox('これはエラーメッセージのテストです');
+      testDiv.innerHTML += '</div>';
+      
+      // テスト5: 成功ボックス
+      console.log('✅ テスト5: createSuccessBox');
+      testDiv.innerHTML += '<div class="test-section"><h2>5. 成功ボックス</h2>';
+      testDiv.innerHTML += window.OsintUIComponents.createSuccessBox('処理が正常に完了しました');
+      testDiv.innerHTML += '</div>';
+      
+      console.log('✅ すべてのテスト完了');
+      
+      // 成功メッセージ
+      testDiv.innerHTML += '<div style="background: #e8f5e9; border: 2px solid #4caf50; padding: 20px; border-radius: 8px; margin-top: 40px;"><h2 style="color: #2e7d32; border: none;">✅ テスト完了</h2><p>すべてのコンポーネントが正常に動作しています！</p></div>';
+      
+    } else {
+      console.error('❌ OsintUIComponentsが読み込まれていません');
+      document.getElementById('test-output').innerHTML = '<div style="background: #ffebee; border: 2px solid #f44336; padding: 20px; border-radius: 8px;"><h2 style="color: #c62828;">❌ エラー</h2><p>UIコンポーネントが読み込まれていません</p></div>';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+{
+  "title": "Chrome DevTools MCP デモンストレーション結果",
+  "timestamp": "2025-11-08T10:06:37.372Z",
+  "totalSearches": 3,
+  "results": [
+    {
+      "keyword": "Chrome DevTools",
+      "titles": [
+        "デベロッパーツール入門：Google ChromeのDeveloper Tools",
+        "Chrome DevTools | Chrome for Developers",
+        "Chrome DevTools について - Zenn",
+        "他の人はこちらも質問",
+        "Chrome DevTools | Chrome for Developers"
+      ],
+      "loadTime": 1168,
+      "memoryUsage": "21.21",
+      "timestamp": "2025-11-08T10:06:06.661Z"
+    },
+    {
+      "keyword": "Puppeteer 自動化",
+      "titles": [
+        "手作業と自動化の合せ技！puppeteerを起動中のブラウザで ...",
+        "Puppeteerの使い方完全マニュアル【スクレイピング・自動化 ...",
+        "Puppeteerを使用してテストを自動化する方法 - クラウドBOT",
+        "puppeteerで始めるブラウザ操作の自動化 | Tech Blog - クレスコ",
+        "ブラウザ操作を自動化！Puppeteerでテストの効率を劇的に ..."
+      ],
+      "loadTime": 881,
+      "memoryUsage": "33.16",
+      "timestamp": "2025-11-08T10:06:21.420Z"
+    },
+    {
+      "keyword": "開発効率化ツール",
+      "titles": [
+        "ソフトウェア開発を促進 | DevOpsでクリーンなコードを | 高品質のコード標準",
+        "【公式】JUST.DB | ノーコード開発の常識を変える | システム部門の課題を解決",
+        "脱エクセルで業務を自動化",
+        "開発ツール、1位の製品は? | 【開発ツール】ランキング",
+        "【開発効率爆上がり】すべてのエンジニアが必ず見るべき16の ..."
+      ],
+      "loadTime": 994,
+      "memoryUsage": "45.38",
+      "timestamp": "2025-11-08T10:06:35.203Z"
+    }
+  ],
+  "summary": {
+    "averageLoadTime": "1014",
+    "totalTitles": 15,
+    "averageMemory": "33.25"
+  }
+}

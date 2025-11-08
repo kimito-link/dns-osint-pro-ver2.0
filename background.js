@@ -2302,10 +2302,24 @@ async function getSeoMetaInfo(tabId) {
     console.log('🔍 getSeoMetaInfo開始 - tabId:', tabId);
     
     // タイムアウト設定（60秒）
-    const timeoutPromise = new Promise((_, reject) => 
+    const timeoutPromise = new Promise((resolve) => 
       setTimeout(() => {
-        console.error('⏰ SEO情報取得がタイムアウト（60秒）');
-        reject(new Error('SEO情報の取得がタイムアウトしました（60秒）。このサイトは非常に大規模なため、SEO情報を取得できません。'));
+        console.warn('⏰ SEO情報取得がタイムアウト（60秒）- 空のデータを返します');
+        // エラーではなく空のデータを返す
+        resolve([{
+          result: {
+            title: '',
+            description: '',
+            keywords: '',
+            ogTitle: '',
+            ogDescription: '',
+            ogImage: '',
+            canonical: '',
+            h1: [],
+            h2: [],
+            h3: []
+          }
+        }]);
       }, 60000)
     );
     

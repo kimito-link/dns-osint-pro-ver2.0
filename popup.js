@@ -487,6 +487,9 @@ function extractSiteName(title) {
 
   console.log('元のタイトル:', title);
 
+  // 🆕 一般的なページ名のリスト（これらは会社名ではない）
+  const commonPageNames = ['ABOUT', 'HOME', 'INDEX', 'TOP', 'CONTACT', 'NEWS', 'BLOG'];
+
   let siteName = title;
 
   // 0. 全角→半角変換
@@ -583,7 +586,16 @@ function extractSiteName(title) {
 
   for (const sep of separators) {
     if (siteName.includes(sep)) {
-      siteName = siteName.split(sep)[0].trim();
+      const parts = siteName.split(sep).map(p => p.trim());
+      // 🆕 一般的なページ名でないパーツを優先
+      const validParts = parts.filter(p => !commonPageNames.some(common => p.toUpperCase() === common));
+      if (validParts.length > 0) {
+        // 最も長いパーツを採用
+        siteName = validParts.reduce((a, b) => a.length > b.length ? a : b);
+      } else {
+        // すべて一般的なページ名の場合は最も長いパーツを採用
+        siteName = parts.reduce((a, b) => a.length > b.length ? a : b);
+      }
       break;
     }
   }
@@ -1254,6 +1266,45 @@ async function checkSuggestPollution(domain, siteTitle) {
   console.log('🔍 検索パターン:', uniqueVariations);
   // サジェストヘッダー（コンポーネント化）
   let html = UI.createSuggestHeader(searchName, siteName);
+  
+  // 🆕 アルファベット拡張オプション表示
+  html += `
+    <div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 2px solid #2196f3; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+        <span style="font-size: 1.5em;">🔍</span>
+        <div style="flex: 1;">
+          <strong style="color: #1976d2; font-size: 1.1em;">関連キーワード拡張機能</strong><br>
+          <span style="color: #424242; font-size: 0.9em;">アルファベット拡張で300+の関連キーワードを取得できます</span>
+        </div>
+      </div>
+      <button id="expandKeywordsBtn" style="
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 1em;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        transition: all 0.3s;
+      ">
+        🚀 関連キーワードをさらに取得（a-z拡張）
+      </button>
+      <div id="expansionProgress" style="display: none; margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.9); border-radius: 6px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="flex: 1;">
+            <div style="background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden;">
+              <div id="progressBar" style="background: linear-gradient(90deg, #4caf50, #8bc34a); height: 100%; width: 0%; transition: width 0.3s;"></div>
+            </div>
+            <div id="progressText" style="font-size: 0.9em; color: #666; margin-top: 5px;">準備中...</div>
+          </div>
+        </div>
+      </div>
+      <div id="expandedKeywordsResult" style="margin-top: 15px;"></div>
+    </div>
+  `;
 
     try {
     // 🆕 複数パターンでサジェストを取得
@@ -1353,8 +1404,8 @@ async function checkSuggestPollution(domain, siteTitle) {
       }
     }
 
-    // HTMLを構築開始
-    let html = '';
+    // HTMLを構築開始（アルファベット拡張ボタンのHTMLに続けて追加）
+    // let html = ''; // ← 削除: 前のhtmlを上書きしないように
 
     // 🚨 風評被害の警告を最上部に表示
     if (hasNegativeSuggest) {
@@ -1643,6 +1694,14 @@ async function checkSuggestPollution(domain, siteTitle) {
     html += '</div>';
 
     loadingDiv.innerHTML = html;
+    
+    // 🆕 アルファベット拡張ボタンのイベントリスナー設定
+    const expandBtn = document.getElementById('expandKeywordsBtn');
+    if (expandBtn) {
+      expandBtn.addEventListener('click', async () => {
+        await expandRelatedKeywords(domain, searchName);
+      });
+    }
 
   } catch (error) {
     if (DEBUG_MODE) console.error('サジェスト取得エラー:', error);

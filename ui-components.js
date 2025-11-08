@@ -1340,6 +1340,92 @@ window.OsintUIComponents = {
   },
 
   /**
+   * Yahoo!サジェスト開発中ボックス
+   * @param {string} domain - ドメイン名
+   * @returns {string} HTML文字列
+   */
+  createYahooSuggestPlaceholder(domain) {
+    const yahooSearchUrl = `https://search.yahoo.co.jp/search?p=${encodeURIComponent(domain)}`;
+    
+    return `
+      <div style="margin: 10px 0; padding: 12px; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-left: 4px solid #ff6f00; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+          <strong style="color: #ff6f00; font-size: 1em;">🟣 Yahoo! サジェスト</strong>
+          <span style="background: #ff6f00; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; font-weight: bold;">🚧 開発中</span>
+        </div>
+        <p style="font-size: 0.85em; color: #666; margin: 8px 0;">Yahoo!のサジェストAPIは非公開のため、現在実装を検討中です。<br>下記のリンクからYahoo!検索をご利用いただけます。</p>
+        <a href="${yahooSearchUrl}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #ff0033; color: white; text-decoration: none; border-radius: 6px; font-size: 0.9em; font-weight: bold; margin-top: 8px; transition: background 0.3s;">🔍 Yahoo!で検索する</a>
+      </div>
+    `;
+  },
+
+  /**
+   * サジェスト説明ボックス
+   * @returns {string} HTML文字列
+   */
+  createSuggestExplanation() {
+    return `
+      <div style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-left: 4px solid #2196f3;">
+        <strong style="color: #1976d2;">📊 サジェストとは?</strong><br>
+        <span style="font-size: 0.9em;">検索バーに入力したときに表示される予測候補です。<br>
+        実際に検索してページ下部の「他の人はこちらも検索」で関連ワードを確認できます。</span>
+      </div>
+    `;
+  },
+
+  /**
+   * 口コミサイトセクションラッパー
+   * @param {string} content - 内部コンテンツ
+   * @returns {string} HTML文字列
+   */
+  createReviewSiteSection(content) {
+    return `
+      <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border: 2px solid #ff9800; border-radius: 8px;">
+        <div style="display: flex; align-items: center; margin-bottom: 12px;">
+          <span style="font-size: 1.3em; margin-right: 8px;">🌟</span>
+          <strong style="color: #e65100; font-size: 1.05em;">口コミサイトで評判を確認:</strong>
+        </div>
+        ${content}
+      </div>
+    `;
+  },
+
+  /**
+   * Bing関連キーワードボックス
+   * @param {Array} keywords - Bingサジェストキーワード配列
+   * @param {Array} negativeKeywords - ネガティブキーワード配列
+   * @returns {string} HTML文字列
+   */
+  createBingRelatedKeywords(keywords, negativeKeywords = []) {
+    if (!keywords || keywords.length === 0) return '';
+    
+    let html = `
+      <div style="background: #fff3e0; border: 2px solid #ff9800; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <h3 style="margin: 0 0 8px 0; color: #e65100;">🔗 Bing関連キーワード</h3>
+        <p style="margin: 0 0 12px 0; font-size: 0.85em; color: #555;">Bingのサジェスト機能から取得した関連キーワード。ネガティブなワードが含まれる場合は赤色で表示されます。</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+    `;
+    
+    keywords.slice(0, 12).forEach((keyword, index) => {
+      const isNegative = negativeKeywords.some(neg => keyword.toLowerCase().includes(neg.toLowerCase()));
+      const bingSearchUrl = `https://www.bing.com/search?q=${encodeURIComponent(keyword)}`;
+      
+      if (isNegative) {
+        html += `<a href="${bingSearchUrl}" target="_blank" style="background: #ffebee; padding: 6px 12px; border-radius: 16px; border: 2px solid #f44336; font-size: 0.9em; color: #d32f2f; font-weight: bold; text-decoration: none; display: inline-block;">🔴 ${index + 1}. ${keyword}</a>`;
+      } else {
+        html += `<a href="${bingSearchUrl}" target="_blank" style="background: #fff; padding: 6px 12px; border-radius: 16px; border: 1px solid #ffb74d; font-size: 0.9em; color: #e65100; text-decoration: none; display: inline-block;">${index + 1}. ${keyword}</a>`;
+      }
+    });
+    
+    html += `
+        </div>
+      </div>
+    `;
+    
+    return html;
+  },
+
+  /**
    * ヒントボックス
    * @param {Array<string>} hints - ヒントの配列
    * @param {string} title - タイトル（デフォルト: 💡 ヒント）

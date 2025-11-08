@@ -1410,27 +1410,7 @@ async function checkSuggestPollution(domain, siteTitle) {
         const bingSuggests = negativeResponse.response.bing;
         
         if (bingSuggests.length > 0) {
-          html += '<div style="background: #fff3e0; border: 2px solid #ff9800; padding: 15px; border-radius: 8px; margin-bottom: 20px;">';
-          html += '<h3 style="margin: 0 0 8px 0; color: #e65100;">🔗 Bing関連キーワード</h3>';
-          html += '<p style="margin: 0 0 12px 0; font-size: 0.85em; color: #555;">Bingのサジェスト機能から取得した関連キーワード。ネガティブなワードが含まれる場合は赤色で表示されます。</p>';
-          html += '<div style="display: flex; flex-wrap: wrap; gap: 8px;">';
-          
-          bingSuggests.slice(0, 12).forEach((keyword, index) => {
-            // ネガティブキーワードをチェック
-            const isNegative = negativeKeywords.some(neg => keyword.toLowerCase().includes(neg.toLowerCase()));
-            const bingSearchUrl = `https://www.bing.com/search?q=${encodeURIComponent(keyword)}`;
-            
-            if (isNegative) {
-              // ネガティブは赤色で表示
-              html += `<a href="${bingSearchUrl}" target="_blank" style="background: #ffebee; padding: 6px 12px; border-radius: 16px; border: 2px solid #f44336; font-size: 0.9em; color: #d32f2f; font-weight: bold; text-decoration: none; display: inline-block;">🔴 ${index + 1}. ${keyword}</a>`;
-            } else {
-              // 通常はオレンジ色の枠
-              html += `<a href="${bingSearchUrl}" target="_blank" style="background: #fff; padding: 6px 12px; border-radius: 16px; border: 1px solid #ffb74d; font-size: 0.9em; color: #e65100; text-decoration: none; display: inline-block;">${index + 1}. ${keyword}</a>`;
-            }
-          });
-          
-          html += '</div>';
-          html += '</div>';
+          html += UI.createBingRelatedKeywords(bingSuggests, negativeKeywords);
           console.log('✅ Bing関連キーワードを表示しました:', bingSuggests.length, '件');
         }
       }
@@ -1635,51 +1615,25 @@ async function checkSuggestPollution(domain, siteTitle) {
       if (yahoo.length > 0) {
         html += UI.createSuggestList(yahoo, 'Yahoo', '#ff0033', negativeKeywords);
       } else {
-        html += '<div style="margin: 10px 0; padding: 12px; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-left: 4px solid #ff6f00; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
-        html += '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">';
-        html += '<strong style="color: #ff6f00; font-size: 1em;">🟣 Yahoo! サジェスト</strong>';
-        html += '<span style="background: #ff6f00; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; font-weight: bold;">🚧 開発中</span>';
-        html += '</div>';
-        html += '<p style="font-size: 0.85em; color: #666; margin: 8px 0;">Yahoo!のサジェストAPIは非公開のため、現在実装を検討中です。<br>下記のリンクからYahoo!検索をご利用いただけます。</p>';
-        
-        // Yahoo!検索へのリンクボタン
-        const yahooSearchUrl = `https://search.yahoo.co.jp/search?p=${encodeURIComponent(domain)}`;
-        html += `<a href="${yahooSearchUrl}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #ff0033; color: white; text-decoration: none; border-radius: 6px; font-size: 0.9em; font-weight: bold; margin-top: 8px; transition: background 0.3s;">`;
-        html += '🔍 Yahoo!で検索する';
-        html += '</a>';
-        
-        html += '</div>';
+        html += UI.createYahooSuggestPlaceholder(domain);
       }
 
       // Bingサジェスト
       html += UI.createSuggestList(bing, 'Bing', '#0078d4', negativeKeywords);
     } // if (!hasNegativeSuggest) の終わり
 
-    html += '<div style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-left: 4px solid #2196f3;">';
-    html += '<strong style="color: #1976d2;">📊 サジェストとは?</strong><br>';
-    html += '<span style="font-size: 0.9em;">検索バーに入力したときに表示される予測候補です。<br>';
-    html += '実際に検索してページ下部の「他の人はこちらも検索」で関連ワードを確認できます。</span>';
-    html += '</div>';
+    // サジェスト説明（コンポーネント化）
+    html += UI.createSuggestExplanation();
 
-    // 🌟 口コミサイトリンク
-    html += '<div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border: 2px solid #ff9800; border-radius: 8px;">';
-    html += '<div style="display: flex; align-items: center; margin-bottom: 12px;">';
-    html += '<span style="font-size: 1.3em; margin-right: 8px;">🌟</span>';
-    html += '<strong style="color: #e65100; font-size: 1.05em;">口コミサイトで評判を確認:</strong>';
-    html += '</div>';
-
-    // 💡 総合口コミと企業評判のボタン群（コンポーネント化）
-    html += UI.createGeneralReviewButtons(searchName);
-    html += UI.createCompanyReviewButtons(searchName);
-    
-    // ヒント（コンポーネント化）
-    html += UI.createHintBox([
-      'ネガティブな口コミが多い場合は早急な対策が必要',
-      '複数のサイトで同じ内容がある場合は注意',
-      '口コミ対策も風評被害対策の一環です'
-    ]);
-
-    html += '</div>';
+    // 🌟 口コミサイトリンク（コンポーネント化）
+    const reviewContent = UI.createGeneralReviewButtons(searchName) +
+                         UI.createCompanyReviewButtons(searchName) +
+                         UI.createHintBox([
+                           'ネガティブな口コミが多い場合は早急な対策が必要',
+                           '複数のサイトで同じ内容がある場合は注意',
+                           '口コミ対策も風評被害対策の一環です'
+                         ]);
+    html += UI.createReviewSiteSection(reviewContent);
 
     // 🎯 サービスPRセクション（ネガティブがない場合のみ表示）
     if (!hasNegativeSuggest) {

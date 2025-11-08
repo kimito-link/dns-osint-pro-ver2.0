@@ -669,6 +669,16 @@ async function loadSeoMetaInfo(domain) {
     return;
   }
   
+  // サイトカテゴリ構造を保存（存在する場合）
+  let siteStructureHtml = '';
+  if (els.seoMetaInfo) {
+    const structureContainer = els.seoMetaInfo.querySelector('#siteStructureContainer');
+    if (structureContainer) {
+      siteStructureHtml = structureContainer.outerHTML;
+      console.log('📦 サイトカテゴリ構造を保存しました');
+    }
+  }
+  
   // ローディング表示
   if (els.seoMetaInfo) {
     els.seoMetaInfo.innerHTML = UI.createLoadingSpinner('SEO情報を取得中...');
@@ -699,6 +709,18 @@ async function loadSeoMetaInfo(domain) {
       
       if (els.seoMetaInfo) {
         els.seoMetaInfo.innerHTML = seoHtmlContent;
+        
+        // サイトカテゴリ構造を復元
+        if (siteStructureHtml) {
+          els.seoMetaInfo.innerHTML += siteStructureHtml;
+          console.log('📦 サイトカテゴリ構造を復元しました');
+          
+          // イベントリスナーを再設定
+          setTimeout(() => {
+            setupTreeEventListeners();
+          }, 100);
+        }
+        
         console.log('✅ SEO情報を表示しました');
       }
       
@@ -724,6 +746,18 @@ async function loadSeoMetaInfo(domain) {
     
     if (els.seoMetaInfo) {
       els.seoMetaInfo.innerHTML = errorHtml;
+      
+      // サイトカテゴリ構造を復元
+      if (siteStructureHtml) {
+        els.seoMetaInfo.innerHTML += siteStructureHtml;
+        console.log('📦 サイトカテゴリ構造を復元しました（エラー時）');
+        
+        // イベントリスナーを再設定
+        setTimeout(() => {
+          setupTreeEventListeners();
+        }, 100);
+      }
+      
       console.log('✅ エラー画面を表示しました');
     }
   }
@@ -2144,9 +2178,10 @@ async function fetchAll(domain) {
         `;
       }
       
-      // サイトマップ情報をSEO情報の後に追加
+      // サイトマップ情報をSEO情報の後に追加（IDで囲む）
       if (els.seoMetaInfo) {
-        els.seoMetaInfo.innerHTML += structureHtml;
+        const wrappedStructureHtml = `<div id="siteStructureContainer">${structureHtml}</div>`;
+        els.seoMetaInfo.innerHTML += wrappedStructureHtml;
         
         // イベントリスナーを設定
         setTimeout(() => {
@@ -2192,7 +2227,8 @@ async function fetchAll(domain) {
       }
       
       if (els.seoMetaInfo) {
-        els.seoMetaInfo.innerHTML += errorHtml;
+        const wrappedErrorHtml = `<div id="siteStructureContainer">${errorHtml}</div>`;
+        els.seoMetaInfo.innerHTML += wrappedErrorHtml;
       }
       
     } finally {

@@ -687,32 +687,49 @@ async function fetchYahooSuggest(query) {
   try {
     console.log('Yahoo Suggest query:', query);
     
-    // プロキシAPIを使用してCORS制限を回避
-    const proxyUrl = `https://reverse-re-birth-hack.com/yahoo-suggest-api.php?q=${encodeURIComponent(query)}`;
+    // 🆕 Yahoo! JAPAN サジェストAPIに直接アクセス
+    // JSONP形式なので、callbackパラメータを付ける
+    const url = `https://search.yahoo.co.jp/realtime/search/suggest?p=${encodeURIComponent(query)}&ei=UTF-8&output=json`;
     
-    console.log('Yahoo Suggest プロキシ経由で取得:', proxyUrl);
+    console.log('Yahoo Suggest 直接取得:', url);
     
-    const res = await fetch(proxyUrl, {
+    const res = await fetch(url, {
       method: 'GET',
+      mode: 'cors',
       cache: 'no-cache'
     });
     
     if (!res.ok) {
-      console.warn('Yahoo Suggest プロキシ HTTP error:', res.status);
+      console.warn('Yahoo Suggest HTTP error:', res.status);
       return [];
     }
     
     const data = await res.json();
-    console.log('✅ Yahoo Suggest プロキシ経由で成功:', data);
+    console.log('✅ Yahoo Suggest 成功:', data);
     
-    if (data.success && Array.isArray(data.suggests)) {
-      return data.suggests;
+    // Yahoo! JAPANのレスポンス形式に対応
+    if (data && data.ResultSet && data.ResultSet.Result) {
+      const results = data.ResultSet.Result;
+      const keywords = results.map(item => {
+        // Yahoo!は複数の形式がある
+        return item.key || item.Query || item;
+      }).filter(Boolean);
+      
+      console.log(`📊 Yahoo Suggest: ${keywords.length}個取得`);
+      return keywords;
     }
     
-    console.warn('Yahoo Suggest プロキシ失敗:', data.error);
+    // 別の形式の場合
+    if (Array.isArray(data)) {
+      console.log(`📊 Yahoo Suggest: ${data.length}個取得`);
+      return data;
+    }
+    
+    console.warn('Yahoo Suggest: 未知のレスポンス形式', data);
     return [];
   } catch (e) {
-    console.warn('Yahoo Suggest プロキシエラー:', e.message);
+    console.warn('Yahoo Suggest エラー:', e.message);
+    // エラーでも空配列を返して続行
     return [];
   }
 }

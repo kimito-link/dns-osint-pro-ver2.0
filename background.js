@@ -45,10 +45,17 @@ const PERFORMANCE_THRESHOLDS = {
 /**
  * Google Custom Search API設定
  * セキュリティのため、APIキーはchrome.storageから取得します
- * オプション画面で設定してください
+ * 
+ * ⚠️ 同じAPIキーを使いたい場合:
+ * 1. オプション画面で設定する（推奨）
+ * 2. または、このファイルのDEFAULT_API_KEYにあなたのAPIキーを設定してください
+ *    （ローカルでのみ使用し、GitHubにはプッシュしないでください）
  */
 const GOOGLE_API_CONFIG = {
-  DEFAULT_API_KEY: '', // セキュリティのため削除。オプション画面で設定してください
+  // デフォルトAPIキー（設定されていない場合に使用）
+  // 同じAPIキーを使いたい場合は、ここに設定してください
+  // ⚠️ GitHubにプッシュする前に、この値を空文字列にしてください
+  DEFAULT_API_KEY: '', // ローカルで使用する場合はここに設定: 'AIzaSyBaKHwsfmnxF3gDkvS177ST1Zd8jLRQwIs'
   DEFAULT_SEARCH_ENGINE_ID: '0480a8a24bbda42fc',
   // キャッシュ有効期間（24時間）
   CACHE_DURATION: 24 * 60 * 60 * 1000,
@@ -56,6 +63,14 @@ const GOOGLE_API_CONFIG = {
   RATE_LIMIT_INTERVAL: 3000,
   // 1日のクエリ上限（無料枠）
   DAILY_QUOTA: 100
+};
+
+/**
+ * Google Maps API設定
+ */
+const GOOGLE_MAPS_API_CONFIG = {
+  // ⚠️ GitHubにプッシュする前に、この値を空文字列にしてください
+  DEFAULT_API_KEY: '' // ローカルで使用する場合はここに設定: 'AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8'
 };
 
 // ========================================
@@ -2929,3 +2944,43 @@ async function analyzeSiteStructure(domain) {
     return createErrorResponse(e, 'analyzeSiteStructure');
   }
 }
+
+// ========================================
+// 初期化処理: デフォルトAPIキーの設定
+// ========================================
+
+/**
+ * デフォルトAPIキーをchrome.storageに設定
+ * 既に設定されている場合は上書きしない
+ */
+async function initializeDefaultApiKeys() {
+  try {
+    // Google API設定を取得
+    const googleSettings = await chrome.storage.local.get(['googleApiKey', 'googleSearchEngineId', 'googleMapsApiKey']);
+    
+    // 設定されていない場合のみ、デフォルト値を設定
+    const updates = {};
+    
+    if (!googleSettings.googleApiKey && GOOGLE_API_CONFIG.DEFAULT_API_KEY) {
+      updates.googleApiKey = GOOGLE_API_CONFIG.DEFAULT_API_KEY;
+    }
+    
+    if (!googleSettings.googleSearchEngineId && GOOGLE_API_CONFIG.DEFAULT_SEARCH_ENGINE_ID) {
+      updates.googleSearchEngineId = GOOGLE_API_CONFIG.DEFAULT_SEARCH_ENGINE_ID;
+    }
+    
+    if (!googleSettings.googleMapsApiKey && GOOGLE_MAPS_API_CONFIG.DEFAULT_API_KEY) {
+      updates.googleMapsApiKey = GOOGLE_MAPS_API_CONFIG.DEFAULT_API_KEY;
+    }
+    
+    if (Object.keys(updates).length > 0) {
+      await chrome.storage.local.set(updates);
+      console.log('✅ デフォルトAPIキーを設定しました');
+    }
+  } catch (e) {
+    console.error('❌ デフォルトAPIキー設定エラー:', e);
+  }
+}
+
+// 拡張機能起動時にデフォルトAPIキーを設定
+initializeDefaultApiKeys();

@@ -44,9 +44,11 @@ const PERFORMANCE_THRESHOLDS = {
 
 /**
  * Google Custom Search API設定
+ * セキュリティのため、APIキーはchrome.storageから取得します
+ * オプション画面で設定してください
  */
 const GOOGLE_API_CONFIG = {
-  DEFAULT_API_KEY: 'AIzaSyBaKHwsfmnxF3gDkvS177ST1Zd8jLRQwIs',
+  DEFAULT_API_KEY: '', // セキュリティのため削除。オプション画面で設定してください
   DEFAULT_SEARCH_ENGINE_ID: '0480a8a24bbda42fc',
   // キャッシュ有効期間（24時間）
   CACHE_DURATION: 24 * 60 * 60 * 1000,

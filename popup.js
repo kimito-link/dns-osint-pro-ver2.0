@@ -1,67 +1,3 @@
-// 💫 彗星が流れる「シュイーン」音を生成
-function playSpaceSound() {
-  try {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    
-    // 彗星のメイン音（高音から低音へスーッと流れる）
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.type = 'sine';
-    // 3000Hzから200Hzへ急降下（シュイーン！）
-    oscillator.frequency.setValueAtTime(3000, audioContext.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.8);
-    
-    // 音量：急に大きくなって徐々に消える
-    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.05);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
-    
-    // キラキラの尾（流れ星の尾のように）
-    const oscillator2 = audioContext.createOscillator();
-    const gainNode2 = audioContext.createGain();
-    
-    oscillator2.type = 'triangle';
-    oscillator2.frequency.setValueAtTime(4000, audioContext.currentTime);
-    oscillator2.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.6);
-    
-    gainNode2.gain.setValueAtTime(0, audioContext.currentTime);
-    gainNode2.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.03);
-    gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
-    
-    // 接続
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    oscillator2.connect(gainNode2);
-    gainNode2.connect(audioContext.destination);
-    
-    // 再生
-    const now = audioContext.currentTime;
-    oscillator.start(now);
-    oscillator.stop(now + 0.8);
-    
-    oscillator2.start(now);
-    oscillator2.stop(now + 0.6);
-    
-  } catch (e) {
-    console.log('Audio not supported:', e);
-  }
-}
-
-// スプラッシュ表示時に宇宙音を再生
-setTimeout(() => {
-  playSpaceSound();
-}, 100);
-
-// ロゴスプラッシュ演出の削除
-setTimeout(() => {
-  const splash = document.getElementById('logoSplash');
-  if (splash) {
-    splash.remove();
-  }
-}, 2500);
-
 // デバッグモード設定 (background.jsと同じ)
 const DEBUG_MODE = true; // デバッグログ表示ON
 
@@ -791,7 +727,9 @@ function stopLoadingWithError(errorMessage) {
  * 結果をクリア
  */
 function clearResults() {
-  els.specialSections.innerHTML = '';
+  if (els.specialSections) {
+    els.specialSections.innerHTML = '';
+  }
 
   // 🐫 りんくのローディング表示
   const loadingHtml = UI.createLoadingSpinner('🐫 りんく：「ちょっと待っててね調査中！」');
@@ -946,19 +884,23 @@ function identifyServiceFromTXT(txtRecord) {
 
 // サジェスト取得関数（サイト名自動抽出版）
 async function checkSuggestPollution(domain, siteTitle) {
-  console.log('サジェスト取得開始 - ドメイン:', domain, 'サイトタイトル:', siteTitle);
+  console.log('🚀🚀🚀 サジェスト取得開始 - ドメイン:', domain, 'サイトタイトル:', siteTitle);
 
   const loadingDiv = document.getElementById('suggest-loading');
   if (!loadingDiv) {
-    if (DEBUG_MODE) console.error('Loading div not found');
+    console.error('❌ エラー: suggest-loading要素が見つかりません');
+    console.error('specialSections内容:', document.getElementById('specialSections')?.innerHTML);
     return;
   }
+  
+  console.log('✅ suggest-loading要素が見つかりました');  
 
   // タイトルからサイト名を抽出
   const siteName = extractSiteName(siteTitle);
   const searchName = siteName || domain;
 
-  console.log('抽出したサイト名:', siteName);
+  console.log('🔍 抽出したサイト名:', siteName);
+  console.log('📝 検索名:', searchName);
 
   // 🆕 拡張版: 英語→カタカナ変換辞書
   const katakanaDict = {
@@ -1273,8 +1215,8 @@ async function checkSuggestPollution(domain, siteTitle) {
       <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
         <span style="font-size: 1.5em;">🔍</span>
         <div style="flex: 1;">
-          <strong style="color: #1976d2; font-size: 1.1em;">関連キーワード拡張機能</strong><br>
-          <span style="color: #424242; font-size: 0.9em;">アルファベット拡張で300+の関連キーワードを取得できます</span>
+          <strong style="color: #1976d2; font-size: 1.1em;">🔤 サジェスト-関連キーワード調査</strong><br>
+          <span style="color: #424242; font-size: 0.9em;">アルファベット順で広い範囲でサジェスト汚染がないか調査します（300+キーワード）</span>
         </div>
       </div>
       <button id="expandKeywordsBtn" style="
@@ -1330,7 +1272,10 @@ async function checkSuggestPollution(domain, siteTitle) {
       '詐欺', '被害', '危険', '怠しい', '最悪', 'ブラック',
       'やばい', 'トラブル', '悪質', '悪い', '悪評',
       '炎上', '問題', 'クレーム', '苦情', '評判悪い',
-      '倒産', '閉鎖', 'パワハラ', 'セクハラ', '事件'
+      '倒産', '閉鎖', 'パワハラ', 'セクハラ', '事件',
+      '逮捕', '容疑', '起訴', '裁判', '有罪', '事故',
+      '死亡', '怪我', '負傷', 'ケガ', '違法', '不正',
+      '横領', '脱税', '粉飾', '偽装', '隠蔽', 'リコール'
     ];
 
     // ✅ ポジティブ検出は不要（業種別推奨のみ）
@@ -1346,7 +1291,9 @@ async function checkSuggestPollution(domain, siteTitle) {
       let bing = response.bing || [];
       
       // 🔧 ドメイン名で検索した場合、明らかに関係ないサジェストを除外
-      if (query === domain || query === domain.replace(/^www\./, '')) {
+      // ただし、キーワードモード（ドメインに.が含まれていない）の場合はスキップ
+      const isDomainMode = domain.includes('.');
+      if (isDomainMode && (query === domain || query === domain.replace(/^www\./, ''))) {
         // ドメイン名から主要部分を抽出（サブドメインを考慮）
         // 例: ec.searchfan.biz → searchfan, www.yahoo.co.jp → yahoo
         const domainCore = extractMainDomainName(domain);
@@ -1391,6 +1338,7 @@ async function checkSuggestPollution(domain, siteTitle) {
       allSuggests.push(...querySuggests);
 
       console.log(`🔍 "${query}" のサジェスト数: ${querySuggests.length}`);
+      console.log(`📝 サジェスト内容:`, querySuggests.slice(0, 5)); // 最初の5件を表示
 
       if (!hasNegativeSuggest) {
         for (const suggest of querySuggests) {
@@ -1401,6 +1349,10 @@ async function checkSuggestPollution(domain, siteTitle) {
             break;
           }
         }
+      }
+      
+      if (!hasNegativeSuggest && querySuggests.length > 0) {
+        console.log(`❌ ネガティブ未検出: ${query}のサジェストにネガティブキーワードなし`);
       }
     }
 
@@ -1444,23 +1396,33 @@ async function checkSuggestPollution(domain, siteTitle) {
       }, negativeKeywords);
     }
     
-    // 🔗 Bing関連キーワード - 「検出されたネガティブサジェスト」の直後に表示
-    // 既に取得済みのBingサジェストを使用（別プロジェクトと同じ方法）
-    if (hasNegativeSuggest && allResponses && allResponses.length > 0) {
-      // ネガティブが検出されたクエリのBingサジェストを取得
-      const negativeResponse = allResponses.find(r => r.query === negativeQuery);
-      if (negativeResponse && negativeResponse.response.bing) {
-        const bingSuggests = negativeResponse.response.bing;
+    // 🔗 Bing関連キーワード - Bing Suggest APIの結果を使用（URLを除外）
+    if (allResponses && allResponses.length > 0) {
+      console.log('🔍 allResponses:', allResponses.map(r => r.query));
+      console.log('🔍 searchName:', searchName);
+      
+      // 基本検索クエリ（searchName）のBingサジェストを取得
+      const bingResponse = allResponses.find(r => r.query === searchName);
+      console.log('🔍 bingResponse:', bingResponse ? 'あり' : 'なし');
+      
+      if (bingResponse && bingResponse.response.bing && bingResponse.response.bing.length > 0) {
+        const bingSuggests = bingResponse.response.bing;
+        console.log('📡 Bingサジェストから関連キーワードを抽出:', bingSuggests.length, '件');
+        console.log('📝 Bingサジェスト内容:', bingSuggests);
         
-        if (bingSuggests.length > 0) {
-          html += UI.createBingRelatedKeywords(bingSuggests, negativeKeywords);
-          console.log('✅ Bing関連キーワードを表示しました:', bingSuggests.length, '件');
-        }
+        // createBingRelatedKeywords内でURLフィルターが適用される
+        const bingHtml = UI.createBingRelatedKeywords(bingSuggests, negativeKeywords);
+        console.log('🔍 Bing関連キーワードHTML長:', bingHtml.length, '文字');
+        console.log('🔍 HTMLプレビュー:', bingHtml.substring(0, 200));
+        html += bingHtml;
+        console.log('✅ Bing関連キーワードをHTMLに追加しました');
+      } else {
+        console.log('⚠️ Bingサジェストが見つかりません');
       }
     }
 
 
-      // 🆕 ネガティブ検出時はそのサジェストだけをフィルタ
+      // 🆕 すべてのサジェストデータを取得（ネガティブの有無に関わらず）
       let google = [];
       let yahoo = [];
       let bing = [];
@@ -1468,19 +1430,19 @@ async function checkSuggestPollution(domain, siteTitle) {
       let allYahooTotal = 0;
       let allBingTotal = 0;
 
-      if (hasNegativeSuggest && negativeQuery) {
-        // ネガティブが見つかったクエリのレスポンスを取得
-        const negativeResponse = allResponses.find(r => r.query === negativeQuery);
-        if (negativeResponse) {
-          let allGoogle = negativeResponse.response.google || [];
-          let allYahoo = negativeResponse.response.yahoo || [];
-          let allBing = negativeResponse.response.bing || [];
-          
-          allGoogleTotal = allGoogle.length;
-          allYahooTotal = allYahoo.length;
-          allBingTotal = allBing.length;
+      // 最初のレスポンス（基本検索クエリ）からデータを取得
+      const primaryResponse = allResponses[0];
+      if (primaryResponse) {
+        let allGoogle = primaryResponse.response.google || [];
+        let allYahoo = primaryResponse.response.yahoo || [];
+        let allBing = primaryResponse.response.bing || [];
+        
+        allGoogleTotal = allGoogle.length;
+        allYahooTotal = allYahoo.length;
+        allBingTotal = allBing.length;
 
-          // ネガティブキーワードを含むサジェストだけをフィルタ
+        if (hasNegativeSuggest) {
+          // ネガティブが検出された場合のみ、ネガティブキーワードでフィルタ
           google = allGoogle.filter(item => {
             return negativeKeywords.some(keyword => item.includes(keyword));
           });
@@ -1490,36 +1452,17 @@ async function checkSuggestPollution(domain, siteTitle) {
           bing = allBing.filter(item => {
             return negativeKeywords.some(keyword => item.includes(keyword));
           });
-
           console.log(`✅ ネガティブサジェスト抽出: Google=${google.length}, Yahoo=${yahoo.length}, Bing=${bing.length}`);
+        } else {
+          // ネガティブがない場合は、全サジェストを表示
+          google = allGoogle;
+          yahoo = allYahoo;
+          bing = allBing;
+          console.log(`✅ 全サジェスト表示: Google=${google.length}, Yahoo=${yahoo.length}, Bing=${bing.length}`);
         }
       }
 
-      // 🎯 風評健全度スコアを表示
-      const totalNegatives = google.length + yahoo.length + bing.length;
-      const totalSuggests = allGoogleTotal + allYahooTotal + allBingTotal;
-
-      if (totalSuggests > 0 && hasNegativeSuggest) {
-        // スコア計算（100点満点）
-        const negativeRatio = totalNegatives / totalSuggests;
-        let score = 100;
-
-        // ネガティブの割合による減点
-        if (negativeRatio > 0) {
-          score = Math.max(0, 100 - (negativeRatio * 100));
-        }
-
-        // ネガティブ絶対数による追加減点
-        if (totalNegatives >= 10) score -= 30;
-        else if (totalNegatives >= 5) score -= 20;
-        else if (totalNegatives >= 3) score -= 15;
-        else if (totalNegatives >= 1) score -= 10;
-
-        score = Math.max(0, Math.round(score));
-
-        // コンポーネントを使用してスコア表示
-        html += UI.createReputationScore(score, totalNegatives, totalSuggests);
-      }
+      // 風評健全度スコアは削除（ユーザー要望）
 
       // 🌟 業種別推奨キーワードの提案（常に表示）
       console.log('🔍 業種別推奨キーワード表示:', {
@@ -1648,7 +1591,7 @@ async function checkSuggestPollution(domain, siteTitle) {
         html += UI.createPositiveKeywordSuggestion(recommended, hasNegativeSuggest);
       }
 
-      // ネガティブサジェストが検出された場合は、通常のサジェスト一覧は表示しない
+      // ネガティブサジェストが検出された場合は、GoogleとYahooのサジェスト一覧は表示しない
       // （上の「検出されたネガティブサジェスト」ボックスに既に表示されているため）
       if (!hasNegativeSuggest) {
         // Googleサジェスト
@@ -1660,10 +1603,10 @@ async function checkSuggestPollution(domain, siteTitle) {
       } else {
         html += UI.createYahooSuggestPlaceholder(domain);
       }
-
-      // Bingサジェスト
-      html += UI.createSuggestList(bing, 'Bing', '#0078d4', negativeKeywords);
     } // if (!hasNegativeSuggest) の終わり
+
+      // Bingサジェスト（ネガティブ検出時も常に表示）
+      html += UI.createSuggestList(bing, 'Bing', '#0078d4', negativeKeywords);
 
     // サジェスト説明（コンポーネント化）
     html += UI.createSuggestExplanation();
@@ -2017,6 +1960,11 @@ async function fetchAll(domain) {
       // エラーは表示せず、タイトルなしで続行
     }
   })();
+  
+  // ========================================
+  // 🔍 風評被害チェック（サジェスト汚染）は後で表示（ITインフラ系の後）
+  // ========================================
+  const siteTitle = await getActiveTabTitle();
   
   // ⚡ 重い処理を全て非同期化して、即座にUIを操作可能にする
   // メインのローディング表示を早めに終了
@@ -2576,12 +2524,33 @@ async function fetchAll(domain) {
 
   // サイト健康診断を実行
   try {
+    console.log('🔍🔍🔍 サイト健康診断開始 - ドメイン:', domain);
     const healthResult = await chrome.runtime.sendMessage({
       type: 'analyzeSiteHealth',
       domain: domain
     });
 
-    console.log('サイト健康診断結果:', healthResult);
+    console.log('🔍🔍🔍 サイト健康診断結果（全体）:', healthResult);
+    console.log('🔍🔍🔍 healthResult.success:', healthResult?.success);
+    console.log('🔍🔍🔍 healthResult.isWordPress:', healthResult?.isWordPress);
+    console.log('🔍🔍🔍 healthResult.wpPlugins:', healthResult?.wpPlugins);
+    console.log('🔍🔍🔍 healthResult.wpTheme:', healthResult?.wpTheme);
+    console.log('🔍🔍🔍 healthResult.phpVersion:', healthResult?.phpVersion);
+      console.log('🔍 WordPress情報詳細:', {
+        isWordPress: healthResult.isWordPress,
+        wpVersion: healthResult.wpVersion,
+        wpTheme: healthResult.wpTheme,
+        wpPlugins: healthResult.wpPlugins,
+        wpPluginsLength: healthResult.wpPlugins ? healthResult.wpPlugins.length : 0,
+        phpVersion: healthResult.phpVersion
+      });
+      
+      // WordPress判定の詳細ログ
+      if (healthResult.isWordPress) {
+        console.log('✅ WordPressサイトと判定されました');
+      } else {
+        console.log('❌ WordPressサイトと判定されませんでした');
+      }
 
     if (healthResult && healthResult.success) {
       let healthHtml = '';
@@ -2637,6 +2606,81 @@ async function fetchAll(domain) {
       }
 
       // ========================================
+      // 🚨 PHPバージョンチェック（WordPressサイトでない場合も含む）
+      // ========================================
+      // WordPressサイトでない場合でも、PHPバージョンが古い場合はりんくのアラートで表示
+      // PHP 8.1未満の場合はすべてりんくのアラートで表示
+      if (!healthResult.isWordPress && healthResult.phpVersion) {
+        const phpVersionStr = String(healthResult.phpVersion);
+        let isPhpOld = false;
+        let phpVersionNum = null;
+        if (phpVersionStr.match(/^[0-9.]+$/)) {
+          phpVersionNum = parseFloat(phpVersionStr);
+          isPhpOld = phpVersionNum < 8.1; // 8.1未満はすべて古いとみなす
+        }
+        
+        if (isPhpOld && phpVersionNum !== null) {
+          redAlertCount++;
+          // 🚨 PHPのバージョンが古い場合の警告（ビジネス導線付き）
+          let phpAlertHtml = '<div style="background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%); border: 3px solid #b71c1c; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); margin-bottom: 20px;">';
+          phpAlertHtml += '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">';
+          phpAlertHtml += '<img src="images/link.png" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #fff;">';
+          phpAlertHtml += '<div style="flex: 1;">';
+          phpAlertHtml += '<strong style="color: #fff; font-size: 1.3em;">りんく：「PHPのバージョンが古すぎるよ！」</strong><br>';
+          phpAlertHtml += '<span style="color: rgba(255,255,255,0.9); font-size: 0.95em;">セキュリティリスクがとても高いよ</span>';
+          phpAlertHtml += '</div>';
+          phpAlertHtml += '</div>';
+
+          phpAlertHtml += '<div style="background: rgba(255,255,255,0.95); padding: 15px; border-radius: 8px; margin-bottom: 15px;">';
+          phpAlertHtml += '<div style="color: #333; font-size: 0.95em; line-height: 1.8;">';
+          if (phpVersionNum < 8.0) {
+            phpAlertHtml += `<strong style="color: #d32f2f; font-size: 1.05em;">⚠️ PHPが古いです (${phpVersionStr})</strong><br><br>`;
+            phpAlertHtml += '<div style="padding-left: 10px;">';
+            phpAlertHtml += '• PHP 8.1以上へのアップデートを推奨<br>';
+            phpAlertHtml += '• セキュリティリスクが高いです<br>';
+            phpAlertHtml += '• パフォーマンスとセキュリティが向上します';
+            phpAlertHtml += '</div>';
+          } else {
+            phpAlertHtml += `<strong style="color: #d32f2f; font-size: 1.05em;">⚠️ PHPがやや古いです (${phpVersionStr})</strong><br><br>`;
+            phpAlertHtml += '<div style="padding-left: 10px;">';
+            phpAlertHtml += '• PHP 8.1以上へのアップデートを推奨<br>';
+            phpAlertHtml += '• 定期的なアップデートが必要です<br>';
+            phpAlertHtml += '• パフォーマンスとセキュリティが向上します';
+            phpAlertHtml += '</div>';
+          }
+          phpAlertHtml += '</div>';
+          phpAlertHtml += '</div>';
+
+          // 💎 りんくのメッセージ
+          phpAlertHtml += '<div style="background: #e3f2fd; border-left: 4px solid #1976d2; padding: 12px; border-radius: 4px; margin-bottom: 15px;">';
+          phpAlertHtml += '<div style="display: flex; gap: 10px; align-items: start;">';
+          phpAlertHtml += '<img src="images/link.png" style="width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;">';
+          phpAlertHtml += '<div style="flex: 1;">';
+          phpAlertHtml += '<strong style="color: #1565c0;">💎 りんくからの提案</strong><br>';
+          phpAlertHtml += '<span style="font-size: 0.9em; color: #333; line-height: 1.6;">';
+          phpAlertHtml += '「りんくが頼りにしているリバースハックに相談してみて！PHPのアップデートを安全にやってくれるよ！」';
+          phpAlertHtml += '</span>';
+          phpAlertHtml += '</div>';
+          phpAlertHtml += '</div>';
+          phpAlertHtml += '</div>';
+
+          // リバースハックに相談ボタン
+          phpAlertHtml += '<a href="https://lin.ee/lrjVHvH" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">';
+          phpAlertHtml += '<img src="images/rev.png" style="height: 45px; width: auto;">';
+          phpAlertHtml += '<div style="text-align: left; flex: 1;">';
+          phpAlertHtml += '<div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>';
+          phpAlertHtml += '<div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div>';
+          phpAlertHtml += '</div>';
+          phpAlertHtml += '<div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>';
+          phpAlertHtml += '</a>';
+
+          phpAlertHtml += '</div>';
+
+          healthHtml += phpAlertHtml;
+        }
+      }
+      
+      // ========================================
       // 🚨 WordPress/PHPバージョンチェック & プラグイン脆弱性
       // ========================================
       if (healthResult.isWordPress) {
@@ -2653,7 +2697,7 @@ async function fetchAll(domain) {
 
         if (phpVersionStr.match(/^[0-9.]+$/)) {
           const phpVersionNum = parseFloat(phpVersionStr);
-          isPhpOld = phpVersionNum < VERSION_CONSTANTS.PHP_MINIMUM;
+          isPhpOld = phpVersionNum < 8.1; // 8.1未満はすべて古いとみなす
         }
 
         if (isWpOld || isPhpOld) {
@@ -2682,12 +2726,22 @@ async function fetchAll(domain) {
           }
 
           if (isPhpOld) {
-            wpPhpAlertHtml += `<strong style="color: #d32f2f; font-size: 1.05em;">⚠️ PHPが古いです (${phpVersionStr})</strong><br><br>`;
-            wpPhpAlertHtml += '<div style="padding-left: 10px;">';
-            wpPhpAlertHtml += '• PHP 8.0以上へのアップデートを推奨<br>';
-            wpPhpAlertHtml += '• 定期的なアップデートが必要です<br>';
-            wpPhpAlertHtml += '• パフォーマンスとセキュリティが向上します';
-            wpPhpAlertHtml += '</div>';
+            const phpVersionNum = parseFloat(phpVersionStr);
+            if (phpVersionNum < 8.0) {
+              wpPhpAlertHtml += `<strong style="color: #d32f2f; font-size: 1.05em;">⚠️ PHPが古いです (${phpVersionStr})</strong><br><br>`;
+              wpPhpAlertHtml += '<div style="padding-left: 10px;">';
+              wpPhpAlertHtml += '• PHP 8.1以上へのアップデートを推奨<br>';
+              wpPhpAlertHtml += '• セキュリティリスクが高いです<br>';
+              wpPhpAlertHtml += '• パフォーマンスとセキュリティが向上します';
+              wpPhpAlertHtml += '</div>';
+            } else {
+              wpPhpAlertHtml += `<strong style="color: #d32f2f; font-size: 1.05em;">⚠️ PHPがやや古いです (${phpVersionStr})</strong><br><br>`;
+              wpPhpAlertHtml += '<div style="padding-left: 10px;">';
+              wpPhpAlertHtml += '• PHP 8.1以上へのアップデートを推奨<br>';
+              wpPhpAlertHtml += '• 定期的なアップデートが必要です<br>';
+              wpPhpAlertHtml += '• パフォーマンスとセキュリティが向上します';
+              wpPhpAlertHtml += '</div>';
+            }
           }
 
           wpPhpAlertHtml += '</div>';
@@ -2705,6 +2759,16 @@ async function fetchAll(domain) {
           wpPhpAlertHtml += '</div>';
           wpPhpAlertHtml += '</div>';
           wpPhpAlertHtml += '</div>';
+
+          // リバースハックに相談ボタン
+          wpPhpAlertHtml += '<a href="https://lin.ee/lrjVHvH" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">';
+          wpPhpAlertHtml += '<img src="images/rev.png" style="height: 45px; width: auto;">';
+          wpPhpAlertHtml += '<div style="text-align: left; flex: 1;">';
+          wpPhpAlertHtml += '<div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>';
+          wpPhpAlertHtml += '<div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div>';
+          wpPhpAlertHtml += '</div>';
+          wpPhpAlertHtml += '<div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>';
+          wpPhpAlertHtml += '</a>';
 
           wpPhpAlertHtml += '</div>';
 
@@ -2746,6 +2810,16 @@ async function fetchAll(domain) {
           cf7AlertHtml += '</div>';
           cf7AlertHtml += '</div>';
           cf7AlertHtml += '</div>';
+
+          // リバースハックに相談ボタン（赤い枠の中に含める）
+          cf7AlertHtml += '<a href="https://lin.ee/lrjVHvH" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">';
+          cf7AlertHtml += '<img src="images/rev.png" style="height: 45px; width: auto;">';
+          cf7AlertHtml += '<div style="text-align: left; flex: 1;">';
+          cf7AlertHtml += '<div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>';
+          cf7AlertHtml += '<div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div>';
+          cf7AlertHtml += '</div>';
+          cf7AlertHtml += '<div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>';
+          cf7AlertHtml += '</a>';
 
           cf7AlertHtml += '</div>';
 
@@ -2802,6 +2876,16 @@ async function fetchAll(domain) {
               vulnHtml += '</div>';
               vulnHtml += '</div>';
 
+              // リバースハックに相談ボタン（赤い枠の中に含める）
+              vulnHtml += '<a href="https://lin.ee/lrjVHvH" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">';
+              vulnHtml += '<img src="images/rev.png" style="height: 45px; width: auto;">';
+              vulnHtml += '<div style="text-align: left; flex: 1;">';
+              vulnHtml += '<div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>';
+              vulnHtml += '<div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div>';
+              vulnHtml += '</div>';
+              vulnHtml += '<div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>';
+              vulnHtml += '</a>';
+
               vulnHtml += '</div>';
               healthHtml += vulnHtml;
             }
@@ -2814,9 +2898,9 @@ async function fetchAll(domain) {
       // ========================================
       // 🔴 深刻な問題（issues）→ りんくの赤い警告
       // ========================================
-      // WordPress/PHPバージョン警告は専用ボックスで表示するため除外
+      // WordPressバージョン警告とPHPバージョン警告は専用ボックスで表示するため除外
       const filteredIssues = healthResult.issues ? healthResult.issues.filter(issue => {
-        return !issue.includes('PHP') && !issue.includes('WordPress');
+        return !issue.includes('WordPress') && !issue.includes('PHP'); // WordPressとPHPは専用アラートで表示
       }) : [];
       const hasIssues = filteredIssues.length > 0;
       
@@ -2850,15 +2934,8 @@ async function fetchAll(domain) {
         healthHtml += '</div>';
         healthHtml += '</div>';
         healthHtml += '</div>';
-        
-        healthHtml += '</div>';
-      }
 
-      // ========================================
-      // 🟢 赤い警告が1つ以上ある場合、まとめてLINE誘導ボタンを表示
-      // ========================================
-      if (redAlertCount > 0) {
-        healthHtml += '<div style="margin: 20px 0;">';
+        // リバースハックに相談ボタン（赤い枠の中に含める）
         healthHtml += '<a href="https://lin.ee/lrjVHvH" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">';
         healthHtml += '<img src="images/rev.png" style="height: 45px; width: auto;">';
         healthHtml += '<div style="text-align: left; flex: 1;">';
@@ -2867,13 +2944,37 @@ async function fetchAll(domain) {
         healthHtml += '</div>';
         healthHtml += '<div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>';
         healthHtml += '</a>';
+        
         healthHtml += '</div>';
       }
 
       // ========================================
+      // 🟢 赤い警告が1つ以上ある場合、まとめてLINE誘導ボタンを表示
+      // ========================================
+      // 注意: 各警告ボックス内に既にボタンが含まれている場合は、ここでは表示しない
+      // Contact Form 7やプラグイン脆弱性など、ボタンが含まれていない警告がある場合のみ表示
+      // 現在は各警告ボックス内にボタンを追加したため、このセクションは使用しない
+      // if (redAlertCount > 0) {
+      //   healthHtml += '<div style="margin: 20px 0;">';
+      //   healthHtml += '<a href="https://lin.ee/lrjVHvH" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">';
+      //   healthHtml += '<img src="images/rev.png" style="height: 45px; width: auto;">';
+      //   healthHtml += '<div style="text-align: left; flex: 1;">';
+      //   healthHtml += '<div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>';
+      //   healthHtml += '<div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div>';
+      //   healthHtml += '</div>';
+      //   healthHtml += '<div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>';
+      //   healthHtml += '</a>';
+      //   healthHtml += '</div>';
+      // }
+
+      // ========================================
       // ⚠️ 注意点（warnings）→ こん太のオレンジ警告
       // ========================================
-      const hasWarnings = healthResult.warnings && healthResult.warnings.length > 0;
+      // PHPバージョン警告は専用アラートで表示するため除外
+      const filteredWarnings = healthResult.warnings ? healthResult.warnings.filter(warning => {
+        return !warning.includes('PHP'); // PHPは専用アラートで表示
+      }) : [];
+      const hasWarnings = filteredWarnings.length > 0;
       
       if (hasWarnings) {
         healthHtml += '<div style="background: #fff3e0; border: 2px solid #ff9800; padding: 15px; border-radius: 8px; margin-bottom: 15px;">';
@@ -2888,7 +2989,7 @@ async function fetchAll(domain) {
         healthHtml += '</div>';
 
         healthHtml += '<div style="color: #333; font-size: 0.9em; line-height: 1.8;">';
-        healthResult.warnings.forEach(warning => {
+        filteredWarnings.forEach(warning => {
           healthHtml += `⚠️ ${warning}<br>`;
         });
         healthHtml += '</div>';
@@ -3000,54 +3101,178 @@ async function fetchAll(domain) {
 
         healthHtml += '</div>'; // grid end
 
-        // WordPress詳細情報
-        if (healthResult.isWordPress) {
+        // WordPressバージョン情報のみ表示（テーマ・PHP・プラグインはこん太のセクションに移動）
+        if (healthResult.isWordPress && healthResult.wpVersion) {
           healthHtml += '<div style="margin-top: 15px; padding: 12px; background: #fff3e0; border-left: 3px solid #ff9800; border-radius: 4px;">';
-          healthHtml += '<div style="color: #e65100; font-weight: bold; margin-bottom: 8px;">💻 WordPress 詳細情報</div>';
+          healthHtml += '<div style="color: #e65100; font-weight: bold; margin-bottom: 8px;">💻 WordPress バージョン</div>';
           healthHtml += '<div style="display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 0.85em;">';
 
-          if (healthResult.wpVersion) {
-            const wpVersionStr = String(healthResult.wpVersion);
-            let wpColor = '#333';
-            if (wpVersionStr.match(/^[0-9.]+$/)) {
-              const wpVersionNum = parseFloat(wpVersionStr);
-              wpColor = wpVersionNum >= 6.4 ? '#4caf50' : wpVersionNum >= 6.0 ? '#ff9800' : '#f44336';
-            }
-            healthHtml += '<div style="color: #666;">WPバージョン:</div>';
-            healthHtml += `<div style="color: ${wpColor}; font-weight: 600;">${healthResult.wpVersion}</div>`;
+          const wpVersionStr = String(healthResult.wpVersion);
+          let wpColor = '#333';
+          if (wpVersionStr.match(/^[0-9.]+$/)) {
+            const wpVersionNum = parseFloat(wpVersionStr);
+            wpColor = wpVersionNum >= 6.4 ? '#4caf50' : wpVersionNum >= 6.0 ? '#ff9800' : '#f44336';
           }
-
-          if (healthResult.phpVersion) {
-            const phpVersionStr = String(healthResult.phpVersion);
-            let phpColor = '#333';
-            if (phpVersionStr.match(/^[0-9.]+$/)) {
-              const phpVersionNum = parseFloat(phpVersionStr);
-              phpColor = phpVersionNum >= 8.0 ? '#4caf50' : phpVersionNum >= 7.4 ? '#ff9800' : '#f44336';
-            }
-            healthHtml += '<div style="color: #666;">PHPバージョン:</div>';
-            healthHtml += `<div style="color: ${phpColor}; font-weight: 600;">${healthResult.phpVersion}</div>`;
-          }
-
-          if (healthResult.wpTheme) {
-            healthHtml += '<div style="color: #666;">テーマ:</div>';
-            healthHtml += `<div style="color: #333; font-weight: 600;">${healthResult.wpTheme}</div>`;
-          }
-
-          if (healthResult.wpPlugins && healthResult.wpPlugins.length > 0) {
-            healthHtml += '<div style="color: #666; vertical-align: top;">プラグイン:</div>';
-            healthHtml += '<div style="color: #333;">';
-            healthHtml += healthResult.wpPlugins.slice(0, 10).join(', ');
-            if (healthResult.wpPlugins.length > 10) {
-              healthHtml += ` 他${healthResult.wpPlugins.length - 10}個`;
-            }
-            healthHtml += '</div>';
-          }
+          healthHtml += '<div style="color: #666;">WPバージョン:</div>';
+          healthHtml += `<div style="color: ${wpColor}; font-weight: 600;">${healthResult.wpVersion}</div>`;
 
           healthHtml += '</div>'; // grid end
           healthHtml += '</div>'; // box end
         }
 
         healthHtml += '</div>'; // white box end
+
+        // 🎯 サーバー環境情報セクション（こん太の役割強化：WordPress・テーマ・PHP・プラグイン）
+        console.log('🔍 サーバー環境情報セクション表示チェック:', {
+          isWordPress: healthResult.isWordPress,
+          wpPlugins: healthResult.wpPlugins,
+          wpPluginsLength: healthResult.wpPlugins ? healthResult.wpPlugins.length : 0,
+          wpTheme: healthResult.wpTheme,
+          phpVersion: healthResult.phpVersion
+        });
+        
+        // WordPressサイトでなくても、PHPバージョンなどの情報があれば表示
+        if (healthResult.isWordPress || healthResult.phpVersion || healthResult.wpTheme) {
+          console.log('✅ サーバー環境情報があるので、こん太のセクションを表示します');
+          healthHtml += '<div style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border: 2px solid #ff9800; padding: 15px; border-radius: 8px; margin-top: 15px;">';
+          healthHtml += '<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">';
+          healthHtml += '<img src="images/konta.png" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid #ff9800;">';
+          if (healthResult.isWordPress) {
+            healthHtml += '<strong style="color: #e65100; font-size: 1.1em;">こん太:「WordPressの環境をチェックしたぜ!」</strong>';
+          } else {
+            healthHtml += '<strong style="color: #e65100; font-size: 1.1em;">こん太:「サーバー環境をチェックしたぜ!」</strong>';
+          }
+          healthHtml += '</div>';
+
+          healthHtml += '<div style="background: rgba(255,255,255,0.95); padding: 15px; border-radius: 6px; margin-bottom: 10px;">';
+          
+          // WordPressテーマ情報
+          if (healthResult.wpTheme) {
+            healthHtml += '<div style="margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 4px; border-left: 3px solid #ff9800;">';
+            healthHtml += '<div style="color: #666; font-size: 0.85em; margin-bottom: 4px;">🎨 使用中のテーマ:</div>';
+            healthHtml += `<div style="color: #333; font-weight: 600; font-size: 0.95em;">${healthResult.wpTheme}</div>`;
+            healthHtml += '</div>';
+          }
+
+          // PHPバージョン情報（8.1以上の場合のみ表示、8.1未満はりんくのアラートで既に表示されているため）
+          if (healthResult.phpVersion) {
+            const phpVersionStr = String(healthResult.phpVersion);
+            let phpColor = '#333';
+            let phpStatus = '';
+            let shouldShow = false;
+            if (phpVersionStr.match(/^[0-9.]+$/)) {
+              const phpVersionNum = parseFloat(phpVersionStr);
+              if (phpVersionNum >= 8.1) {
+                phpColor = '#4caf50';
+                phpStatus = '✅ 最新';
+                shouldShow = true; // 8.1以上の場合のみ表示
+              }
+              // 8.1未満の場合は、りんくのアラートで既に表示されているため、ここでは表示しない
+            }
+            if (shouldShow) {
+              healthHtml += '<div style="margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 4px; border-left: 3px solid ' + phpColor + ';">';
+              healthHtml += '<div style="color: #666; font-size: 0.85em; margin-bottom: 4px;">🔧 PHPバージョン:</div>';
+              healthHtml += `<div style="display: flex; align-items: center; gap: 8px;">`;
+              healthHtml += `<div style="color: ${phpColor}; font-weight: 600; font-size: 0.95em;">${healthResult.phpVersion}</div>`;
+              healthHtml += `<div style="color: ${phpColor}; font-size: 0.8em;">${phpStatus}</div>`;
+              healthHtml += '</div>';
+              healthHtml += '</div>';
+            }
+          }
+
+          // プラグイン一覧
+          console.log('🔍 プラグイン表示チェック:', {
+            hasPlugins: !!healthResult.wpPlugins,
+            pluginsLength: healthResult.wpPlugins ? healthResult.wpPlugins.length : 0,
+            plugins: healthResult.wpPlugins
+          });
+          
+          if (healthResult.wpPlugins && healthResult.wpPlugins.length > 0) {
+            console.log('✅ プラグインが検出されました:', healthResult.wpPlugins);
+            healthHtml += '<div style="margin-bottom: 15px;">';
+            healthHtml += '<div style="color: #666; font-size: 0.9em; margin-bottom: 10px;">📦 使用中のプラグイン一覧（' + healthResult.wpPlugins.length + '個）:</div>';
+            
+            // プラグインをグリッド表示（3列）
+            healthHtml += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; max-height: 400px; overflow-y: auto; padding: 5px;">';
+            
+            healthResult.wpPlugins.forEach((plugin, index) => {
+              // プラグイン名を整形（スラッグから読みやすい名前に変換）
+              const pluginName = plugin
+                .replace(/-/g, ' ')
+                .replace(/_/g, ' ')
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+              
+              healthHtml += `<div style="padding: 8px 12px; background: #f5f5f5; border-radius: 4px; border-left: 3px solid #ff9800; font-size: 0.85em; color: #333;">`;
+              healthHtml += `🔌 ${pluginName}`;
+              healthHtml += `<div style="color: #999; font-size: 0.75em; margin-top: 2px;">${plugin}</div>`;
+              healthHtml += '</div>';
+            });
+            
+            healthHtml += '</div>'; // grid end
+            healthHtml += '</div>';
+          } else {
+            // プラグインが見つからない場合
+            console.log('⚠️ プラグインが検出されませんでした');
+            healthHtml += '<div style="margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 4px; border-left: 3px solid #ff9800;">';
+            healthHtml += '<div style="color: #666; font-size: 0.9em;">📦 プラグイン:</div>';
+            healthHtml += '<div style="color: #999; font-size: 0.85em; margin-top: 4px;">プラグインが検出されませんでした（HTMLにプラグインのパスが含まれていない可能性があります）</div>';
+            healthHtml += '</div>';
+          }
+          
+          healthHtml += '</div>'; // white box end
+          
+          // こん太のアドバイス
+          healthHtml += '<div style="background: rgba(255,255,255,0.7); padding: 12px; border-radius: 6px; margin-top: 10px; border-left: 4px solid #ff9800;">';
+          healthHtml += '<div style="display: flex; gap: 8px; align-items: start;">';
+          healthHtml += '<img src="images/konta.png" style="width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;">';
+          healthHtml += '<div style="flex: 1;">';
+          
+          let adviceText = '';
+          
+          // PHPバージョンのアドバイス（古い場合はりんくのアラートで既に表示されているため、ここでは表示しない）
+          // PHPバージョンが8.1以上の場合のみ、こん太から良い評価を表示
+          if (healthResult.phpVersion) {
+            const phpVersionStr = String(healthResult.phpVersion);
+            if (phpVersionStr.match(/^[0-9.]+$/)) {
+              const phpVersionNum = parseFloat(phpVersionStr);
+              if (phpVersionNum >= 8.1) {
+                adviceText += `✅ PHP ${healthResult.phpVersion}は最新だぜ!このまま維持しよう!<br>`;
+              }
+              // 8.1未満の場合は、りんくの赤いアラートで既に警告されているため、ここでは表示しない
+            }
+          }
+          
+          // プラグイン数のアドバイス
+          if (healthResult.wpPlugins && healthResult.wpPlugins.length > 0) {
+            if (healthResult.wpPlugins.length > 20) {
+              adviceText += `⚠️ プラグインが多すぎるぜ（${healthResult.wpPlugins.length}個）。パフォーマンスに影響する可能性があるから、不要なプラグインは削除することを検討してくれ!<br>`;
+            } else if (healthResult.wpPlugins.length > 10) {
+              adviceText += `💡 プラグインがやや多いな（${healthResult.wpPlugins.length}個）。定期的に使用していないプラグインがないか確認することを推奨するぜ!<br>`;
+            } else {
+              adviceText += `✅ プラグイン数は適切だぜ（${healthResult.wpPlugins.length}個）。ただし、定期的なアップデートとセキュリティチェックは忘れずにな!<br>`;
+            }
+          }
+          
+          // テーマのアドバイス
+          if (healthResult.wpTheme) {
+            adviceText += `🎨 テーマ「${healthResult.wpTheme}」を使用中だな。テーマも定期的にアップデートしてセキュリティを保つことが重要だぜ!`;
+          }
+          
+          if (adviceText) {
+            healthHtml += '<strong style="color: #e65100;">💡 こん太からのアドバイス:</strong><br>';
+            healthHtml += `<span style="font-size: 0.9em; color: #333;">${adviceText}</span>`;
+          } else {
+            healthHtml += '<strong style="color: #e65100;">✅ こん太からの評価:</strong><br>';
+            healthHtml += '<span style="font-size: 0.9em; color: #333;">WordPressの環境は良好だぜ!このまま維持しよう!</span>';
+          }
+          
+          healthHtml += '</div>';
+          healthHtml += '</div>';
+          healthHtml += '</div>';
+          healthHtml += '</div>'; // box end
+        }
 
         // アドバイスセクション（アドバイスがある場合のみ表示）
         let hasAdvice = false;
@@ -3061,10 +3286,11 @@ async function fetchAll(domain) {
           adviceContent += '📦 ページが重いな。画像の最適化やコード圧縮を検討しよう!<br>';
           hasAdvice = true;
         }
-        if (healthResult.phpVersion && parseFloat(healthResult.phpVersion) < 8.0) {
-          adviceContent += `🔧 PHP ${healthResult.phpVersion}は古いぞ。PHP 8.1以上にアップグレードで高速化できるぜ!<br>`;
-          hasAdvice = true;
-        }
+        // PHPバージョンが古い場合は、りんくの赤いアラートで既に表示されているため、こん太のアドバイスでは表示しない
+        // if (healthResult.phpVersion && parseFloat(healthResult.phpVersion) < 8.0) {
+        //   adviceContent += `🔧 PHP ${healthResult.phpVersion}は古いぞ。PHP 8.1以上にアップグレードで高速化できるぜ!<br>`;
+        //   hasAdvice = true;
+        // }
         if (healthResult.responseTime < 800 && parseFloat(healthResult.htmlSizeKB) < 200) {
           adviceContent += '✅ サイトの速度は良好だぜ!このまま維持しよう!';
           hasAdvice = true;
@@ -3155,6 +3381,46 @@ async function fetchAll(domain) {
   // 👤 個人名ネガティブチェック（オプション）
   // ユーザーがチェックボックスを有効にした場合のみ実行
   // ========================================
+  // ========================================
+  // 🔍 風評系セクション - WEB系の後、ITインフラ系の前
+  // ========================================
+  
+  // 🔍 風評被害チェック（サジェスト汚染）
+  addSpecialSection("🔍 風評被害チェック", `
+    <div id="suggest-loading" style="padding: 20px; background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%); border-radius: 8px; border: 2px solid #fbc02d;">
+      <div style="text-align: center;">
+        <div style="color: #f57f17; font-weight: bold; font-size: 1.1em; margin-bottom: 8px;">🔍 風評被害のチェック中...</div>
+        <div class="loading-dots" style="color: #f57f17; font-size: 0.9em;">サジェストを取得しています<span class="dots"></span></div>
+      </div>
+    </div>
+  `);
+
+  // サジェストチェックを非同期で実行（エラーが発生しても続行）
+  (async () => {
+    try {
+      await checkSuggestPollution(domain, siteTitle);
+    } catch (error) {
+      console.error('サジェストチェックエラー:', error);
+      // エラー表示
+      const loadingDiv = document.getElementById('suggest-loading');
+      if (loadingDiv) {
+        loadingDiv.innerHTML = `
+          <div style="padding: 15px; background: #fff3e0; border: 2px solid #ff9800; border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+              <img src="images/konta.png" style="width: 40px; height: 40px; border-radius: 50%;">
+              <strong style="color: #e65100;">こん太：「サジェストが取得できなかったぜ！」</strong>
+            </div>
+            <div style="font-size: 0.9em; color: #333;">
+              ブラウザの制限でサジェスト情報を取得できませんでした。<br>
+              DNS情報やその他の機能は正常に動作します。
+            </div>
+          </div>
+        `;
+      }
+    }
+  })();
+
+  // 👤 個人名ネガティブチェック（オプション）
   const checkPersonNamesEnabled = document.getElementById('checkPersonNames')?.checked;
 
   if (checkPersonNamesEnabled) {
@@ -3169,89 +3435,54 @@ async function fetchAll(domain) {
   `);
 
   // 個人名チェックを実行
-  try {
-    const personResult = await chrome.runtime.sendMessage({
-      type: 'checkPersonReputations',
-      domain: domain,
-      url: `https://${domain}`
-    });
+  (async () => {
+    try {
+      const personResult = await chrome.runtime.sendMessage({
+        type: 'checkPersonReputations',
+        domain: domain,
+        url: `https://${domain}`
+      });
 
-    const personDiv = document.getElementById('person-loading');
-    if (!personDiv) {
-      console.error('person-loading div not found');
-    } else if (!personResult.success) {
-      personDiv.innerHTML = UI.createErrorBox(personResult.error);
-    } else {
-      let personHtml = '';
-
-      if (personResult.persons.length === 0) {
-        // 個人名が検出されなかった
-        personHtml = UI.createCharacterMessage(
-          'tanu-nee',
-          'たぬ姉：「個人名が検出されなかったわ」',
-          'サイトから役職付きの個人名を検出できませんでした。'
-        );
-      } else if (!personResult.hasNegative) {
-        // ネガティブなし
-        personHtml = UI.createPersonCheckSuccess(personResult.persons);
+      const personDiv = document.getElementById('person-loading');
+      if (!personDiv) {
+        console.error('person-loading div not found');
+      } else if (!personResult.success) {
+        personDiv.innerHTML = UI.createErrorBox(personResult.error);
       } else {
-        // ⚠️ ネガティブ検出
-        personHtml = UI.createPersonCheckNegative(personResult.persons);
-      }
+        let personHtml = '';
 
-      personDiv.innerHTML = personHtml;
+        if (personResult.persons.length === 0) {
+          // 個人名が検出されなかった
+          personHtml = UI.createCharacterMessage(
+            'tanu-nee',
+            'たぬ姉：「個人名が検出されなかったわ」',
+            'サイトから役職付きの個人名を検出できませんでした。'
+          );
+        } else if (!personResult.hasNegative) {
+          // ネガティブなし
+          personHtml = UI.createPersonCheckSuccess(personResult.persons);
+        } else {
+          // ⚠️ ネガティブ検出
+          personHtml = UI.createPersonCheckNegative(personResult.persons);
+        }
+
+        personDiv.innerHTML = personHtml;
+      }
+    } catch (error) {
+      console.error('個人名チェックエラー:', error);
+      const personDiv = document.getElementById('person-loading');
+      if (personDiv) {
+        personDiv.innerHTML = UI.createWarningBox(
+          'サイトへのアクセス制限により個人名を取得できませんでした。<br>他の機能は正常に動作します。',
+          'たぬ姉：「個人名チェックができなかったわ」'
+        );
+      }
     }
-  } catch (error) {
-    console.error('個人名チェックエラー:', error);
-    const personDiv = document.getElementById('person-loading');
-    if (personDiv) {
-      personDiv.innerHTML = UI.createWarningBox(
-        'サイトへのアクセス制限により個人名を取得できませんでした。<br>他の機能は正常に動作します。',
-        'たぬ姉：「個人名チェックができなかったわ」'
-      );
-    }
-  }
+  })();
   } // if (checkPersonNamesEnabled)
 
   // ========================================
-  // 🔍 風評被害チェック（サジェスト汚染）
-  // ========================================
-  const siteTitle = await getActiveTabTitle();
-
-  addSpecialSection("🔍 風評被害チェック", `
-    <div id="suggest-loading" style="padding: 20px; background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%); border-radius: 8px; border: 2px solid #fbc02d;">
-      <div style="text-align: center;">
-        <div style="color: #f57f17; font-weight: bold; font-size: 1.1em; margin-bottom: 8px;">🔍 風評被害のチェック中...</div>
-        <div class="loading-dots" style="color: #f57f17; font-size: 0.9em;">サジェストを取得しています<span class="dots"></span></div>
-      </div>
-    </div>
-  `);
-
-  // サジェストチェックを実行（エラーが発生しても続行）
-  try {
-    await checkSuggestPollution(domain, siteTitle);
-  } catch (error) {
-    console.error('サジェストチェックエラー:', error);
-    // エラー表示
-    const loadingDiv = document.getElementById('suggest-loading');
-    if (loadingDiv) {
-      loadingDiv.innerHTML = `
-        <div style="padding: 15px; background: #fff3e0; border: 2px solid #ff9800; border-radius: 8px;">
-          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-            <img src="images/konta.png" style="width: 40px; height: 40px; border-radius: 50%;">
-            <strong style="color: #e65100;">こん太：「サジェストが取得できなかったぜ！」</strong>
-          </div>
-          <div style="font-size: 0.9em; color: #333;">
-            ブラウザの制限でサジェスト情報を取得できませんでした。<br>
-            DNS情報やその他の機能は正常に動作します。
-          </div>
-        </div>
-      `;
-    }
-  }
-
-  // ========================================
-  // 📡 DNS情報セクション（ITインフラの最後）
+  // 📡 DNS情報セクション（ITインフラ系 - 最後）
   // ========================================
   addSpecialSection("📡 DNS情報", `
     <div style="background: #e3f2fd; padding: 12px; border-radius: 6px; margin-bottom: 10px;">
@@ -3393,7 +3624,8 @@ async function fetchAll(domain) {
   } catch {}
 
   // メールサーバー推定（重複削除）
-  if (allMxRecords.length > 0) {
+  const hasMX = allMxRecords.length > 0;
+  if (hasMX) {
     const uniqueMx = U.uniq(allMxRecords);
 
     const mxEstimates = [];
@@ -3405,6 +3637,62 @@ async function fetchAll(domain) {
       addRow("🔎 推定メールサーバー (MX)", [...new Set(mxEstimates)].join("<br>"));
     }
   }
+
+  // 🚨 メールセキュリティチェック（MXの有無に関わらず実行）
+  try {
+    // SPFとDMARCレコードを取得（既に取得済みの場合は再利用）
+    let spfRecordForAnalysis = '';
+    let dmarcRecordForAnalysis = '';
+    
+    // SPFレコードを取得
+    try {
+      const txt = await U.dohQuery(redirectTarget, "TXT");
+      const txtRecords = (txt.Answer || []).map(r => r.data.replaceAll('"',''));
+      const spfRecords = txtRecords.filter(r => r.toLowerCase().startsWith('v=spf1'));
+      if (spfRecords.length === 1) {
+        spfRecordForAnalysis = spfRecords[0];
+      }
+    } catch {}
+    
+    // DMARCレコードを取得
+    try {
+      const dmarcDomain = `_dmarc.${redirectTarget}`;
+      const dmarcResult = await U.dohQuery(dmarcDomain, "TXT");
+      const dmarcRecords = (dmarcResult.Answer || []).map(r => r.data.replaceAll('"',''));
+      for (const record of dmarcRecords) {
+        if (record.toLowerCase().startsWith('v=dmarc1')) {
+          dmarcRecordForAnalysis = record;
+          break;
+        }
+      }
+    } catch {}
+    
+    // メールセキュリティの詳細分析を実行
+    if (spfRecordForAnalysis || dmarcRecordForAnalysis) {
+      const analysisResult = await chrome.runtime.sendMessage({
+        type: 'analyzeEmailSecurity',
+        domain: redirectTarget,
+        spfRecord: spfRecordForAnalysis,
+        dmarcRecord: dmarcRecordForAnalysis
+      });
+      
+      if (analysisResult && analysisResult.success && analysisResult.analysis) {
+        const analysis = analysisResult.analysis;
+        let successHtml = '<div style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 2px solid #4caf50; padding: 15px; border-radius: 8px;">';
+        
+        if (analysis.spf && analysis.spf.valid) {
+          successHtml += `<div style="margin-bottom: 10px;"><strong>✅ SPF:</strong> ${analysis.spf.policy || '設定済み'}<br><span style="font-size: 0.9em; color: #666;">${analysis.spf.details || ''}</span></div>`;
+        }
+        
+        if (analysis.dmarc && analysis.dmarc.valid) {
+          successHtml += `<div><strong>✅ DMARC:</strong> p=${analysis.dmarc.policy || 'none'}<br><span style="font-size: 0.9em; color: #666;">${analysis.dmarc.details || ''}</span></div>`;
+        }
+        
+        successHtml += '</div>';
+        addRow("✅ メールセキュリティ", successHtml);
+      }
+    }
+  } catch {}
 
   // TXT - 重複を防ぐため、両方から取得して同じ場合は1つだけ表示
   let baseTxtRecords = [];
@@ -4166,13 +4454,57 @@ async function init() {
     els.domain.value = d || q;
   } else {
     const url = await getActiveTabUrl();
-    els.domain.value = U.hostnameFromUrl(url) || "";
+    const hostname = U.hostnameFromUrl(url) || "";
+    
+    // 無効なドメイン名を除外（newtab、chrome://、edge://など）
+    const invalidDomains = ['newtab', 'chrome', 'edge', 'about', 'localhost'];
+    const isInvalid = invalidDomains.some(invalid => hostname.includes(invalid));
+    
+    // 有効なドメイン名のみ設定、無効な場合は空白にしてプレースホルダーを表示
+    els.domain.value = isInvalid ? "" : hostname;
   }
 
   const run = () => {
     // UIをブロックしないようにPromiseで非同期実行
-    Promise.resolve().then(() => {
-      fetchAll(normalizeDomain(els.domain.value));
+    Promise.resolve().then(async () => {
+      const input = els.domain.value.trim();
+      
+      // ドメインかキーワードかを判定（.を含む場合のみドメインとして扱う）
+      const isDomain = input.includes('.');
+      
+      if (isDomain) {
+        // ドメインモード：従来通りの処理
+        fetchAll(normalizeDomain(input));
+      } else {
+        // キーワードモード：既存のcheckSuggestPollution関数を使用
+        console.log('🔍 キーワードモード:', input);
+        
+        // 結果エリアをクリア
+        els.specialSections.innerHTML = '';
+        els.resultBody.innerHTML = '';
+        
+        // DNS情報エリアに説明を表示
+        addRow('💡 モード', `
+          <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #2196f3;">
+            <strong style="color: #1976d2; font-size: 1.1em;">キーワードモード</strong><br>
+            <span style="color: #666; font-size: 0.95em;">「${U.escapeHtml(input)}」の風評チェック</span><br>
+            <span style="color: #999; font-size: 0.85em;">※ キーワードモードではDNS/WHOIS情報は表示されません</span>
+          </div>
+        `);
+        
+        // 風評被害チェックセクションを作成（checkSuggestPollution関数が必要とする）
+        addSpecialSection("🔍 風評被害チェック", `
+          <div id="suggest-loading" style="padding: 20px; background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%); border-radius: 8px; border: 2px solid #fbc02d;">
+            <div style="text-align: center;">
+              <div style="color: #f57f17; font-weight: bold; font-size: 1.1em; margin-bottom: 8px;">🔍 風評被害のチェック中...</div>
+              <div class="loading-dots" style="color: #f57f17; font-size: 0.9em;">サジェストを取得しています<span class="dots"></span></div>
+            </div>
+          </div>
+        `);
+        
+        // 既存のcheckSuggestPollution関数を呼び出す（ドメインモードと同じ）
+        await checkSuggestPollution(input, input);
+      }
     });
   };
   

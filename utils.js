@@ -1,6 +1,11 @@
 function uniq(arr) { return Array.from(new Set(arr.filter(Boolean))); }
 function formatJSON(obj, fallback = "-") { try { if (!obj) return fallback; return JSON.stringify(obj, null, 2); } catch { return fallback; } }
 function hostnameFromUrl(url) { try { return new URL(url).hostname; } catch { return ""; } }
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
 
 function copyToClipboard(text) {
   const ta = document.createElement("textarea");
@@ -171,7 +176,7 @@ function drawBarChart(canvas, dataRows) {
 }
 
 window.OsintUtils = {
-  uniq, formatJSON, hostnameFromUrl, copyToClipboard, downloadText,
+  uniq, formatJSON, hostnameFromUrl, escapeHtml, copyToClipboard, downloadText,
   toCSV, toMarkdownTable,
   dohQuery, rdapDomain, rdapIp, waybackAvailable,
   getApiKeys, stSubdomains, stHistoryA, ipdataLookup, whoisxmlDomain,

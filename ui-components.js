@@ -513,6 +513,29 @@ window.OsintUIComponents = {
   createSuggestList(suggests, platform, color = '#4285f4', negativeKeywords = []) {
     if (!suggests || suggests.length === 0) return '';
     
+    // URL形式を除外するフィルター
+    const isUrlLike = (keyword) => {
+      const urlPatterns = [
+        /^https?[:\/\s]/i,                     // http:// または https:// または https www で始まる
+        /^www[\s.]/i,                          // www. または www で始まる
+        /\.(com|jp|net|org|html?|php|asp|jsp)(\s|$)/i, // ドメイン拡張子で終わる（スペースまたは終端）
+        /\/|\\|&|\?|=/,                        // URLパス文字を含む
+        /^[\w-]+\.[\w-]+\.[\w-]+/,             // xxx.xxx.xxx 形式（ドメイン）
+        /^[\w-]+\s[\w-]+\s[\w-]+\s[\w-]+/,     // xxx xxx xxx xxx 形式（スペース区切りURL）
+      ];
+      return urlPatterns.some(pattern => pattern.test(keyword));
+    };
+    
+    // URLを除外
+    const filteredSuggests = suggests.filter(item => !isUrlLike(item));
+    
+    console.log(`🔧 ${platform}サジェスト: ${suggests.length}件 → フィルター後: ${filteredSuggests.length}件`);
+    
+    if (filteredSuggests.length === 0) {
+      console.log(`⚠️ ${platform}サジェストは全てURL形式のため非表示`);
+      return '';
+    }
+    
     const platformIcons = {
       'Google': '🌐',
       'Yahoo': '🔍',
@@ -532,7 +555,7 @@ window.OsintUIComponents = {
       `;
     }
     
-    suggests.slice(0, 10).forEach((item, index) => {
+    filteredSuggests.slice(0, 10).forEach((item, index) => {
       let displayItem = item;
       
       // ネガティブキーワードをハイライト
@@ -1397,7 +1420,47 @@ window.OsintUIComponents = {
    * @returns {string} HTML文字列
    */
   createBingRelatedKeywords(keywords, negativeKeywords = []) {
+    console.log('🔧 createBingRelatedKeywords 開始:', keywords.length, '件');
+    console.log('🔧 入力キーワード:', keywords);
+    
     if (!keywords || keywords.length === 0) return '';
+    
+    // ノイズとURL形式を除外するフィルター（純粋な関連キーワードのみ残す）
+    const isNoise = (keyword) => {
+      const noisePatterns = [
+        // UI要素
+        /^(すべて|画像|動画|ニュース|地図|ショッピング|検索|もっと見る|関連|検索結果|フィルター)$/i,
+        // URL関連
+        /^https?[:\/\s]/i,                     // http:// または https:// または https www で始まる
+        /^www[\s.]/i,                          // www. または www で始まる
+        /\.(com|jp|net|org|co\.jp|html?|php|asp|jsp)(\s|$)/i, // ドメイン拡張子で終わる（スペースまたは終端）
+        /\/|\\|&|\?|=/,                        // URLパス文字を含む
+        /^[\w-]+\.[\w-]+\.[\w-]+/,             // xxx.xxx.xxx 形式（ドメイン）
+        /^[\w-]+\s[\w-]+\s[\w-]+\s[\w-]+/,     // xxx xxx xxx xxx 形式（スペース区切りURL）
+        // その他のノイズ
+        /^[a-z]{1,2}$/i,                       // 1-2文字のみ（英字）
+        /^[\d\s,.]+$/,                         // 数字と記号のみ
+        /^©|®|™/,                              // 商標記号
+      ];
+      return noisePatterns.some(pattern => pattern.test(keyword));
+    };
+    
+    // ノイズのみを除外（関連キーワードは全て残す）
+    const filteredKeywords = keywords.filter(kw => {
+      const result = !isNoise(kw);
+      if (!result) {
+        console.log(`  ❌ 除外: "${kw}"`);
+      }
+      return result;
+    });
+    
+    console.log('🔧 フィルター後:', filteredKeywords.length, '件');
+    console.log('🔧 残ったキーワード:', filteredKeywords);
+    
+    if (filteredKeywords.length === 0) {
+      console.log('⚠️ フィルター後のキーワードが0件のため、セクション非表示');
+      return '';
+    }
     
     let html = `
       <div style="background: #fff3e0; border: 2px solid #ff9800; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
@@ -1406,7 +1469,7 @@ window.OsintUIComponents = {
         <div style="display: flex; flex-wrap: wrap; gap: 8px;">
     `;
     
-    keywords.slice(0, 12).forEach((keyword, index) => {
+    filteredKeywords.slice(0, 12).forEach((keyword, index) => {
       const isNegative = negativeKeywords.some(neg => keyword.toLowerCase().includes(neg.toLowerCase()));
       const bingSearchUrl = `https://www.bing.com/search?q=${encodeURIComponent(keyword)}`;
       

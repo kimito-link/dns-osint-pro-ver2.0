@@ -2,16 +2,16 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <title>君斗りんくのWEBサイト健康診断</title>
+  <title>💙 君斗りんくのWEBサイト健康診断 & OSINT Helper</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     html, body {
-      width: 800px !important;
-      height: 600px !important;
-      max-width: 800px !important;
-      max-height: 600px !important;
+      min-width: 600px;
+      max-width: 800px;
+      width: 100%;
+      height: 600px;
       overflow-x: hidden !important;
-      overflow-y: hidden !important;
+      overflow-y: auto;
       margin: 0 !important;
       padding: 0 !important;
     }
@@ -22,6 +22,39 @@
     
     img, video, iframe, table {
       max-width: 100% !important;
+      overflow-x: auto !important;
+    }
+    
+    table {
+      table-layout: fixed !important;
+      width: 100% !important;
+    }
+    
+    td, th {
+      word-break: break-word !important;
+      overflow-wrap: break-word !important;
+    }
+    
+    .row {
+      display: flex !important;
+      gap: 10px !important;
+      align-items: center !important;
+    }
+    
+    .row input {
+      flex: 1 !important;
+      min-width: 0 !important;
+    }
+    
+    .row button {
+      flex-shrink: 0 !important;
+    }
+    
+    /* コンテナの最大幅を制限 */
+    .special-section, #specialSections > div {
+      max-width: 100% !important;
+      overflow-x: hidden !important;
+      word-wrap: break-word !important;
     }
     
     /* Hover効果用クラス (CSP対応) */
@@ -102,21 +135,16 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <!-- ロゴスプラッシュ演出 -->
-  <div id="logoSplash" class="logo-splash">
-    <img src="images/logo/logo_kimitolink_RGB_ginga_color.jpg" alt="Kimitolink Logo" class="splash-logo" />
-  </div>
-  
   <header>
     <div class="header-content">
       <img src="images/link.png" alt="君斗りんく" class="header-logo" />
       <div class="header-text">
-        <h1>💫 君斗りんくのWEBサイト健康診断</h1>
-        <p style="margin: 5px 0 0 0; font-size: 0.75em; color: #fff; font-weight: normal; opacity: 0.9;">DNS & WHOIS＆サジェストチェック</p>
+        <h1>💙 君斗りんくのWEBサイト健康診断<span style="font-size: 0.5em; margin-left: 8px; padding: 2px 6px; background: rgba(255,255,255,0.2); border-radius: 3px; font-weight: normal;">™出願中</span></h1>
+        <p style="margin: 5px 0 0 0; font-size: 0.75em; color: #fff; font-weight: normal; opacity: 0.9;">DNS & WHOIS＆サジェストチェック | 商標出願番号: T7810769477297</p>
       </div>
     </div>
     <div class="row">
-      <input id="domain" placeholder="ドメイン名を入力" />
+      <input id="domain" placeholder="キーワード あるいは ドメイン を入力してください" />
       <button id="go">検索</button>
     </div>
     
@@ -135,41 +163,17 @@
 
   <!-- タブナビゲーション -->
   <nav class="tab-navigation">
-    <button class="tab-button active" data-tab="diagnosisTab">🔍 診断結果</button>
+    <button class="tab-button active" data-tab="diagnosisTab">🏥 サイト健康診断</button>
     <button class="tab-button" data-tab="seoTab">📊 SEO情報</button>
   </nav>
 
   <main>
     <!-- 診断結果タブ -->
     <div id="diagnosisTab" class="tab-content active">
-      <!-- 特別なセクション（1列表示） -->
+      <!-- 特別なセクション（1列表示） - 風評チェックなど（最優先表示） -->
       <div id="specialSections"></div>
-    
-    <!-- Googleインデックス状況チェックボタン（SEO関連） -->
-    <div id="googleIndexSection" style="margin: 15px 0; display: none;">
-      <button id="checkGoogleIndex" style="
-        width: 100%;
-        padding: 15px 20px;
-        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-        color: #fff;
-        border: none;
-        border-radius: 8px;
-        font-size: 1.05em;
-        font-weight: bold;
-        cursor: pointer;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-        transition: all 0.3s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-      ">
-        📊 Googleインデックス状況を確認
-      </button>
-      <div id="googleIndexResult" style="margin-top: 15px;"></div>
-    </div>
-    
-      <!-- 通常のDNS情報テーブル（2列表示） -->
+      
+      <!-- 通常のDNS情報テーブル（2列表示） - ITインフラ情報 -->
       <table id="resultTable">
         <thead>
           <tr>
@@ -183,6 +187,30 @@
           </tr>
         </tbody>
       </table>
+    
+      <!-- Googleインデックス状況チェックボタン（SEO関連） -->
+      <div id="googleIndexSection" style="margin: 15px 0; display: none;">
+        <button id="checkGoogleIndex" style="
+          width: 100%;
+          padding: 15px 20px;
+          background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+          color: #fff;
+          border: none;
+          border-radius: 8px;
+          font-size: 1.05em;
+          font-weight: bold;
+          cursor: pointer;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+          transition: all 0.3s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+        ">
+          📊 Googleインデックス状況を確認
+        </button>
+        <div id="googleIndexResult" style="margin-top: 15px;"></div>
+      </div>
     </div>
 
     <!-- SEO情報タブ -->
@@ -269,6 +297,7 @@
   <script src="utils.js"></script>
   <script src="ui-components.js"></script>
   <script src="keyword-expansion.js"></script>
+  <script src="keyword-expansion-filter.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

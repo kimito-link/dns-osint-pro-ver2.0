@@ -52,8 +52,11 @@ async function expandRelatedKeywords(domain, searchName) {
     // 🆕 検索エンジン別の統計
     const stats = {
       google: 0,
-      yahoo: 0,
-      bing: 0
+      bing: 0,
+      youtube: 0,
+      amazon: 0,
+      rakuten: 0,
+      tiktok: 0
     };
     
     console.log(`📊 ${totalSteps}パターンで検索開始`);
@@ -76,28 +79,41 @@ async function expandRelatedKeywords(domain, searchName) {
           query: query
         });
         
-        // 🆕 Google, Yahoo, Bing の3つすべてから取得（統計＋ソース情報付き）
+        // 🆕 全プラットフォームから取得（統計＋ソース情報付き）
         const processKeywords = (keywords, source) => {
           let count = 0;
+          const isDomainMode = domain.includes('.');  // キーワードモード判定
+          
           (keywords || []).forEach(kw => {
-            const fullDomainPrefix = domain.toLowerCase();
-            const wwwDomainPrefix = 'www.' + domain.replace(/^www\./, '').toLowerCase();
-            const lower = kw.toLowerCase();
+            let shouldAdd = true;
             
-            if (!lower.startsWith(fullDomainPrefix) && !lower.startsWith(wwwDomainPrefix)) {
-              if (!allKeywords.has(kw)) {
-                // 新規キーワードの場合、ソース情報を保存
-                allKeywords.set(kw, source);
-                count++;
+            // ドメインモードの場合のみフィルタリング
+            if (isDomainMode) {
+              const fullDomainPrefix = domain.toLowerCase();
+              const wwwDomainPrefix = 'www.' + domain.replace(/^www\./, '').toLowerCase();
+              const lower = kw.toLowerCase();
+              
+              // ドメイン名で始まるものは除外
+              if (lower.startsWith(fullDomainPrefix) || lower.startsWith(wwwDomainPrefix)) {
+                shouldAdd = false;
               }
+            }
+            
+            if (shouldAdd && !allKeywords.has(kw)) {
+              // 新規キーワードの場合、ソース情報を保存
+              allKeywords.set(kw, source);
+              count++;
             }
           });
           return count;
         };
         
         stats.google += processKeywords(response?.google, 'google');
-        stats.yahoo += processKeywords(response?.yahoo, 'yahoo');
         stats.bing += processKeywords(response?.bing, 'bing');
+        stats.youtube += processKeywords(response?.youtube, 'youtube');
+        stats.amazon += processKeywords(response?.amazon, 'amazon');
+        stats.rakuten += processKeywords(response?.rakuten, 'rakuten');
+        stats.tiktok += processKeywords(response?.tiktok, 'tiktok');
         
         // レート制限対策（100ms待機）
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -112,12 +128,15 @@ async function expandRelatedKeywords(domain, searchName) {
       ✅ 完了！ ${allKeywords.size}個の関連キーワードを発見<br>
       <small style="color: #666;">
         🌐 Google: ${stats.google}個 | 
-        🔴 Yahoo: ${stats.yahoo}個 | 
-        🔵 Bing: ${stats.bing}個
+        🔵 Bing: ${stats.bing}個 | 
+        🎥 YouTube: ${stats.youtube}個 | 
+        🛒 Amazon: ${stats.amazon}個 | 
+        🛍️ 楽天: ${stats.rakuten}個 | 
+        📱 TikTok: ${stats.tiktok}個
       </small>
     `;
     console.log(`✅ 拡張完了: ${allKeywords.size}個のキーワード取得`);
-    console.log(`📊 内訳: Google=${stats.google}, Yahoo=${stats.yahoo}, Bing=${stats.bing}`);
+    console.log(`📊 内訳: Google=${stats.google}, Bing=${stats.bing}, YouTube=${stats.youtube}, Amazon=${stats.amazon}, 楽天=${stats.rakuten}, TikTok=${stats.tiktok}`);
     
     // 結果を表示（統計情報＋ソース情報も渡す）
     // Map を [{keyword, source}] の配列に変換
@@ -147,7 +166,7 @@ async function expandRelatedKeywords(domain, searchName) {
  * @param {string} domainCore - ドメインコア
  * @param {Object} stats - 検索エンジン別統計 {google, yahoo, bing}
  */
-function displayExpandedKeywords(keywords, domainCore, stats = {google: 0, yahoo: 0, bing: 0}) {
+function displayExpandedKeywords(keywords, domainCore, stats = {google: 0, bing: 0, youtube: 0, amazon: 0, rakuten: 0, tiktok: 0}) {
   const resultDiv = document.getElementById('expandedKeywordsResult');
   
   if (keywords.length === 0) {
@@ -164,7 +183,10 @@ function displayExpandedKeywords(keywords, domainCore, stats = {google: 0, yahoo
     '詐欺', '被害', '危険', '怠しい', '最悪', 'ブラック',
     'やばい', 'トラブル', '悪質', '悪い', '悪評',
     '炎上', '問題', 'クレーム', '苦情', '評判悪い',
-    '倒産', '閉鎖', 'パワハラ', 'セクハラ', '事件'
+    '倒産', '閉鎖', 'パワハラ', 'セクハラ', '事件',
+    '逮捕', '容疑', '起訴', '裁判', '有罪', '事故',
+    '死亡', '怪我', '負傷', 'ケガ', '違法', '不正',
+    '横領', '脱税', '粉飾', '偽装', '隠蔽', 'リコール'
   ];
   
   // キーワードを分類（ソース情報を保持）
@@ -210,21 +232,33 @@ function displayExpandedKeywords(keywords, domainCore, stats = {google: 0, yahoo
             <div style="opacity: 0.9;">ネガティブ率</div>
           </div>
         </div>
-        <!-- 検索エンジン別内訳 -->
+        <!-- 検索エンジン別内訳（クリック可能） -->
         <div style="border-top: 1px solid rgba(255,255,255,0.3); padding-top: 10px;">
-          <div style="color: #fff; font-size: 0.85em; opacity: 0.9; margin-bottom: 6px; font-weight: 600;">📊 取得元の内訳</div>
+          <div style="color: #fff; font-size: 0.85em; opacity: 0.9; margin-bottom: 6px; font-weight: 600;">📊 取得元の内訳（クリックで絞り込み）</div>
           <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 0.8em;">
-            <div style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px;">
+            <div data-filter="google" class="source-filter" style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
               <div style="font-weight: bold;">🌐 Google</div>
               <div>${stats.google}個 (${((stats.google/totalCount)*100).toFixed(1)}%)</div>
             </div>
-            <div style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px;">
-              <div style="font-weight: bold;">🔴 Yahoo</div>
-              <div>${stats.yahoo}個 (${((stats.yahoo/totalCount)*100).toFixed(1)}%)</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px;">
+            <div data-filter="bing" class="source-filter" style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
               <div style="font-weight: bold;">🔵 Bing</div>
               <div>${stats.bing}個 (${((stats.bing/totalCount)*100).toFixed(1)}%)</div>
+            </div>
+            <div data-filter="youtube" class="source-filter" style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
+              <div style="font-weight: bold;">🎥 YouTube</div>
+              <div>${stats.youtube}個 (${((stats.youtube/totalCount)*100).toFixed(1)}%)</div>
+            </div>
+            <div data-filter="amazon" class="source-filter" style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
+              <div style="font-weight: bold;">🛒 Amazon</div>
+              <div>${stats.amazon}個 (${((stats.amazon/totalCount)*100).toFixed(1)}%)</div>
+            </div>
+            <div data-filter="rakuten" class="source-filter" style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
+              <div style="font-weight: bold;">🛍️ 楽天</div>
+              <div>${stats.rakuten}個 (${((stats.rakuten/totalCount)*100).toFixed(1)}%)</div>
+            </div>
+            <div data-filter="tiktok" class="source-filter" style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
+              <div style="font-weight: bold;">📱 TikTok</div>
+              <div>${stats.tiktok}個 (${((stats.tiktok/totalCount)*100).toFixed(1)}%)</div>
             </div>
           </div>
         </div>
@@ -288,9 +322,15 @@ function displayExpandedKeywords(keywords, domainCore, stats = {google: 0, yahoo
   // タブ切り替えイベント
   setupTabSwitching();
   
+  // プラットフォームフィルタリング
+  setupSourceFiltering(keywords, categorized, negativeKeywords, stats);
+  
   // コピーボタンイベント
   document.getElementById('copyKeywordsBtn').addEventListener('click', () => {
-    const text = keywords.join('\n');
+    // オブジェクト配列からキーワードのみを抽出
+    const text = keywords.map(item => {
+      return typeof item === 'string' ? item : item.keyword;
+    }).join('\n');
     navigator.clipboard.writeText(text).then(() => {
       alert(`✅ ${keywords.length}個のキーワードをコピーしました！`);
     });
@@ -312,8 +352,11 @@ function createKeywordList(keywords, negativeKeywords) {
   // ソース情報のアイコンとカラー
   const sourceInfo = {
     google: { icon: '🌐', color: '#4285f4', name: 'Google' },
-    yahoo: { icon: '🔴', color: '#ff0033', name: 'Yahoo' },
     bing: { icon: '🔵', color: '#0078d4', name: 'Bing' },
+    youtube: { icon: '🎥', color: '#ff0000', name: 'YouTube' },
+    amazon: { icon: '🛒', color: '#ff9900', name: 'Amazon' },
+    rakuten: { icon: '🛍️', color: '#bf0000', name: '楽天' },
+    tiktok: { icon: '📱', color: '#000000', name: 'TikTok' },
     unknown: { icon: '❓', color: '#999', name: '不明' }
   };
   
@@ -322,17 +365,26 @@ function createKeywordList(keywords, negativeKeywords) {
     const source = typeof item === 'string' ? 'unknown' : item.source;
     const isNegative = negativeKeywords.some(neg => kw.includes(neg));
     
-    // 🆕 ソースに応じた検索URL
+    // 🆕 ソースに応じた検索URL（プラットフォーム対応）
     let searchUrl;
     switch(source) {
       case 'google':
         searchUrl = `https://www.google.com/search?q=${encodeURIComponent(kw)}`;
         break;
-      case 'yahoo':
-        searchUrl = `https://search.yahoo.co.jp/search?p=${encodeURIComponent(kw)}`;
-        break;
       case 'bing':
         searchUrl = `https://www.bing.com/search?q=${encodeURIComponent(kw)}`;
+        break;
+      case 'youtube':
+        searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(kw)}`;
+        break;
+      case 'amazon':
+        searchUrl = `https://www.amazon.co.jp/s?k=${encodeURIComponent(kw)}`;
+        break;
+      case 'rakuten':
+        searchUrl = `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(kw)}`;
+        break;
+      case 'tiktok':
+        searchUrl = `https://www.tiktok.com/search?q=${encodeURIComponent(kw)}`;
         break;
       default:
         searchUrl = `https://www.google.com/search?q=${encodeURIComponent(kw)}`;
@@ -361,8 +413,19 @@ function createKeywordList(keywords, negativeKeywords) {
             font-weight: bold;
             min-width: 60px;
             text-align: center;
-          " title="${info.name}から取得">
+          " title="${info.name}サジェストから取得">
             ${info.icon} ${info.name}
+          </span>
+          <span style="
+            display: inline-block;
+            padding: 2px 6px;
+            background: #f3f3f3;
+            color: #666;
+            border-radius: 3px;
+            font-size: 0.7em;
+            font-weight: 500;
+          ">
+            サジェスト
           </span>
           <span style="color: ${isNegative ? '#d32f2f' : '#333'}; font-weight: ${isNegative ? 'bold' : 'normal'};">
             ${isNegative ? '⚠️ ' : ''}${kw}
@@ -370,14 +433,15 @@ function createKeywordList(keywords, negativeKeywords) {
         </div>
         <a href="${searchUrl}" target="_blank" style="
           padding: 6px 12px;
-          background: #2196f3;
+          background: ${info.color};
           color: #fff;
           text-decoration: none;
           border-radius: 4px;
           font-size: 0.85em;
           font-weight: bold;
+          white-space: nowrap;
         ">
-          🔍 検索
+          🔍 ${info.name}検索
         </a>
       </div>
     `;
@@ -426,17 +490,19 @@ function setupTabSwitching() {
  */
 function exportKeywordsToCSV(keywords, negativeKeywords, domainCore) {
   // CSVヘッダー
-  let csv = 'キーワード,タイプ,検索URL\n';
+  let csv = 'キーワード,タイプ,取得元,検索URL\n';
   
   // データ行
-  keywords.forEach(kw => {
+  keywords.forEach(item => {
+    const kw = typeof item === 'string' ? item : item.keyword;
+    const source = typeof item === 'string' ? '不明' : item.source;
     const isNegative = negativeKeywords.some(neg => kw.includes(neg));
     const type = isNegative ? 'ネガティブ' : '通常';
     const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(kw)}`;
     
     // CSVエスケープ
     const escapedKw = `"${kw.replace(/"/g, '""')}"`;
-    csv += `${escapedKw},${type},${searchUrl}\n`;
+    csv += `${escapedKw},${type},${source},${searchUrl}\n`;
   });
   
   // BOM付きUTF-8でダウンロード

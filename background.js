@@ -38,8 +38,8 @@ const TIMEOUT_CONSTANTS = {
  */
 const PERFORMANCE_THRESHOLDS = {
   HTML_SIZE_OPTIMAL: 100,    // 100KB未満が最適
-  HTML_SIZE_LARGE: 500,      // 500KB以上が大きすぎる
-  MAX_PLUGINS: 10            // 表示する最大プラグイン数
+  HTML_SIZE_LARGE: 500       // 500KB以上が大きすぎる
+  // MAX_PLUGINSは削除（全プラグインを表示）
 };
 
 /**
@@ -310,43 +310,41 @@ async function analyzeSiteHealth(domain) {
       issues.push('HTTPSが使用されていません。SSL証明書の導入を推奨します。');
     }
     
-    // 3. タイトルタグチェック
+    // 3. タイトルタグチェック（警告は極端な場合のみ）
     const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
     if (titleMatch) {
       const title = titleMatch[1].trim();
-      if (title.length < 30) {
-        warnings.push(`タイトルが短すぎます (${title.length}文字)。30-60文字を推奨します。`);
-      } else if (title.length > 60) {
-        warnings.push(`タイトルが長すぎます (${title.length}文字)。検索結果で切れる可能性があります。`);
-      } else {
+      // 極端に短い（10文字未満）または極端に長い（80文字超）場合のみ警告
+      if (title.length < 10) {
+        warnings.push(`タイトルが極端に短すぎます (${title.length}文字)。30-60文字を推奨します。`);
+      } else if (title.length > 80) {
+        warnings.push(`タイトルが極端に長すぎます (${title.length}文字)。検索結果で切れる可能性があります。`);
+      } else if (title.length >= 30 && title.length <= 60) {
         goodPoints.push('タイトルタグの文字数が適切です');
       }
+      // 10-30文字、60-80文字の範囲は警告しない（推奨範囲外だが許容範囲）
     } else {
       issues.push('タイトルタグが見つかりません。SEOに致命的です。');
     }
     
-    // 4. メタディスクリプションチェック
+    // 4. メタディスクリプションチェック（警告は設定されていない場合のみ）
     const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i);
     if (descMatch) {
       const desc = descMatch[1].trim();
-      if (desc.length < 80) {
-        warnings.push(`メタディスクリプションが短すぎます (${desc.length}文字)。120-160文字を推奨します。`);
-      } else if (desc.length > 160) {
-        warnings.push(`メタディスクリプションが長すぎます (${desc.length}文字)。検索結果で切れる可能性があります。`);
-      } else {
+      // 文字数チェックは警告しない（設定されていればOK）
+      if (desc.length >= 120 && desc.length <= 160) {
         goodPoints.push('メタディスクリプションの文字数が適切です');
       }
-    } else {
-      warnings.push('メタディスクリプションが設定されていません。検索結果での表示が最適化されません。');
+      // それ以外の長さでも警告しない（推奨範囲外だが許容範囲）
     }
+    // メタディスクリプションが設定されていない場合も警告しない（必須ではない）
     
-    // 5. Canonical URLチェック
+    // 5. Canonical URLチェック（設定されていればOK、なければ警告しない）
     const canonicalMatch = html.match(/<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']+)["']/i);
     if (canonicalMatch) {
       goodPoints.push('Canonical URLが設定されています');
-    } else {
-      warnings.push('Canonical URLが設定されていません。重複コンテンツのリスクがあります。');
     }
+    // 設定されていない場合も警告しない（必須ではない）
     
     // 6. robots metaタグチェック
     const robotsMetaMatch = html.match(/<meta[^>]*name=["']robots["'][^>]*content=["']([^"']+)["']/i);
@@ -360,15 +358,18 @@ async function analyzeSiteHealth(domain) {
       }
     }
     
-    // 7. OGPタグチェック
+    // 7. OGPタグチェック（正規表現エラー修正）
     const ogTitleMatch = html.match(/<meta[^>]*property=["']og:title["']/i);
     const ogImageMatch = html.match(/<meta[^>]*property=["']og:image["']/i);
-    const ogDescMatch = html.match(/<meta>]*property=["']og:description["']/i);
+    const ogDescMatch = html.match(/<meta[^>]*property=["']og:description["']/i);
     
+    // OGPタグが1つでも設定されている場合は警告しない（完全でなくても部分的に設定されていればOK）
+    const hasAnyOGP = ogTitleMatch || ogImageMatch || ogDescMatch;
     if (ogTitleMatch && ogImageMatch && ogDescMatch) {
       goodPoints.push('OGPタグが適切に設定されています（SNSシェア対応）');
-    } else {
-      warnings.push('OGPタグが不完全です。SNSでのシェア時の表示が最適化されません。');
+    } else if (!hasAnyOGP) {
+      // OGPタグが全くない場合のみ警告
+      warnings.push('OGPタグが設定されていません。SNSでのシェア時の表示が最適化されません。');
     }
     
     // === WordPressチェック ===
@@ -383,15 +384,28 @@ async function analyzeSiteHealth(domain) {
     let cf7Vulnerable = false;
     
     // WordPress検出（複数の方法を試行）
-    if (html.includes('wp-content') || 
-        html.includes('wp-includes') ||
-        html.includes('/wp-json/') ||
-        html.match(/<meta name=["']generator["'] content=["']WordPress/i) ||
-        html.includes('wp-emoji') ||
-        html.includes('wp-block-') ||
-        headers['x-powered-by']?.toLowerCase().includes('wordpress')) {
+    const wpChecks = {
+      hasWpContent: html.includes('wp-content'),
+      hasWpIncludes: html.includes('wp-includes'),
+      hasWpJson: html.includes('/wp-json/'),
+      hasGeneratorMeta: !!html.match(/<meta name=["']generator["'] content=["']WordPress/i),
+      hasWpEmoji: html.includes('wp-emoji'),
+      hasWpBlock: html.includes('wp-block-'),
+      hasXPoweredBy: headers['x-powered-by']?.toLowerCase().includes('wordpress')
+    };
+    
+    console.log('🔍 WordPress検出チェック:', wpChecks);
+    
+    if (wpChecks.hasWpContent || 
+        wpChecks.hasWpIncludes ||
+        wpChecks.hasWpJson ||
+        wpChecks.hasGeneratorMeta ||
+        wpChecks.hasWpEmoji ||
+        wpChecks.hasWpBlock ||
+        wpChecks.hasXPoweredBy) {
       isWordPress = true;
       Logger.success('WordPress', 'サイトを検出');
+      console.log('✅ WordPressサイトと判定:', Object.keys(wpChecks).filter(key => wpChecks[key]));
       
       // WordPressバージョン検出（複数の方法）
       // 方法1: generator metaタグ
@@ -457,13 +471,14 @@ async function analyzeSiteHealth(domain) {
         wpTheme = themeMatch[1];
       }
       
-      // WordPressプラグイン検出（主要なもの）
+      // WordPressプラグイン検出（全プラグインを取得）
       const pluginMatches = html.matchAll(/wp-content\/plugins\/([^\/"']+)/gi);
       const pluginSet = new Set();
       for (const match of pluginMatches) {
         pluginSet.add(match[1]);
       }
-      wpPlugins = Array.from(pluginSet).slice(0, 10); // 最大10個まで
+      wpPlugins = Array.from(pluginSet).sort(); // 全プラグインをアルファベット順で取得
+      Logger.info('WordPress', `検出されたプラグイン数: ${wpPlugins.length}個`);
       
       // 古いjQuery検出
       const jqueryMatch = html.match(/jquery(?:\.min)?\.js\?ver=([0-9.]+)/i);
@@ -552,9 +567,10 @@ async function analyzeSiteHealth(domain) {
     
     // === セキュリティヘッダーチェック ===
     // HSTS（HTTPS使用時のみ重要）のみチェック
-    if (finalUrl.startsWith('https://') && !headers['strict-transport-security']) {
-      warnings.push('HSTS（Strict-Transport-Security）ヘッダーが設定されていません。HTTPS接続の安全性を高めるため、設定を推奨します。');
-    }
+    // 注意: HSTSは設定されていなくても必須ではないため、警告は出さない（推奨事項としてのみ）
+    // if (finalUrl.startsWith('https://') && !headers['strict-transport-security']) {
+    //   warnings.push('HSTS（Strict-Transport-Security）ヘッダーが設定されていません。HTTPS接続の安全性を高めるため、設定を推奨します。');
+    // }
     
     // その他のヘッダーは特に警告しない（あれば良い程度）
     if (headers['x-frame-options'] && headers['x-content-type-options']) {
@@ -562,19 +578,20 @@ async function analyzeSiteHealth(domain) {
     }
     
     // === サーバー情報の漏洩チェック ===
-    if (headers['server']) {
-      warnings.push(`サーバー情報が公開されています: ${headers['server']}`);
-    }
+    // サーバー情報の公開は一般的な設定のため、警告は出さない（情報のみ）
+    // if (headers['server']) {
+    //   warnings.push(`サーバー情報が公開されています: ${headers['server']}`);
+    // }
     
-    if (headers['x-powered-by']) {
-      warnings.push(`バックエンド情報が公開されています: ${headers['x-powered-by']}`);
-    }
+    // if (headers['x-powered-by']) {
+    //   warnings.push(`バックエンド情報が公開されています: ${headers['x-powered-by']}`);
+    // }
     
     // === パフォーマンスチェック ===
-    // キャッシュ設定
-    if (!headers['cache-control'] && !headers['expires']) {
-      warnings.push('キャッシュ設定がされていません。ページ読み込みが遅くなる可能性があります。');
-    }
+    // キャッシュ設定は必須ではないため、警告は出さない（推奨事項としてのみ）
+    // if (!headers['cache-control'] && !headers['expires']) {
+    //   warnings.push('キャッシュ設定がされていません。ページ読み込みが遅くなる可能性があります。');
+    // }
     
     // 圧縮設定
     if (!headers['content-encoding']) {
@@ -738,22 +755,93 @@ async function fetchBingSuggest(query) {
   try {
     console.log('Bing Suggest query:', query);
     const url = `https://api.bing.com/osjson.aspx?query=${encodeURIComponent(query)}`;
-    const res = await fetch(url, {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    console.log('Bing Suggest response:', data);
+    return data[1] || [];
+  } catch (error) {
+    console.error('Bing Suggest error:', error);
+    return [];
+  }
+}
+
+async function fetchYouTubeSuggest(query) {
+  try {
+    console.log('YouTube Suggest query:', query);
+    const url = `https://suggestqueries.google.com/complete/search?client=youtube&ds=yt&q=${encodeURIComponent(query)}`;
+    const response = await fetch(url, {
       method: 'GET',
       mode: 'cors',
       cache: 'no-cache'
     });
-    
-    if (!res.ok) {
-      console.warn('Bing Suggest HTTP error:', res.status);
+    if (!response.ok) {
+      console.warn('YouTube Suggest HTTP error:', response.status);
       return [];
     }
-    
-    const data = await res.json();
-    console.log('Bing Suggest response:', data);
-    return data[1] || []; // サジェスト候補の配列
-  } catch (e) {
-    console.warn('Bing Suggest error (CORS制限の可能性):', e.message);
+    const text = await response.text();
+    // JSONP形式を処理: window.google.ac.h(...) の形式
+    const jsonMatch = text.match(/\[.*\]/);
+    if (!jsonMatch) {
+      console.warn('YouTube Suggest: JSON抽出失敗');
+      return [];
+    }
+    const data = JSON.parse(jsonMatch[0]);
+    console.log('YouTube Suggest response:', data);
+    // YouTubeの場合は data[1] が配列の配列なので、最初の要素を取り出す
+    return data[1] ? data[1].map(item => item[0]) : [];
+  } catch (error) {
+    console.error('YouTube Suggest error:', error);
+    return [];
+  }
+}
+
+async function fetchAmazonSuggest(query) {
+  try {
+    console.log('Amazon Suggest query:', query);
+    // Amazonのより簡易的なサジェストAPI
+    const url = `https://completion.amazon.co.jp/search/complete?method=completion&search-alias=aps&mkt=6&q=${encodeURIComponent(query)}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      mode: 'cors',
+      cache: 'no-cache'
+    });
+    if (!response.ok) {
+      console.warn('Amazon Suggest HTTP error:', response.status);
+      return [];
+    }
+    const data = await response.json();
+    console.log('Amazon Suggest response:', data);
+    // Amazon APIのレスポンスは [query, [suggestions]] の形式
+    return data[1] || [];
+  } catch (error) {
+    console.error('Amazon Suggest error:', error);
+    return [];
+  }
+}
+
+async function fetchRakutenSuggest(query) {
+  try {
+    console.log('Rakuten Suggest query:', query);
+    // 楽天のサジェストAPIは直接アクセスできないため、現在は未実装
+    console.log('Rakuten Suggest: API制限のため未実装');
+    return [];
+  } catch (error) {
+    console.error('Rakuten Suggest error:', error);
+    return [];
+  }
+}
+
+async function fetchTikTokSuggest(query) {
+  try {
+    console.log('TikTok Suggest query:', query);
+    // TikTokのサジェストAPIは公開されていないため、未実装
+    console.log('TikTok Suggest: API非公開のため未実装');
+    return [];
+  } catch (error) {
+    console.error('TikTok Suggest error:', error);
     return [];
   }
 }
@@ -880,25 +968,30 @@ async function fetchBingRelatedSearches(query) {
     const relatedSearches = [];
     const seenKeywords = new Set();
     
-    // Bingの「に関連する検索」セクションを探す
-    // ページ下部の関連検索エリア
-    const relatedSectionMatch = html.match(/に関連する検索|関連検索|Related searches/i);
+    // Bingの「に関連する検索」または「について掘り下げる」セクションを探す
+    // ページ下部の関連検索エリア（より広範囲にマッチさせる）
+    const relatedSectionMatch = html.match(/に関連する|について掘り|関連検索|Related|掘り下げ|関連する検索/i);
     
     if (relatedSectionMatch) {
-      console.log('✅ 「に関連する検索」セクションを発見');
+      console.log('✅ 関連検索セクションを発見:', relatedSectionMatch[0]);
       
-      // セクションの後ろ2000文字を取得
+      // セクションの後ろ3000文字を取得（より広範囲に）
       const sectionIndex = relatedSectionMatch.index;
-      const sectionHtml = html.substring(sectionIndex, sectionIndex + 2000);
+      const sectionHtml = html.substring(sectionIndex, sectionIndex + 3000);
+      console.log(`📄 関連検索セクションのHTML抽出 (${sectionHtml.length}文字)`);
+      console.log(`   最初の100文字: ${sectionHtml.substring(0, 100)}`);
       
       // リンクパターンで抽出
       const linkPattern = /<a[^>]+href="\/search\?q=([^"&]+)[^"]*"[^>]*>([^<]+)<\/a>/gi;
       let linkMatch;
+      let totalMatches = 0;
       
       while ((linkMatch = linkPattern.exec(sectionHtml)) !== null && relatedSearches.length < 12) {
+        totalMatches++;
         try {
           const rawKeyword = linkMatch[1];
           const linkText = linkMatch[2];
+          console.log(`   🔍 マッチ${totalMatches}: rawKeyword="${rawKeyword}", linkText="${linkText}"`);
           
           // リンクテキストを優先
           let keyword = linkText.trim();
@@ -907,14 +1000,13 @@ async function fetchBingRelatedSearches(query) {
             keyword = decodeURIComponent(rawKeyword.replace(/\+/g, ' ')).trim();
           }
           
-          // ノイズ除外
+          // 最小限のノイズ除外のみ（関連キーワードは全て残す）
           const noisePatterns = [
-            /^(www\.|https?:\/\/)/i,
-            /©|®|™/,
-            /^[a-z]{1,2}$/i,
-            /^\d+$/,
-            /[\u0000-\u001F]/,
-            /^(すべて|画像|動画|ニュース|地図|ショッピング|検索|もっと見る)$/i,
+            /^(すべて|画像|動画|ニュース|地図|ショッピング|検索|もっと見る|関連|検索結果|フィルター)$/i, // UI要素のみ
+            /^[a-z]{1,2}$/i,                       // 1-2文字のみ（英字）
+            /^[\d\s,.]+$/,                         // 数字と記号のみ
+            /[\u0000-\u001F]/,                     // 制御文字
+            /^©|®|™/,                              // 商標記号
           ];
           
           const isValid = keyword && 
@@ -927,13 +1019,23 @@ async function fetchBingRelatedSearches(query) {
             relatedSearches.push(keyword);
             seenKeywords.add(keyword.toLowerCase());
             console.log(`   ✅ 関連ワード追加[${relatedSearches.length}]: ${keyword}`);
+          } else {
+            console.log(`   ❌ 除外: ${keyword} (理由: ${!keyword ? '空' : keyword.length < 2 ? '短すぎ' : keyword.length > 150 ? '長すぎ' : noisePatterns.some(p => p.test(keyword)) ? 'ノイズ' : '重複'})`);
           }
         } catch (parseError) {
           // エラーは無視
         }
       }
+      console.log(`📊 合計マッチ数: ${totalMatches}件, 採用: ${relatedSearches.length}件`);
     } else {
-      console.log('⚠️ 「に関連する検索」セクションが見つかりませんでした');
+      console.log('⚠️ 関連検索セクションが見つかりませんでした');
+      console.log(`   HTMLに含まれる可能性のあるキーワード: ${html.includes('関連') ? '「関連」あり' : '「関連」なし'}, ${html.includes('掘り下げる') ? '「掘り下げる」あり' : '「掘り下げる」なし'}, ${html.includes('Related') ? '「Related」あり' : '「Related」なし'}`);
+      
+      // デバッグ用：「関連」の周辺100文字を表示
+      const relatedIndex = html.indexOf('関連');
+      if (relatedIndex !== -1) {
+        console.log('   「関連」の周辺テキスト:', html.substring(relatedIndex - 50, relatedIndex + 100));
+      }
     }
     
     console.log(`✅ Bing関連検索取得完了: ${relatedSearches.length}件`);
@@ -1982,17 +2084,23 @@ try {
   const query = msg.query;
 
   // 並列で取得（エラーが出ても続行）
-  const [google, yahoo, bing] = await Promise.allSettled([
+  const [google, bing, youtube, amazon, rakuten, tiktok] = await Promise.allSettled([
     fetchGoogleSuggest(query),
-    fetchYahooSuggest(query),
-    fetchBingSuggest(query)
+    fetchBingSuggest(query),
+    fetchYouTubeSuggest(query),
+    fetchAmazonSuggest(query),
+    fetchRakutenSuggest(query),
+    fetchTikTokSuggest(query)
   ]);
 
   const result = {
     success: true,
     google: google.status === 'fulfilled' ? google.value : [],
-    yahoo: yahoo.status === 'fulfilled' ? yahoo.value : [],
-    bing: bing.status === 'fulfilled' ? bing.value : []
+    bing: bing.status === 'fulfilled' ? bing.value : [],
+    youtube: youtube.status === 'fulfilled' ? youtube.value : [],
+    amazon: amazon.status === 'fulfilled' ? amazon.value : [],
+    rakuten: rakuten.status === 'fulfilled' ? rakuten.value : [],
+    tiktok: tiktok.status === 'fulfilled' ? tiktok.value : []
   };
 
   console.log('getSuggests 結果:', result);
@@ -2002,8 +2110,11 @@ try {
   sendResponse({ 
     success: true, // エラーでも成功として返す
     google: [], 
-    yahoo: [], 
     bing: [],
+    youtube: [],
+    amazon: [],
+    rakuten: [],
+    tiktok: [],
     error: String(e)
   });
 }

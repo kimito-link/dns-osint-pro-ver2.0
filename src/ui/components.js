@@ -1,51 +1,154 @@
 /**
  * 🎨 OsintUIComponents
  * popup.jsで使用するUI生成関数
- * @version 2.0.0
+ * @version 1.0.0
  * 
  * このモジュールは、ポップアップ画面で表示される警告ボックスや相談導線を生成します。
  * 全ての関数はHTML文字列を返し、インラインスタイルを使用しています。
- * 
- * 【リファクタリング情報】
- * 以下の関数は分割され、独立したコンポーネントファイルに移動しました：
- * 
- * 汎用UIコンポーネント:
- * - createErrorBox, createSuccessBox, createWarningBox, createInfoBox → src/components/ui/AlertBox.js
- * - createLoadingSpinner → src/components/ui/LoadingSpinner.js
- * - createCard, createGradientCard → src/components/ui/Card.js
- * - createAccordionButton → src/components/ui/Accordion.js
- * 
- * 業務コンポーネント:
- * - createReputationAlert → src/components/domain/ReputationAlert.js
- * - createEmailSecurityAlert → src/components/domain/EmailSecurityCard.js
- * - createSiteHealthAlert → src/components/domain/SiteHealthCard.js
- * - createFullConsultationSection → src/components/domain/ConsultationSection.js
- * 
- * 定数:
- * - LINE_URLS → src/constants/config.js (window.OsintConstants.LINE_URLS)
  */
 
-// LINE_URLSは各関数内でローカル変数として定義します
-// （src/constants/config.jsで既にconst宣言されているため、グローバルスコープでの再宣言は不可）
+// LINE相談URL（background.jsと同じ）
+const LINE_URLS = {
+  IT_INFRA: 'https://lin.ee/lrjVHvH',
+  REPUTATION: 'https://lin.ee/ThvxXZR'
+};
 
 /**
  * OSINT UIコンポーネント
  * ポップアップで使用するUI要素を生成するモジュール
  * @namespace OsintUIComponents
- * @note 既存のwindow.OsintUIComponentsがある場合は拡張し、ない場合は新規作成
  */
-if (!window.OsintUIComponents) {
-  window.OsintUIComponents = {};
-}
-
-// 既存のオブジェクトに追加（上書きしない）
-Object.assign(window.OsintUIComponents, {
+window.OsintUIComponents = {
   
-  // 以下の関数は分割されました:
-  // - createErrorBox, createSuccessBox, createWarningBox, createInfoBox → src/components/ui/AlertBox.js
-  // - createLoadingSpinner → src/components/ui/LoadingSpinner.js
-  // - createCard, createGradientCard → src/components/ui/Card.js
-  // - createAccordionButton → src/components/ui/Accordion.js
+  /**
+   * エラーメッセージボックス
+   * @param {string} message - エラーメッセージ
+   * @param {string} title - タイトル（オプション）
+   * @returns {string} HTML文字列
+   */
+  createErrorBox(message, title = '⚠️ エラーが発生しました') {
+    return `
+      <div style="background: #ffebee; border: 2px solid #f44336; padding: 15px; border-radius: 8px; margin: 10px 0;">
+        <strong style="color: #c62828; font-size: 1.05em;">${title}</strong><br>
+        <span style="font-size: 0.9em; color: #333; margin-top: 8px; display: block;">${message}</span>
+      </div>
+    `;
+  },
+
+  /**
+   * 成功メッセージボックス
+   * @param {string} message - 成功メッセージ
+   * @param {string} title - タイトル（オプション）
+   * @returns {string} HTML文字列
+   */
+  createSuccessBox(message, title = '✅ 成功') {
+    return `
+      <div style="background: #e8f5e9; border: 2px solid #4caf50; padding: 15px; border-radius: 8px; margin: 10px 0;">
+        <strong style="color: #2e7d32; font-size: 1.05em;">${title}</strong><br>
+        <span style="font-size: 0.9em; color: #333; margin-top: 8px; display: block;">${message}</span>
+      </div>
+    `;
+  },
+
+  /**
+   * 警告メッセージボックス
+   * @param {string} message - 警告メッセージ
+   * @param {string} title - タイトル（オプション）
+   * @returns {string} HTML文字列
+   */
+  createWarningBox(message, title = '⚠️ 注意') {
+    return `
+      <div style="background: #fff3e0; border: 2px solid #ff9800; padding: 15px; border-radius: 8px; margin: 10px 0;">
+        <strong style="color: #e65100; font-size: 1.05em;">${title}</strong><br>
+        <span style="font-size: 0.9em; color: #333; margin-top: 8px; display: block;">${message}</span>
+      </div>
+    `;
+  },
+
+  /**
+   * 情報メッセージボックス
+   * @param {string} message - 情報メッセージ
+   * @param {string} title - タイトル（オプション）
+   * @returns {string} HTML文字列
+   */
+  createInfoBox(message, title = 'ℹ️ 情報') {
+    return `
+      <div style="background: #e3f2fd; border: 2px solid #2196f3; padding: 15px; border-radius: 8px; margin: 10px 0;">
+        <strong style="color: #0d47a1; font-size: 1.05em;">${title}</strong><br>
+        <span style="font-size: 0.9em; color: #333; margin-top: 8px; display: block;">${message}</span>
+      </div>
+    `;
+  },
+
+  /**
+   * ローディングスピナー
+   * @param {string} message - ローディングメッセージ
+   * @returns {string} HTML文字列
+   */
+  createLoadingSpinner(message = '読み込み中...') {
+    return `
+      <style>
+        @keyframes loadingPulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.05); opacity: 0.8; }
+        }
+        @keyframes loadingRotate {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      </style>
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <div style="width: 60px; height: 60px; border: 4px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: loadingRotate 1s linear infinite; margin-bottom: 20px;"></div>
+        <div style="color: #fff; font-size: 1.1em; font-weight: bold; animation: loadingPulse 1.5s ease-in-out infinite;">${message}</div>
+      </div>
+    `;
+  },
+
+  /**
+   * アコーディオンボタン
+   * @param {string} id - ボタンのID
+   * @param {string} text - ボタンのテキスト
+   * @param {boolean} expanded - 初期状態（展開/折りたたみ）
+   * @returns {string} HTML文字列
+   */
+  createAccordionButton(id, text, expanded = false) {
+    const icon = expanded ? '▲' : '▼';
+    return `
+      <button id="${id}" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 6px; font-size: 0.95em; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s ease;">
+        <span>${icon}</span>
+        <span>${text}</span>
+      </button>
+    `;
+  },
+
+  /**
+   * カードコンポーネント
+   * @param {string} content - カードの内容
+   * @param {string} backgroundColor - 背景色（オプション）
+   * @returns {string} HTML文字列
+   */
+  createCard(content, backgroundColor = '#fff') {
+    return `
+      <div style="background: ${backgroundColor}; padding: 18px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin: 10px 0;">
+        ${content}
+      </div>
+    `;
+  },
+
+  /**
+   * グラデーションカード
+   * @param {string} content - カードの内容
+   * @param {string} gradientStart - グラデーション開始色
+   * @param {string} gradientEnd - グラデーション終了色
+   * @returns {string} HTML文字列
+   */
+  createGradientCard(content, gradientStart = '#667eea', gradientEnd = '#764ba2') {
+    return `
+      <div style="background: linear-gradient(135deg, ${gradientStart} 0%, ${gradientEnd} 100%); padding: 20px; border-radius: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); margin: 10px 0;">
+        ${content}
+      </div>
+    `;
+  },
 
   /**
    * キャラクター付きメッセージボックス
@@ -109,12 +212,6 @@ Object.assign(window.OsintUIComponents, {
    * @returns {string} HTML文字列
    */
   createPersonCheckNegative(persons) {
-    // LINE_URLSをローカル変数として定義
-    const LINE_URLS = window.OsintConstants?.LINE_URLS || {
-      IT_INFRA: 'https://lin.ee/lrjVHvH',
-      REPUTATION: 'https://lin.ee/ThvxXZR'
-    };
-    
     const negativePersons = persons.filter(p => p.hasNegative);
     
     let html = `
@@ -173,7 +270,39 @@ Object.assign(window.OsintUIComponents, {
     return html;
   },
 
-  // createReputationAlert は src/components/domain/ReputationAlert.js に移動しました
+  /**
+   * 風評被害警告ボックス（簡易版）
+   * @returns {string} HTML文字列
+   */
+  createReputationAlert() {
+    return `
+      <div style="background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%); border: 3px solid #b71c1c; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+          <img src="images/konta.png" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #fff;">
+          <div style="flex: 1;">
+            <strong style="color: #fff; font-size: 1.3em;">こんた：「ネガティブサジェストが見つかったぜ！」</strong><br>
+            <span style="color: rgba(255,255,255,0.9); font-size: 0.95em;">風評被害対策が必要です</span>
+          </div>
+        </div>
+        
+        <div style="background: #e3f2fd; border-left: 4px solid #1976d2; padding: 12px; border-radius: 4px; margin-bottom: 15px;">
+          <div style="display: flex; gap: 10px; align-items: start;">
+            <img src="images/link.png" style="width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;">
+            <div style="flex: 1;">
+              <strong style="color: #1565c0; font-size: 1em;">りんく：「風評被害対策が必要だね」</strong><br>
+              <span style="font-size: 0.9em; color: #333; margin-top: 5px; display: block;">
+                ネガティブサジェストは企業イメージに影響します。早めに風評対策を検討しましょう。
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <a href="${LINE_URLS.REPUTATION}" target="_blank" style="display: block; background: linear-gradient(135deg, #00e676 0%, #00c853 100%); color: #fff; text-align: center; padding: 15px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.05em; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.2s;">
+          🛡️ 風評被害対策の無料相談はこちら
+        </a>
+      </div>
+    `;
+  },
 
   /**
    * 検出されたネガティブサジェスト詳細表示
@@ -302,12 +431,6 @@ Object.assign(window.OsintUIComponents, {
    * @returns {string} HTML文字列
    */
   createNegativeSuggestAlert(negativeSuggests, siteName) {
-    // LINE_URLSをローカル変数として定義
-    const LINE_URLS = window.OsintConstants?.LINE_URLS || {
-      IT_INFRA: 'https://lin.ee/lrjVHvH',
-      REPUTATION: 'https://lin.ee/ThvxXZR'
-    };
-    
     let html = `
       <div style="background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%); border: 3px solid #b71c1c; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); margin-bottom: 20px;">
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
@@ -594,9 +717,173 @@ Object.assign(window.OsintUIComponents, {
     `;
   },
 
-  // createSiteHealthAlert は src/components/domain/SiteHealthCard.js に移動しました
-  // createEmailSecurityAlert は src/components/domain/EmailSecurityCard.js に移動しました
-  // createFullConsultationSection は src/components/domain/ConsultationSection.js に移動しました
+  /**
+   * サイト健康診断警告ボックス生成
+   * WordPress/PHPの問題が発見された際にITインフラサポートへの相談導線を表示
+   * @returns {string} HTML文字列
+   */
+  createSiteHealthAlert() {
+    return `
+      <div style="background: linear-gradient(135deg, #ff6b6b 0%, #ff8787 100%); border: 3px solid #c92a2a; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+          <span style="font-size: 2.5em;">⚠️</span>
+          <div style="flex: 1;">
+            <strong style="color: #fff; font-size: 1.3em;">WordPressが古くて危険です！</strong><br>
+            <span style="color: rgba(255,255,255,0.9); font-size: 0.95em;">ハッキングのリスクが高い状態です</span>
+          </div>
+        </div>
+        
+        <div style="background: rgba(255,255,255,0.95); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+          <div style="color: #333; font-size: 0.95em; line-height: 1.8;">
+            <strong style="color: #d32f2f; font-size: 1.1em;">🚨 今すぐ対応が必要な理由:</strong><br><br>
+            ❌ <strong style="color: #d32f2f;">WordPressが古い</strong> → セキュリティホールだらけ<br>
+            ❌ <strong style="color: #d32f2f;">PHPが古い</strong> → サポート終了で脆弱性が残る<br>
+            ❌ <strong>ハッカーに狙われやすい</strong><br>
+            ❌ <strong>顧客情報が漏れる可能性</strong>
+          </div>
+        </div>
+        
+        <div style="display: flex; align-items: start; gap: 12px; margin-bottom: 15px;">
+          <img src="images/link.png" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #fff; flex-shrink: 0;">
+          <div style="flex: 1;">
+            <div style="background: #fff; padding: 12px; border-radius: 8px; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <div style="position: absolute; left: -10px; top: 20px; width: 0; height: 0; border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-right: 10px solid #fff;"></div>
+              <strong style="color: #667eea;">りんく:</strong><br>
+              <span style="color: #333; font-size: 0.95em; line-height: 1.6;">「この状態は本当に危ないよ！りんくが頼りにしているリバースハックに相談してみて！WordPressとPHPのアップデートを安全にやってくれるよ！」</span>
+            </div>
+          </div>
+        </div>
+        
+        <a href="https://lin.ee/lrjVHvH" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">
+          <img src="images/rev.png" style="height: 45px; width: auto;">
+          <div style="text-align: left; flex: 1;">
+            <div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>
+            <div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div>
+          </div>
+          <div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>
+        </a>
+      </div>
+    `;
+  },
+  
+  /**
+   * メールセキュリティ警告ボックス生成
+   * SPF/DKIM/DMARCが未設定の場合にメール配信の問題を警告
+   * @returns {string} HTML文字列
+   */
+  createEmailSecurityAlert() {
+    return `
+      <div style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); border: 3px solid #e65100; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; margin-bottom: 15px; gap: 12px;">
+          <img src="images/link.png" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #fff;">
+          <div style="flex: 1;">
+            <strong style="color: #fff; font-size: 1.3em;">りんく：「メールセキュリティが危険だよ！」</strong><br>
+            <span style="color: rgba(255,255,255,0.9); font-size: 0.95em;">メールが届かないリスクがあるよ</span>
+          </div>
+        </div>
+        
+        <div style="background: rgba(255,255,255,0.95); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+          <strong style="color: #e65100; font-size: 1.1em;">⚠️ このままだと起こる問題:</strong><br>
+          <div style="color: #333; font-size: 0.95em; line-height: 1.8; margin-top: 10px;">
+            ❌ <strong style="color: #d32f2f;">Gmailなどに届かない</strong><br>
+            ❌ <strong>迷惑メールフォルダ行き</strong><br>
+            ❌ <strong>顧客とのやり取りができない</strong><br>
+            ❌ <strong>ビジネスチャンスを逃す</strong>
+          </div>
+        </div>
+        
+        <a href="https://lin.ee/lrjVHvH" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">
+          <img src="images/rev.png" style="height: 45px; width: auto;">
+          <div style="text-align: left; flex: 1;">
+            <div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>
+            <div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div>
+          </div>
+          <div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>
+        </a>
+      </div>
+    `;
+  },
+  
+  /**
+   * 相談セクション生成（フルバージョン）
+   * りんくのメッセージ、リバースハックの情報、LINE相談ボタンを含む豪華なボックス
+   * @param {Object} options - オプション
+   * @param {string} options.type - 'reputation'(風評対策) or 'itinfra'(ITインフラ)
+   * @param {string} [options.rinkMessage] - りんくのメッセージ
+   * @param {string} [options.severity='warning'] - 警告レベル
+   * @param {string} [options.customTitle] - カスタムタイトル
+   * @param {string} [options.customDescription] - カスタム説明文
+   * @returns {string} HTML文字列
+   */
+  createFullConsultationSection(options = {}) {
+    const {
+      type = 'itinfra',
+      rinkMessage = 'この問題、りんくが頼りにしているリバースハックに相談するといいよ！',
+      severity = 'warning',
+      customTitle = null,
+      customDescription = null
+    } = options;
+    
+    const isReputation = type === 'reputation';
+    const linkUrl = isReputation ? 'https://lin.ee/ThvxXZR' : 'https://lin.ee/lrjVHvH';
+    const gradientColor = severity === 'warning' ? 
+      'linear-gradient(135deg, #ff9800 0%, #ff6b00 100%)' : 
+      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    const borderColor = severity === 'warning' ? '#e65100' : '#5a67d8';
+    const buttonColor = severity === 'warning' ? '#ff6b00' : '#667eea';
+    
+    const title = customTitle || (isReputation ? '風評対策' : 'ITインフラサポート');
+    const description = customDescription || (isReputation ? 
+      'サジェスト汚染対策・逆SEO対策の専門家' : 
+      'WordPress・PHP・SEO・セキュリティの専門家');
+    
+    return `
+      <div style="background: ${gradientColor}; border: 3px solid ${borderColor}; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); position: relative; overflow: hidden;">
+        
+        <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%; z-index: 0;"></div>
+        <div style="position: absolute; bottom: -30px; left: -30px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; z-index: 0;"></div>
+        
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 18px; position: relative; z-index: 1;">
+          <img src="images/rev.png" style="height: 65px; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));">
+          <div style="flex: 1;">
+            <div style="color: #fff; font-size: 1.3em; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.2); margin-bottom: 5px;">${title}</div>
+            <div style="color: rgba(255,255,255,0.95); font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
+              <span style="background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 10px; font-size: 0.85em;">りんく推薦</span>
+              <span>${description}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div style="display: flex; align-items: start; gap: 10px; margin-bottom: 15px; position: relative; z-index: 1;">
+          <img src="images/link.png" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #fff; flex-shrink: 0;">
+          <div style="flex: 1;">
+            <div style="background: #fff; padding: 12px; border-radius: 8px; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <div style="position: absolute; left: -10px; top: 20px; width: 0; height: 0; border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-right: 10px solid #fff;"></div>
+              <strong style="color: #667eea;">りんく:</strong><br>
+              <span style="color: #333; font-size: 0.95em; line-height: 1.6;">「${rinkMessage}」</span>
+            </div>
+          </div>
+        </div>
+        
+        <a href="${linkUrl}" target="_blank" class="hover-scale-border" style="display: flex; align-items: center; justify-content: center; gap: 15px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 15px rgba(6,199,85,0.3); position: relative; z-index: 1; border: none;">
+          <img src="images/rev.png" style="height: 48px; width: auto;">
+          <div style="text-align: left; flex: 1;">
+            <div style="color: #fff; font-weight: bold; font-size: 1.2em; line-height: 1.3;">${isReputation ? 'リバースハックに相談（風評対策）' : 'リバースハックに相談（ITインフラ）'}</div>
+            <div style="color: rgba(255,255,255,0.9); font-size: 0.85em; margin-top: 2px;">りんくが頼りにしている専門家 | レスポンス◎</div>
+          </div>
+          <div style="color: #fff; font-size: 1.8em; font-weight: bold;">→</div>
+        </a>
+        
+        <div style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.15); border-radius: 8px; backdrop-filter: blur(10px); position: relative; z-index: 1;">
+          <div style="color: rgba(255,255,255,0.95); font-size: 0.85em; line-height: 1.7;">
+            ✅ <strong>対応可能:</strong> ${isReputation ? 
+              'サジェスト削除・逆SEO・ネガティブワード対策' : 
+              'WEBサイト高速化・WordPress/PHPアップデート・SEO対策・セキュリティ対策・メール設定（SPF/DKIM/DMARC）'}
+          </div>
+        </div>
+      </div>
+    `;
+  },
   
   /**
    * メールセキュリティ警告ボックス生成（上部表示用）
@@ -608,12 +895,6 @@ Object.assign(window.OsintUIComponents, {
    * @returns {string} HTML文字列
    */
   createEmailSecurityTopAlert(options = {}) {
-    // LINE_URLSをローカル変数として定義
-    const LINE_URLS = window.OsintConstants?.LINE_URLS || {
-      IT_INFRA: 'https://lin.ee/lrjVHvH',
-      REPUTATION: 'https://lin.ee/ThvxXZR'
-    };
-    
     const { hasSPF = false, hasDKIM = false, hasDMARC = false, spfIssues = [], dmarcIssues = [] } = options;
     
     // 欠けている項目をリストアップ
@@ -689,7 +970,7 @@ Object.assign(window.OsintUIComponents, {
           <img src="images/rev.png" style="height: 45px; width: auto;">
           <div style="text-align: left; flex: 1;">
             <div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>
-            <div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎ | ${window.OsintUIComponents.createPremiumIdBadge ? window.OsintUIComponents.createPremiumIdBadge('@revit') : '<strong style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px;">@revit</strong>'}</div>
+            <div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div>
           </div>
           <div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>
         </a>
@@ -704,7 +985,57 @@ Object.assign(window.OsintUIComponents, {
     `;
   },
   
-  // createReputationAlert は src/components/domain/ReputationAlert.js に移動しました（重複削除）
+  /**
+   * 風評被害警告ボックス生成
+   * ネガティブなサジェストが発見された際に風評対策の相談導線を表示
+   * @returns {string} HTML文字列
+   */
+  createReputationAlert() {
+    return `
+      <div style="background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%); border: 3px solid #b71c1c; padding: 20px; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.15); margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+          <img src="images/link.png" style="width: 55px; height: 55px; border-radius: 50%; border: 3px solid #fff;">
+          <div style="flex: 1;">
+            <strong style="color: #fff; font-size: 1.3em;">りんく：「ネガティブなサジェストが見つかったよ！」</strong><br>
+            <span style="color: rgba(255,255,255,0.9); font-size: 0.95em;">風評被害のリスクがあるよ</span>
+          </div>
+        </div>
+        
+        <div style="background: rgba(255,255,255,0.95); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+          <div style="padding: 10px; background: #ffebee; border-left: 3px solid #f44336; border-radius: 4px;">
+            <strong style="color: #c62828;">⚠️ 風評被害のリスク</strong><br>
+            <span style="font-size: 0.85em; color: #666;">
+              ・ 検索されたときにネガティブな候補が表示される<br>
+              ・ 顧客や取引先の信頼を失う<br>
+              ・ ビジネス機会の損失<br>
+              ・ 企業イメージの悪化
+            </span>
+          </div>
+        </div>
+        
+        <div style="background: #e3f2fd; border-left: 4px solid #1976d2; padding: 12px; border-radius: 4px; margin-top: 12px; margin-bottom: 12px;">
+          <div style="display: flex; gap: 8px; align-items: start;">
+            <img src="images/link.png" style="width: 35px; height: 35px; border-radius: 50%;">
+            <div style="flex: 1;">
+              <strong style="color: #1565c0;">💎 りんくからの提案</strong><br>
+              <span style="font-size: 0.85em; color: #333;">
+                「りんくが頼りにしているリバースハックに相談してみて！サジェスト汚染対策や逆SEOの実績がすごいんだ！」
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <a href="https://lin.ee/ThvxXZR" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">
+          <img src="images/rev.png" style="height: 45px; width: auto;">
+          <div style="text-align: left; flex: 1;">
+            <div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（風評対策）</div>
+            <div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div>
+          </div>
+          <div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>
+        </a>
+      </div>
+    `;
+  },
 
   /**
    * SEOメタ情報表示セクション生成
@@ -1322,12 +1653,6 @@ Object.assign(window.OsintUIComponents, {
    * @returns {string} HTML文字列
    */
   createWwwUnificationAlert() {
-    // LINE_URLSをローカル変数として定義
-    const LINE_URLS = window.OsintConstants?.LINE_URLS || {
-      IT_INFRA: 'https://lin.ee/lrjVHvH',
-      REPUTATION: 'https://lin.ee/ThvxXZR'
-    };
-    
     return `
       <div style="background: linear-gradient(135deg, #ff9800 0%, #fb8c00 100%); border: 3px solid #e65100; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
@@ -1364,7 +1689,7 @@ Object.assign(window.OsintUIComponents, {
           <img src="images/rev.png" style="height: 45px; width: auto;">
           <div style="text-align: left; flex: 1;">
             <div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>
-            <div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎ | ${window.OsintUIComponents.createPremiumIdBadge ? window.OsintUIComponents.createPremiumIdBadge('@revit') : '<strong style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px;">@revit</strong>'}</div>
+            <div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div>
           </div>
           <div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>
         </a>
@@ -1620,7 +1945,7 @@ Object.assign(window.OsintUIComponents, {
 
     return html;
   }
-});
+};
 
 // デバッグ用ログ
 console.log('✅ ui-components.js 読み込み完了');

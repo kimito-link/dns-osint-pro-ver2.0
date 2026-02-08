@@ -9,6 +9,10 @@
 
 Chrome拡張機能として動作する、ドメイン情報の総合分析ツールです。DNS情報、WHOIS、サジェスト汚染検出、サイト健康診断、メールセキュリティチェックなど、Web調査に必要な情報を一括で取得できます。
 
+> 📖 **ドキュメントを探している方へ**  
+> プロジェクトのすべてのドキュメント構造は [DOCUMENT_STRUCTURE.md](DOCUMENT_STRUCTURE.md) で確認できます。  
+> 開発者向けの詳細ドキュメントは [docs/00_INDEX.md](docs/00_INDEX.md) を参照してください。
+
 ![Banner](docs/banner.png)
 
 ---
@@ -233,6 +237,8 @@ IPアドレス、ホスト名、レジストラ情報から、使用している
 
 ## 📂 プロジェクト構造
 
+> 📖 **詳細なドキュメント構造は [DOCUMENT_STRUCTURE.md](DOCUMENT_STRUCTURE.md) を参照してください**
+
 ```
 dns-osint-pro-ver2.0/
 ├── 📄 manifest.json          # Chrome拡張機能の設定ファイル
@@ -240,38 +246,49 @@ dns-osint-pro-ver2.0/
 ├── ⚙️ popup.js               # メインロジック（フロントエンド）
 ├── 🎨 styles.css             # スタイルシート
 ├── 🔧 background.js          # バックグラウンドスクリプト（API呼び出し）
-├── 🛠️ utils.js               # ユーティリティ関数（DNS/RDAP）
+├── 🛠️ utils.js               # ユーティリティ関数（DNS/RDAP） ※旧版
 ├── 📄 options.html           # オプションページ
 ├── ⚙️ options.js             # オプション設定
 │
+├── 📁 src/                   # リファクタリング後のソースコード（NEW）
+│   ├── core/                # コア機能
+│   ├── features/            # 機能モジュール
+│   │   ├── suggest/        # サジェスト機能
+│   │   ├── site-health/    # サイト健康診断
+│   │   └── email-security/ # メールセキュリティ
+│   ├── ui/                  # UIコンポーネント
+│   │   ├── components.js   # UIコンポーネント（ui-components.jsから移行）
+│   │   └── link-templates.js
+│   ├── utils/               # ユーティリティ
+│   │   └── utils.js        # 共通ユーティリティ
+│   └── demos/               # デモ・テストファイル
+│
+├── 📁 docs/                  # ドキュメント（リファクタリング済み）
+│   ├── 00_INDEX.md          # ドキュメントインデックス（NEW）
+│   ├── guides/              # ガイド類（NEW）
+│   │   ├── USAGE.md        # 使用方法の詳細
+│   │   ├── DEVELOPMENT.md  # 開発者向けガイド
+│   │   └── ...
+│   ├── specs/               # 仕様書（NEW）
+│   │   ├── API.md          # API仕様書
+│   │   ├── SPEC.md         # 機能仕様
+│   │   └── ...
+│   └── workflows/           # ワークフロー（NEW）
+│
 ├── 📁 icons/                 # アイコン画像
-│   ├── icon16.png           # 16x16 ツールバーアイコン
-│   ├── icon32.png           # 32x32
-│   ├── icon48.png           # 48x48
-│   ├── icon128.png          # 128x128 拡張機能ストア用
-│   └── kimito-link.jpg      # ヘッダーロゴ
-│
 ├── 📁 images/                # キャラクター画像
-│   ├── link.png             # りんく
-│   ├── konta.png            # こん太
-│   ├── tanu-nee.png         # たぬ姉
-│   └── rev.png              # Reverse Rebirth Hackロゴ
-│
-├── 📁 docs/                  # ドキュメント
-│   ├── USAGE.md             # 使用方法の詳細
-│   ├── DEVELOPMENT.md       # 開発者向けガイド
-│   ├── API.md               # API仕様書
-│   └── screenshot.png       # スクリーンショット
-│
 ├── 📁 .claude/               # Claude AI設定
 ├── 📁 .claude-flow/          # Claude Flow設定
-├── 📁 src/                   # 追加ソースコード（将来の拡張用）
 │
+├── 📄 DOCUMENT_STRUCTURE.md  # ドキュメント構造ガイド（NEW）
+├── 📄 CHANGELOG_DOCS.md      # ドキュメント変更履歴（NEW）
 ├── 📄 README.md              # このファイル
 ├── 📄 CHANGELOG.md           # 変更履歴
 ├── 📄 LICENSE                # MITライセンス
-└── 📄 package.json           # npm設定（将来の拡張用）
+└── 📄 package.json           # npm設定
 ```
+
+> 📝 **注意**: 現在リファクタリング中です。`src/`配下が新しい構造、ルート階層のJSファイルは旧構造です。
 
 ---
 
@@ -337,6 +354,29 @@ cd dns-osint-pro-ver2.0
 # Chrome拡張機能として読み込む
 # chrome://extensions/ → デベロッパーモード ON → パッケージ化されていない拡張機能を読み込む
 ```
+
+### Gate 1: 開発プロセス
+
+このプロジェクトでは、**Gate 1**という構造化された開発プロセスを採用しています。
+
+**Gate 1の目的:**
+- 危険な変更を自動検知
+- 影響範囲を明確化
+- テストを必須化
+- 「5歩進んだら7歩下がる」問題の解決
+
+**主なツール:**
+- `scripts/diff-check.sh`: 危険な変更を自動検知
+- `.github/pull_request_template.md`: PR作成時のチェックリスト
+- `docs/contract.md`: 新機能実装時の4点セットテンプレート
+- `.github/workflows/gate1.yml`: GitHub Actions CI
+
+**使い方:**
+1. 変更をコミットする前に`bash scripts/diff-check.sh`を実行
+2. 警告が表示された場合は必須アクションを実施
+3. PR作成時はGate 1チェックリストを全てチェック
+
+詳細は [docs/workflows/GATE1_GUIDE.md](docs/workflows/GATE1_GUIDE.md) を参照してください。
 
 ### デバッグ方法
 

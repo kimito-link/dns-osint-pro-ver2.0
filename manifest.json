@@ -1,11 +1,23 @@
 {
   "manifest_version": 3,
-  "name": "君斗りんくのWEBサイト健康診断 & OSINT Helper",
-  "version": "7.3.2",
-  "description": "現在のタブのドメインについて、IP/DNS/WHOIS(RDAP)/Wayback/サブドメイン/履歴を一括取得。右クリック照会・グラフ・コピー/DL対応。",
+  "name": "💙 君斗りんくのWEBサイト健康診断 & OSINT Helper",
+  "version": "8.0.3",
+  "description": "複数の検索エンジンのサジェスト機能から、ネガティブキーワードを自動検出します。DNS/WHOIS/SSL診断、CSV出力機能を搭載。",
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Open OSINT Helper"
+    "default_title": "💙 君斗りんくのWEBサイト健康診断 & OSINT Helper",
+    "default_icon": {
+      "16": "images/link.png",
+      "32": "images/link.png",
+      "48": "images/link.png",
+      "128": "images/link.png"
+    }
+  },
+  "icons": {
+    "16": "images/link.png",
+    "32": "images/link.png",
+    "48": "images/link.png",
+    "128": "images/link.png"
   },
   "permissions": [
     "activeTab",
@@ -31,17 +43,17 @@
     "https://ff.search.yahoo.co.jp/*",
     "https://m.search.yahoo.co.jp/*",
     "https://api.bing.com/*",
+    "https://completion.amazon.co.jp/*",
+    "https://completion.amazon.com/*",
+    "https://suggestqueries.google.co.jp/*",
+    "https://www.bing.com/*",
+    "https://www.google.com/*",
+    "https://www.google.co.jp/*",
     "http://*/*",
     "https://*/*"
   ],
   "background": {
     "service_worker": "background.js"
-  },
-  "icons": {
-    "16": "images/link.png",
-    "32": "images/link.png",
-    "48": "images/link.png",
-    "128": "images/link.png"
   },
   "options_page": "options.html"
 }

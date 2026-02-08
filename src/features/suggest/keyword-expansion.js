@@ -14,13 +14,7 @@ async function expandRelatedKeywords(domain, searchName) {
   const progressDiv = document.getElementById('expansionProgress');
   const progressBar = document.getElementById('progressBar');
   const progressText = document.getElementById('progressText');
-  const progressStatus = document.getElementById('progressStatus');
-  const progressPercent = document.getElementById('progressPercent');
   const resultDiv = document.getElementById('expandedKeywordsResult');
-  
-  // りんくのアニメーション要素
-  const rinkuEyes = document.getElementById('keywordRinkuEyes');
-  const rinkuMouth = document.getElementById('keywordRinkuMouth');
   
   // ボタン無効化
   expandBtn.disabled = true;
@@ -29,88 +23,6 @@ async function expandRelatedKeywords(domain, searchName) {
   
   // プログレスバー表示
   progressDiv.style.display = 'block';
-  
-  // りんくのアニメーション開始
-  let eyeState = 'normal';
-  let mouthState = 'closed';
-  let lastBlinkTime = Date.now();
-  let lastMouthChangeTime = Date.now();
-  let animationId = null; // アニメーションIDを保存
-  let isAnimating = true; // アニメーション実行中フラグ
-  
-  const updateEyes = (state) => {
-    if (!rinkuEyes) return;
-    const eyeImages = {
-      'normal': 'images/partsfile/rinku/rinku-eyes-normal.png',
-      'blink': 'images/partsfile/rinku/rinku-eyes-blink.png',
-      'smile': 'images/partsfile/rinku/rinku-eyes-smile.png'
-    };
-    const newSrc = eyeImages[state] || eyeImages.normal;
-    if (rinkuEyes.src !== newSrc) {
-      rinkuEyes.src = newSrc;
-      eyeState = state;
-    }
-  };
-  
-  const updateMouth = (state) => {
-    if (!rinkuMouth) return;
-    const mouthImages = {
-      'closed': 'images/partsfile/rinku/rinku-mouth-closed.png',
-      'open': 'images/partsfile/rinku/rinku-mouth-open.png'
-    };
-    const newSrc = mouthImages[state] || mouthImages.closed;
-    if (rinkuMouth.src !== newSrc) {
-      rinkuMouth.src = newSrc;
-      mouthState = state;
-    }
-  };
-  
-  // アニメーション停止関数
-  const stopAnimation = () => {
-    isAnimating = false;
-    if (animationId !== null) {
-      cancelAnimationFrame(animationId);
-      animationId = null;
-    }
-    
-    // CSSアニメーションも停止（回転アニメーション）
-    const container = document.getElementById('keywordRinkuContainer');
-    if (container) {
-      container.style.animation = 'none';
-    }
-    
-    // 最終表情を固定（笑顔）
-    updateEyes('smile');
-    updateMouth('open');
-  };
-  
-  const animateCharacter = () => {
-    if (!isAnimating) return; // アニメーション停止時は実行しない
-    
-    const now = Date.now();
-    
-    // まばたきアニメーション（1-2秒間隔）
-    if (now - lastBlinkTime > 1000 + Math.random() * 1000) {
-      updateEyes('blink');
-      setTimeout(() => {
-        if (isAnimating) { // 停止されていない場合のみ更新
-          updateEyes(eyeState); // 現在の状態に戻す
-        }
-      }, 100);
-      lastBlinkTime = now;
-    }
-    
-    // 口の開閉アニメーション（0.3-0.6秒間隔）
-    if (now - lastMouthChangeTime > 300 + Math.random() * 300) {
-      updateMouth(mouthState === 'closed' ? 'open' : 'closed');
-      lastMouthChangeTime = now;
-    }
-    
-    animationId = requestAnimationFrame(animateCharacter);
-  };
-  
-  // アニメーション開始
-  animateCharacter();
   
   try {
     // 🔧 サイトタイトルを優先、なければドメインのコア部分を使用
@@ -156,25 +68,8 @@ async function expandRelatedKeywords(domain, searchName) {
       
       // プログレス更新
       const progress = ((i + 1) / totalSteps) * 100;
-      if (progressBar) {
-        progressBar.style.width = `${progress}%`;
-      }
-      if (progressPercent) {
-        progressPercent.textContent = `${Math.floor(progress)}%`;
-      }
-      if (progressStatus) {
-        progressStatus.textContent = `取得中... ${i + 1}/${totalSteps} (${letter})`;
-      }
-      if (progressText) {
-        progressText.textContent = `関連キーワードを調査中... (${letter})`;
-      }
-      
-      // 進捗に応じてりんくの表情を変更
-      if (progress > 80) {
-        updateEyes('smile');
-      } else if (progress > 50) {
-        updateEyes('normal');
-      }
+      progressBar.style.width = `${progress}%`;
+      progressText.textContent = `取得中... ${i + 1}/${totalSteps} (${letter})`;
       
       console.log(`📡 [${i + 1}/${totalSteps}] "${query}" 取得中...`);
       
@@ -228,31 +123,18 @@ async function expandRelatedKeywords(domain, searchName) {
       }
     }
     
-    // 完了 - アニメーションを停止
-    stopAnimation();
-    
-    if (progressText) {
-      progressText.textContent = `✅ 完了！ ${allKeywords.size}個の関連キーワードを発見`;
-    }
-    if (progressStatus) {
-      progressStatus.innerHTML = `
-        ✅ 完了！ ${allKeywords.size}個の関連キーワードを発見<br>
-        <small style="opacity: 0.9;">
-          🌐 Google: ${stats.google}個 | 
-          🔵 Bing: ${stats.bing}個 | 
-          🎥 YouTube: ${stats.youtube}個 | 
-          🛒 Amazon: ${stats.amazon}個 | 
-          🛍️ 楽天: ${stats.rakuten}個 | 
-          📱 TikTok: ${stats.tiktok}個
-        </small>
-      `;
-    }
-    if (progressPercent) {
-      progressPercent.textContent = '100%';
-    }
-    if (progressBar) {
-      progressBar.style.width = '100%';
-    }
+    // 完了
+    progressText.innerHTML = `
+      ✅ 完了！ ${allKeywords.size}個の関連キーワードを発見<br>
+      <small style="color: #666;">
+        🌐 Google: ${stats.google}個 | 
+        🔵 Bing: ${stats.bing}個 | 
+        🎥 YouTube: ${stats.youtube}個 | 
+        🛒 Amazon: ${stats.amazon}個 | 
+        🛍️ 楽天: ${stats.rakuten}個 | 
+        📱 TikTok: ${stats.tiktok}個
+      </small>
+    `;
     console.log(`✅ 拡張完了: ${allKeywords.size}個のキーワード取得`);
     console.log(`📊 内訳: Google=${stats.google}, Bing=${stats.bing}, YouTube=${stats.youtube}, Amazon=${stats.amazon}, 楽天=${stats.rakuten}, TikTok=${stats.tiktok}`);
     
@@ -271,22 +153,7 @@ async function expandRelatedKeywords(domain, searchName) {
     
   } catch (error) {
     console.error('❌ アルファベット拡張エラー:', error);
-    
-    // エラー時もアニメーションを停止
-    stopAnimation();
-    updateEyes('normal');
-    updateMouth('closed');
-    
-    if (progressText) {
-      progressText.textContent = `❌ エラーが発生しました`;
-    }
-    if (progressStatus) {
-      progressStatus.textContent = `❌ エラー: ${error.message}`;
-    }
-    if (progressPercent) {
-      progressPercent.textContent = 'エラー';
-    }
-    
+    progressText.textContent = `❌ エラー: ${error.message}`;
     expandBtn.textContent = '🔄 リトライ';
     expandBtn.disabled = false;
     expandBtn.style.opacity = '1';
@@ -613,133 +480,6 @@ function setupTabSwitching() {
       });
     }
   });
-}
-
-/**
- * ソースフィルタリング設定（検索エンジン別の絞り込み）
- * @param {Array} keywords - 全キーワード配列
- * @param {Object} categorized - カテゴリ別キーワード {negative: [], normal: []}
- * @param {Array} negativeKeywords - ネガティブキーワード配列
- * @param {Object} stats - 検索エンジン別統計
- */
-function setupSourceFiltering(keywords, categorized, negativeKeywords, stats) {
-  const sourceFilters = document.querySelectorAll('.source-filter');
-  let currentFilter = null; // 現在選択中のフィルタ（null = すべて表示）
-  
-  sourceFilters.forEach(filter => {
-    // ホバー効果
-    filter.addEventListener('mouseenter', () => {
-      if (!filter.classList.contains('active')) {
-        filter.style.background = 'rgba(255,255,255,0.3)';
-        filter.style.transform = 'scale(1.05)';
-      }
-    });
-    
-    filter.addEventListener('mouseleave', () => {
-      if (!filter.classList.contains('active')) {
-        filter.style.background = 'rgba(255,255,255,0.2)';
-        filter.style.transform = 'scale(1)';
-      }
-    });
-    
-    // クリックイベント
-    filter.addEventListener('click', () => {
-      const source = filter.getAttribute('data-filter');
-      
-      // 同じフィルタをクリックした場合は解除
-      if (currentFilter === source) {
-        currentFilter = null;
-        filter.classList.remove('active');
-        filter.style.background = 'rgba(255,255,255,0.2)';
-        filter.style.fontWeight = 'normal';
-      } else {
-        // フィルタを適用
-        currentFilter = source;
-        
-        // すべてのフィルタをリセット
-        sourceFilters.forEach(f => {
-          f.classList.remove('active');
-          f.style.background = 'rgba(255,255,255,0.2)';
-          f.style.fontWeight = 'normal';
-        });
-        
-        // 選択したフィルタをアクティブ化
-        filter.classList.add('active');
-        filter.style.background = 'rgba(255,255,255,0.4)';
-        filter.style.fontWeight = 'bold';
-      }
-      
-      // キーワードリストを更新
-      updateKeywordListBySource(currentFilter, keywords, categorized, negativeKeywords);
-    });
-  });
-}
-
-/**
- * ソースフィルタに応じてキーワードリストを更新
- * @param {string|null} source - フィルタするソース（null = すべて表示）
- * @param {Array} keywords - 全キーワード配列
- * @param {Object} categorized - カテゴリ別キーワード
- * @param {Array} negativeKeywords - ネガティブキーワード配列
- */
-function updateKeywordListBySource(source, keywords, categorized, negativeKeywords) {
-  // フィルタリングされたキーワードを取得
-  const filterKeywords = source 
-    ? keywords.filter(item => {
-        const itemSource = typeof item === 'string' ? 'unknown' : item.source;
-        return itemSource === source;
-      })
-    : keywords;
-  
-  // フィルタリングされたカテゴリ別キーワード
-  const filterCategorized = {
-    negative: source
-      ? categorized.negative.filter(item => {
-          const itemSource = typeof item === 'string' ? 'unknown' : item.source;
-          return itemSource === source;
-        })
-      : categorized.negative,
-    normal: source
-      ? categorized.normal.filter(item => {
-          const itemSource = typeof item === 'string' ? 'unknown' : item.source;
-          return itemSource === source;
-        })
-      : categorized.normal
-  };
-  
-  // リストを更新
-  const listAll = document.getElementById('keywordListAll');
-  const listNegative = document.getElementById('keywordListNegative');
-  const listNormal = document.getElementById('keywordListNormal');
-  
-  if (listAll) {
-    listAll.innerHTML = createKeywordList(filterKeywords, negativeKeywords);
-  }
-  
-  if (listNegative) {
-    listNegative.innerHTML = filterCategorized.negative.length > 0
-      ? createKeywordList(filterCategorized.negative, negativeKeywords)
-      : '<p style="text-align: center; color: #999; padding: 20px;">ネガティブキーワードはありません</p>';
-  }
-  
-  if (listNormal) {
-    listNormal.innerHTML = createKeywordList(filterCategorized.normal, negativeKeywords);
-  }
-  
-  // タブのカウントを更新
-  const tabAll = document.getElementById('tabAll');
-  const tabNegative = document.getElementById('tabNegative');
-  const tabNormal = document.getElementById('tabNormal');
-  
-  if (tabAll) {
-    tabAll.textContent = `すべて (${filterKeywords.length})`;
-  }
-  if (tabNegative) {
-    tabNegative.textContent = `⚠️ ネガティブ (${filterCategorized.negative.length})`;
-  }
-  if (tabNormal) {
-    tabNormal.textContent = `通常 (${filterCategorized.normal.length})`;
-  }
 }
 
 /**

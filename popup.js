@@ -23,9 +23,10 @@ if (UI) {
   console.log('✅ UI.createFullConsultationSection:', typeof UI.createFullConsultationSection);
   console.log('✅ UI.createEmailSecurityAlert:', typeof UI.createEmailSecurityAlert);
   console.log('✅ UI.createSiteHealthAlert:', typeof UI.createSiteHealthAlert);
+  console.log('✅ UI.createSSLCertificateExpiryAlert:', typeof UI.createSSLCertificateExpiryAlert);
 
   // メソッドが存在しない場合は警告
-  const requiredMethods = ['createReputationAlert', 'createFullConsultationSection', 'createEmailSecurityAlert', 'createSiteHealthAlert'];
+  const requiredMethods = ['createReputationAlert', 'createFullConsultationSection', 'createEmailSecurityAlert', 'createSiteHealthAlert', 'createSSLCertificateExpiryAlert', 'createDomainExpiryAlert'];
   for (const method of requiredMethods) {
     if (typeof UI[method] !== 'function') {
       console.error(`❌ UI.${method} が存在しないか、関数ではありません:`, typeof UI[method]);
@@ -36,18 +37,14 @@ if (UI) {
 }
 
 // ========================================
-// 定数定義（background.jsと共有）
+// 定数定義（window.OsintConstantsから読み込み）
 // ========================================
 
 /**
  * バージョン管理定数
- * @note background.jsと同じ値を使用
+ * @note window.OsintConstants.VERSION_CONSTANTSから直接参照します
+ * （src/constants/config.jsで既にconst宣言されているため、グローバルスコープでの再宣言は不可）
  */
-const VERSION_CONSTANTS = {
-  WP_MINIMUM: 6.8,      // WordPress最低バージョン
-  PHP_MINIMUM: 8.0,     // PHP最低バージョン
-  CF7_MINIMUM: 6.1      // Contact Form 7最低バージョン
-};
 
 const els = {
   domain: document.getElementById("domain"),
@@ -587,6 +584,72 @@ function addRow(type, value) {
   const tdValue = document.createElement("td");
 
   tdType.textContent = type;
+  
+  // コピーボタンを追加（値がテキストの場合）
+  const valueText = typeof value === 'string' ? value : (value?.textContent || '');
+  const hasCopyableContent = valueText && valueText.length > 0 && !valueText.includes('<img') && !valueText.includes('<iframe');
+  
+  if (hasCopyableContent) {
+    // HTMLタグを除去してテキストのみ抽出
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = value;
+    const plainText = tempDiv.textContent || tempDiv.innerText || '';
+    
+    if (plainText.trim().length > 0) {
+      const copyBtn = document.createElement('button');
+      copyBtn.innerHTML = '📋';
+      copyBtn.className = 'copy-btn';
+      copyBtn.title = 'クリックでコピー';
+      copyBtn.style.cssText = `
+        margin-left: 8px;
+        padding: 4px 8px;
+        background: #e3f2fd;
+        border: 1px solid #2196f3;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9em;
+        vertical-align: middle;
+        transition: all 0.2s;
+      `;
+      
+      copyBtn.addEventListener('mouseenter', () => {
+        copyBtn.style.background = '#2196f3';
+        copyBtn.style.color = '#fff';
+        copyBtn.style.transform = 'scale(1.1)';
+      });
+      
+      copyBtn.addEventListener('mouseleave', () => {
+        copyBtn.style.background = '#e3f2fd';
+        copyBtn.style.color = '#333';
+        copyBtn.style.transform = 'scale(1)';
+      });
+      
+      copyBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        try {
+          await navigator.clipboard.writeText(plainText.trim());
+          const originalText = copyBtn.innerHTML;
+          copyBtn.innerHTML = '✅';
+          copyBtn.style.background = '#4caf50';
+          copyBtn.style.borderColor = '#4caf50';
+          setTimeout(() => {
+            copyBtn.innerHTML = originalText;
+            copyBtn.style.background = '#e3f2fd';
+            copyBtn.style.borderColor = '#2196f3';
+          }, 2000);
+        } catch (err) {
+          console.error('コピーに失敗しました:', err);
+          copyBtn.innerHTML = '❌';
+          setTimeout(() => {
+            copyBtn.innerHTML = '📋';
+          }, 2000);
+        }
+      });
+      
+      tdType.appendChild(copyBtn);
+    }
+  }
+  
   tdValue.innerHTML = value;
   tdValue.className = "multi-line";
 
@@ -596,9 +659,15 @@ function addRow(type, value) {
 }
 
 // 特別なセクションを追加（1列表示）
-function addSpecialSection(title, content) {
+function addSpecialSection(title, content, alertType = null) {
   const section = document.createElement("div");
   section.className = "special-section";
+  
+  // 重要な警告の場合はstickyクラスを追加
+  if (alertType === 'critical' || alertType === 'warning') {
+    section.setAttribute('data-alert-type', alertType);
+  }
+  
   section.innerHTML = `
     <div class="section-title">${title}</div>
     <div class="section-content">${content}</div>
@@ -718,9 +787,45 @@ function stopLoadingWithError(errorMessage) {
   console.error('❌ ローディング強制停止:', errorMessage);
   
   const errorHtml = UI.createErrorBox(`${errorMessage}<br><br>
-    <small style="color: #999;">※ ページを再読み込みしてから再度お試しください</small>`);
+    <small style="color: #999;">※ ページを再読み込みしてから再度お試しください</small>
+    <br><br>
+    <button id="retryBtn" style="
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1em;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      transition: all 0.3s;
+    ">🔄 再試行</button>
+  `);
   
   els.resultBody.innerHTML = errorHtml;
+  
+  // 再試行ボタンのイベントリスナー
+  const retryBtn = document.getElementById('retryBtn');
+  if (retryBtn) {
+    retryBtn.addEventListener('click', () => {
+      const input = els.domain.value.trim();
+      if (input) {
+        clearResults();
+        fetchAll(normalizeDomain(input));
+      }
+    });
+    
+    retryBtn.addEventListener('mouseenter', () => {
+      retryBtn.style.transform = 'translateY(-2px)';
+      retryBtn.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+    });
+    
+    retryBtn.addEventListener('mouseleave', () => {
+      retryBtn.style.transform = 'translateY(0)';
+      retryBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+    });
+  }
 }
 
 /**
@@ -732,7 +837,7 @@ function clearResults() {
   }
 
   // 🐫 りんくのローディング表示
-  const loadingHtml = UI.createLoadingSpinner('🐫 りんく：「ちょっと待っててね調査中！」');
+  const loadingHtml = UI.createLoadingSpinner('まっててね');
   
   els.resultBody.innerHTML = loadingHtml;
 
@@ -1234,13 +1339,154 @@ async function checkSuggestPollution(domain, siteTitle) {
       ">
         🚀 関連キーワードをさらに取得（a-z拡張）
       </button>
-      <div id="expansionProgress" style="display: none; margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.9); border-radius: 6px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="flex: 1;">
-            <div style="background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden;">
-              <div id="progressBar" style="background: linear-gradient(90deg, #4caf50, #8bc34a); height: 100%; width: 0%; transition: width 0.3s;"></div>
+      <div id="expansionProgress" style="display: none; margin-top: 10px; padding: 20px; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.2);">
+        <style>
+          @keyframes keywordLinkBounce {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-5px) scale(1.05); }
+          }
+          @keyframes keywordLoadingRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          @keyframes keywordMessagePulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+          }
+          @keyframes keywordProgressBar {
+            0% { width: 0%; }
+            20% { width: 30%; }
+            40% { width: 60%; }
+            60% { width: 75%; }
+            80% { width: 90%; }
+            95% { width: 98%; }
+            100% { width: 100%; }
+          }
+          @keyframes keywordProgressShine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(300%); }
+          }
+          .keyword-loading-character-wrapper {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px;
+          }
+          .keyword-loading-character-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid #fff;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4), 0 0 30px rgba(255,255,255,0.3);
+            overflow: hidden;
+            background: #fff;
+            animation: keywordLinkBounce 1.5s ease-in-out infinite, keywordLoadingRotate 3s linear infinite;
+          }
+          .keyword-loading-character-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(transparent, rgba(255,255,255,0.3), transparent 30%);
+            animation: keywordLoadingRotate 2s linear infinite;
+            z-index: 10;
+          }
+          .keyword-loading-character-part {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+          }
+          .keyword-loading-character-face {
+            z-index: 1;
+          }
+          .keyword-loading-character-eyes {
+            z-index: 2;
+            transition: opacity 0.15s ease-in-out;
+          }
+          .keyword-loading-character-mouth {
+            z-index: 3;
+            transition: opacity 0.15s ease-in-out;
+          }
+          .keyword-loading-message {
+            color: #fff;
+            font-size: 1.2em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            animation: keywordMessagePulse 1.5s ease-in-out infinite;
+            text-align: center;
+            margin-bottom: 15px;
+          }
+          .keyword-progress-wrapper {
+            width: 100%;
+            margin-top: 15px;
+          }
+          .keyword-progress-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.3);
+          }
+          .keyword-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #fff 0%, #fbbf24 50%, #fff 100%);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+            transition: width 0.3s ease;
+          }
+          .keyword-progress-shine {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 30%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+            animation: keywordProgressShine 2s ease-in-out infinite;
+          }
+          .keyword-progress-text {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            color: #fff;
+            font-size: 0.95em;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+          }
+        </style>
+        <div class="keyword-loading-character-wrapper">
+          <div class="keyword-loading-character-container" id="keywordRinkuContainer">
+            <img src="images/partsfile/rinku/rinku-face.png" alt="りんくの顔" class="keyword-loading-character-part keyword-loading-character-face" id="keywordRinkuFace">
+            <img src="images/partsfile/rinku/rinku-eyes-normal.png" alt="りんくの目" class="keyword-loading-character-part keyword-loading-character-eyes" id="keywordRinkuEyes">
+            <img src="images/partsfile/rinku/rinku-mouth-closed.png" alt="りんくの口" class="keyword-loading-character-part keyword-loading-character-mouth" id="keywordRinkuMouth">
+          </div>
+        </div>
+        <div class="keyword-loading-message" id="progressText">関連キーワードを調査中...</div>
+        <div class="keyword-progress-wrapper">
+          <div class="keyword-progress-bar">
+            <div class="keyword-progress-fill" id="progressBar" style="width: 0%;">
+              <div class="keyword-progress-shine"></div>
             </div>
-            <div id="progressText" style="font-size: 0.9em; color: #666; margin-top: 5px;">準備中...</div>
+          </div>
+          <div class="keyword-progress-text">
+            <span id="progressStatus">準備中...</span>
+            <span id="progressPercent" style="font-weight: bold; color: #fff; font-size: 1.1em; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.3);">0%</span>
           </div>
         </div>
       </div>
@@ -1361,7 +1607,8 @@ async function checkSuggestPollution(domain, siteTitle) {
 
     // 🚨 風評被害の警告を最上部に表示
     if (hasNegativeSuggest) {
-        html += UI.createReputationAlert();
+        // 風評被害警告は別セクションとして追加（固定表示のため）
+        addSpecialSection("🚨 風評被害警告", UI.createReputationAlert(), 'critical');
 
         // 検出されたパターンを表示（コンポーネント化）
         if (negativeQuery && negativeQuery !== searchName) {
@@ -1969,17 +2216,8 @@ async function fetchAll(domain) {
   // ⚡ 重い処理を全て非同期化して、即座にUIを操作可能にする
   // メインのローディング表示を早めに終了
   setTimeout(() => {
-    // ローディングを基本情報表示に切り替え
-    const loadingHtml = `
-      <tr>
-        <td colspan="2" style="padding: 20px; text-align: center;">
-          <div style="padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: #fff;">
-            <div style="font-size: 1.2em; margin-bottom: 10px;">📊 診断を実行中</div>
-            <div style="font-size: 0.9em; opacity: 0.9;">DNS、WHOIS、セキュリティチェックなどを実行しています...</div>
-          </div>
-        </td>
-      </tr>
-    `;
+    // ローディングをりんくのアニメーション付き表示に切り替え
+    const loadingHtml = UI.createLoadingSpinner('読み込み中');
     els.resultBody.innerHTML = loadingHtml;
   }, 1000); // 1秒後にローディングを軽量化
 
@@ -2192,7 +2430,8 @@ async function fetchAll(domain) {
       mixedContentHtml += '<a href="https://lin.ee/lrjVHvH" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">';
       mixedContentHtml += '<img src="images/rev.png" style="height: 45px; width: auto;">';
       mixedContentHtml += '<div style="text-align: left; flex: 1;"><div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（ITインフラ）</div>';
-      mixedContentHtml += '<div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div></div><div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div></a></div>';
+      const revitBadge = window.OsintUIComponents?.createPremiumIdBadge ? window.OsintUIComponents.createPremiumIdBadge('@revit') : '<strong style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px;">@revit</strong>';
+      mixedContentHtml += `<div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎ | ${revitBadge}</div></div><div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div></a></div>`;
       addSpecialSection("🚨 セキュリティ警告", mixedContentHtml);
     }
   } catch (e) {
@@ -2315,7 +2554,7 @@ async function fetchAll(domain) {
       indexHtml += '<div style="background: #fff3cd; border-left: 4px solid #ff9800; padding: 12px; border-radius: 4px; margin-bottom: 15px;"><div style="display: flex; gap: 10px; align-items: start;"><img src="images/link.png" style="width: 40px; height: 40px; border-radius: 50%;"><div style="flex: 1;">';
       indexHtml += '<strong style="color: #ff6f00;">💡 りんくからのアドバイス</strong><br><span style="font-size: 0.9em; color: #333;">「Google Search Consoleでさらに詳しい情報を確認できるよ！インデックスに問題があれば、りんくが頼りにしているSEO専門家に相談しよう！」</span></div></div></div>';
       
-      indexHtml += '<a href="https://lin.ee/X2aWSFO" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #fff; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">';
+      indexHtml += '<a href="https://lin.ee/ThvxXZR" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #fff; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">';
       indexHtml += '<img src="images/rev.png" style="height: 40px;"><div style="text-align: left;"><div style="color: #2e7d32; font-weight: bold; font-size: 1.15em;">りんくが頼りにしているリバースハック</div>';
       indexHtml += '<div style="font-size: 0.8em; color: #999;">SEO対策・インデックス改善 | レスポンス◎</div></div><div style="color: #2e7d32; font-size: 1.5em;">→</div></a></div>';
       
@@ -2459,17 +2698,572 @@ async function fetchAll(domain) {
     });
   }
 
+  const healthLoadingId = 'health-loading-' + Math.random().toString(36).substr(2, 9);
   healthSectionHtml += `
-    <div id="health-loading" style="position: relative; padding: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%); border-radius: 8px; border: 2px solid #667eea; overflow: hidden; min-height: 100px;">
-      <img src="images/link.png" class="loading-link-bounce" style="width: 60px; height: auto; position: absolute; left: -80px; top: 50%; margin-top: -30px; box-shadow: 0 4px 12px rgba(102,126,234,0.4); z-index: 2;">
-      <div style="text-align: center;">
-        <div style="color: #667eea; font-weight: bold; font-size: 1.2em; margin-bottom: 8px;">� りんく：「ちょっと待っててね！」</div>
-        <div class="loading-dots" style="color: #667eea; font-size: 0.95em;">リバースハックの技術で診断中<span class="dots"></span></div>
+    <style>
+      @keyframes healthLinkBounce {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-5px) scale(1.05); }
+      }
+      @keyframes healthLoadingRotate {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      @keyframes healthMessagePulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.8; }
+      }
+      @keyframes healthProgressBar {
+        0% { width: 0%; }
+        20% { width: 30%; }
+        40% { width: 60%; }
+        60% { width: 75%; }
+        80% { width: 90%; }
+        95% { width: 98%; }
+        100% { width: 100%; }
+      }
+      @keyframes healthProgressShine {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(300%); }
+      }
+      @keyframes healthStepPulse {
+        0%, 100% { opacity: 0.3; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.2); }
+      }
+      .health-loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 30px 20px;
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        border: 2px solid rgba(255,255,255,0.2);
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0;
+      }
+      .health-loading-character-wrapper {
+        position: relative;
+        width: 140px;
+        height: 140px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 10px 0 20px 0;
+      }
+      .health-loading-character-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 4px solid #fff;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.4), 0 0 30px rgba(255,255,255,0.3);
+        overflow: hidden;
+        background: #fff;
+        animation: healthLinkBounce 1.5s ease-in-out infinite, healthLoadingRotate 3s linear infinite;
+      }
+      .health-loading-character-container::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: conic-gradient(transparent, rgba(255,255,255,0.3), transparent 30%);
+        animation: healthLoadingRotate 2s linear infinite;
+        z-index: 10;
+      }
+      .health-loading-character-part {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        pointer-events: none;
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+      }
+      .health-loading-character-face {
+        z-index: 1;
+      }
+      .health-loading-character-eyes {
+        z-index: 2;
+        transition: opacity 0.15s ease-in-out;
+      }
+      .health-loading-character-mouth {
+        z-index: 3;
+        transition: opacity 0.15s ease-in-out;
+      }
+      .health-loading-message {
+        color: #fff;
+        font-size: 1.4em;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        animation: healthMessagePulse 1.5s ease-in-out infinite;
+        text-align: center;
+        margin-bottom: 20px;
+        width: 100%;
+      }
+      .health-progress-wrapper {
+        width: 100%;
+        margin: 0 0 25px 0;
+        padding: 0 30px;
+      }
+      .health-progress-bar {
+        width: 100%;
+        height: 12px;
+        background: rgba(0,0,0,0.3);
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+        border: 1px solid rgba(255,255,255,0.3);
+      }
+      .health-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #fff 0%, #fbbf24 50%, #fff 100%);
+        border-radius: 10px;
+        animation: healthProgressBar 3s ease-in-out infinite;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 0 10px rgba(255,255,255,0.5);
+      }
+      .health-progress-shine {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 30%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+        animation: healthProgressShine 2s ease-in-out infinite;
+      }
+      .health-progress-text {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 12px;
+        color: #fff;
+        font-size: 1em;
+        font-weight: 600;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+      }
+      .health-progress-percent {
+        font-weight: bold;
+        color: #fff;
+        font-size: 1.2em;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+        background: rgba(255,255,255,0.2);
+        padding: 4px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.3);
+      }
+      .health-loading-steps {
+        display: flex;
+        justify-content: space-around;
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 0 30px 20px 30px;
+        font-size: 0.9em;
+        color: #fff;
+        font-weight: 600;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+      }
+      .health-loading-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      .health-loading-step-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.4);
+        border: 2px solid rgba(255,255,255,0.6);
+        animation: healthStepPulse 2s ease-in-out infinite;
+      }
+      .health-loading-step-dot.active {
+        background: #fff;
+        border-color: #fff;
+        box-shadow: 0 0 12px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.4);
+        transform: scale(1.3);
+      }
+      .health-loading-step:nth-child(1) .health-loading-step-dot { animation-delay: 0s; }
+      .health-loading-step:nth-child(2) .health-loading-step-dot { animation-delay: 0.3s; }
+      .health-loading-step:nth-child(3) .health-loading-step-dot { animation-delay: 0.6s; }
+      .health-loading-step:nth-child(4) .health-loading-step-dot { animation-delay: 0.9s; }
+    </style>
+    <div id="health-loading" class="health-loading-container">
+      <div class="health-loading-character-wrapper">
+        <div class="health-loading-character-container" id="${healthLoadingId}-rinku">
+          <img src="images/partsfile/rinku/rinku-face.png" alt="りんくの顔" class="health-loading-character-part health-loading-character-face">
+          <img src="images/partsfile/rinku/rinku-eyes-normal.png" alt="りんくの目" class="health-loading-character-part health-loading-character-eyes" id="${healthLoadingId}-eyes">
+          <img src="images/partsfile/rinku/rinku-mouth-closed.png" alt="りんくの口" class="health-loading-character-part health-loading-character-mouth" id="${healthLoadingId}-mouth">
+        </div>
+      </div>
+      <div class="health-loading-message" id="${healthLoadingId}-message">診断を実行中...</div>
+      <div class="health-progress-wrapper">
+        <div class="health-progress-bar">
+          <div class="health-progress-fill" id="${healthLoadingId}-progress">
+            <div class="health-progress-shine"></div>
+          </div>
+        </div>
+        <div class="health-progress-text">
+          <span id="${healthLoadingId}-status">DNS、WHOIS、セキュリティチェックなどを実行しています...</span>
+          <span class="health-progress-percent" id="${healthLoadingId}-percent">0%</span>
+        </div>
+      </div>
+      <div class="health-loading-steps">
+        <div class="health-loading-step">
+          <div class="health-loading-step-dot active"></div>
+          <span>DNS</span>
+        </div>
+        <div class="health-loading-step">
+          <div class="health-loading-step-dot"></div>
+          <span>WHOIS</span>
+        </div>
+        <div class="health-loading-step">
+          <div class="health-loading-step-dot"></div>
+          <span>セキュリティ</span>
+        </div>
+        <div class="health-loading-step">
+          <div class="health-loading-step-dot"></div>
+          <span>診断</span>
+        </div>
+      </div>
+    </div>
+    <!-- アニメーションスクリプトはaddSpecialSectionの後に実行されます -->
+  `;
+
+  // バージョン情報を取得（一番下に配置）
+  const currentVersion = chrome.runtime.getManifest().version || '8.0.3';
+  
+  // バージョン履歴データ
+  const versionHistory = [
+    { version: '8.0.3', date: '2026-02-08', changes: ['CSPエラー修正（Manifest V3対応）', 'サイト健康診断のりんくアニメーション改善', 'ローディング表示の改善'] },
+    { version: '8.0.2', date: '2026-02-08', changes: ['UI/UX改善（コピーボタン、再試行ボタン、タブ視認性向上）', 'サジェストツールのエラー修正', 'りんくのパーツアニメーション追加'] },
+    { version: '8.0.1', date: '2026-02-07', changes: ['DNSレコード表示の改善（TXT/NS/MXを1行ずつ表示）', 'サーバー会社判定の改善'] },
+    { version: '8.0.0', date: '2026-02-06', changes: ['マルチドメイン検出機能の削除', 'ドメイン期限切れアラート追加'] },
+    { version: '7.9.9', date: '2026-02-05', changes: ['マルウェア検出機能追加', 'SPFレコード解析の改善'] },
+    { version: '7.9.8', date: '2026-02-04', changes: ['SSL証明書期限切れアラート追加', 'ローディング画面の改善'] },
+    { version: '7.9.7', date: '2026-02-03', changes: ['コンポーネント化の推進', 'エラーハンドリングの改善'] },
+    { version: '7.9.6', date: '2026-02-02', changes: ['風評被害チェック機能の改善', 'サジェスト取得の最適化'] },
+    { version: '7.9.5', date: '2026-02-01', changes: ['SEO情報取得機能追加', 'サイト健康診断機能の追加'] }
+  ];
+  
+  // バージョン情報セクション（一番下に配置）
+  healthSectionHtml += `
+    <div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 2px solid #2196f3; padding: 15px; border-radius: 10px; margin-top: 20px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.5em;">📦</span>
+          <div>
+            <strong style="color: #1976d2; font-size: 1.1em;">拡張機能バージョン情報</strong><br>
+            <span style="color: #424242; font-size: 0.9em;">現在のバージョン: <strong style="color: #1976d2; font-size: 1.1em;">v${currentVersion}</strong></span>
+          </div>
+        </div>
+        <button id="toggleVersionHistory" style="
+          padding: 8px 16px;
+          background: #2196f3;
+          color: #fff;
+          border: none;
+          border-radius: 6px;
+          font-size: 0.9em;
+          font-weight: bold;
+          cursor: pointer;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          transition: all 0.3s;
+        ">📋 バージョン履歴</button>
+      </div>
+      <div id="versionHistoryContent" style="display: none; margin-top: 15px; max-height: 400px; overflow-y: auto;">
+        <div style="background: rgba(255,255,255,0.95); padding: 15px; border-radius: 8px;">
+          <strong style="color: #1976d2; font-size: 1em; margin-bottom: 10px; display: block;">📋 バージョンアップ履歴</strong>
+          ${versionHistory.map(v => `
+            <div style="border-left: 3px solid #2196f3; padding-left: 12px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #e0e0e0;">
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <span style="background: #2196f3; color: #fff; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.9em;">v${v.version}</span>
+                <span style="color: #666; font-size: 0.85em;">${v.date}</span>
+              </div>
+              <ul style="margin: 5px 0 0 0; padding-left: 20px; color: #333; font-size: 0.9em; line-height: 1.6;">
+                ${v.changes.map(change => `<li>${change}</li>`).join('')}
+              </ul>
+            </div>
+          `).join('')}
+        </div>
       </div>
     </div>
   `;
 
   addSpecialSection("🐫 サイト健康診断", healthSectionHtml);
+  
+  // アニメーションスクリプトを実行（CSP対応：直接関数として実行）
+  setTimeout(() => {
+    const healthLoadingElement = document.getElementById('health-loading');
+    if (healthLoadingElement) {
+      try {
+        const loadingId = healthLoadingId;
+        const progressBar = document.getElementById(loadingId + '-progress');
+        const percentText = document.getElementById(loadingId + '-percent');
+        const statusText = document.getElementById(loadingId + '-status');
+        const messageText = document.getElementById(loadingId + '-message');
+        const steps = healthLoadingElement.querySelectorAll('.health-loading-step-dot');
+        
+        // りんくの要素を取得
+        const rinkuEyes = document.getElementById(loadingId + '-eyes');
+        const rinkuMouth = document.getElementById(loadingId + '-mouth');
+        const rinkuContainer = document.getElementById(loadingId + '-rinku');
+        
+        if (!rinkuEyes || !rinkuMouth || !rinkuContainer) {
+          console.warn('⚠️ りんくの要素が見つかりません');
+          return;
+        }
+        
+        let currentPercent = 0;
+        let currentStep = 0;
+        let isAnimating = true;
+        let animationId = null;
+        
+        // りんくの状態
+        let eyeState = 'normal';
+        let mouthState = 'closed';
+        let lastBlinkTime = Date.now();
+        let lastMouthChangeTime = Date.now();
+        let lastMessageChangeTime = Date.now();
+        
+        // メッセージのリスト
+        const messages = [
+          '診断を実行中...',
+          'DNS情報を取得中...',
+          'WHOIS情報を確認中...',
+          'セキュリティチェック中...',
+          'SSL証明書を確認中...',
+          'メール設定をチェック中...',
+          'WordPress情報を取得中...',
+          'PHPバージョンを確認中...',
+          'プラグインをチェック中...',
+          '最終確認中...',
+          'もう少しで完了です...'
+        ];
+        let messageIndex = 0;
+        
+        // 目の画像を切り替え
+        const updateEyes = (state) => {
+          if (!rinkuEyes || !isAnimating) return;
+          const eyeImages = {
+            'normal': 'images/partsfile/rinku/rinku-eyes-normal.png',
+            'blink': 'images/partsfile/rinku/rinku-eyes-blink.png',
+            'smile': 'images/partsfile/rinku/rinku-eyes-smile.png'
+          };
+          const newSrc = eyeImages[state] || eyeImages.normal;
+          if (rinkuEyes.src !== newSrc) {
+            rinkuEyes.src = newSrc;
+            eyeState = state;
+          }
+        };
+        
+        // 口の画像を切り替え
+        const updateMouth = (state) => {
+          if (!rinkuMouth || !isAnimating) return;
+          const mouthImages = {
+            'closed': 'images/partsfile/rinku/rinku-mouth-closed.png',
+            'open': 'images/partsfile/rinku/rinku-mouth-open.png'
+          };
+          const newSrc = mouthImages[state] || mouthImages.closed;
+          if (rinkuMouth.src !== newSrc) {
+            rinkuMouth.src = newSrc;
+            mouthState = state;
+          }
+        };
+        
+        // メッセージを更新
+        const updateMessage = () => {
+          if (!messageText || !isAnimating) return;
+          const now = Date.now();
+          if (now - lastMessageChangeTime > 3000) {
+            messageIndex = (messageIndex + 1) % messages.length;
+            messageText.textContent = messages[messageIndex];
+            lastMessageChangeTime = now;
+          }
+        };
+        
+        // りんくのアニメーション
+        const animateCharacter = () => {
+          if (!isAnimating) return;
+          const now = Date.now();
+          
+          if (now - lastBlinkTime > 1000 + Math.random() * 1000) {
+            updateEyes('blink');
+            setTimeout(() => {
+              if (isAnimating) updateEyes(eyeState);
+            }, 100);
+            lastBlinkTime = now;
+          }
+          
+          if (now - lastMouthChangeTime > 300 + Math.random() * 300) {
+            updateMouth(mouthState === 'closed' ? 'open' : 'closed');
+            lastMouthChangeTime = now;
+          }
+        };
+        
+        // プログレスバーのアニメーション
+        const updateProgress = () => {
+          if (!isAnimating) return;
+          const now = Date.now();
+          const duration = 3000;
+          const elapsed = (now % duration) / duration;
+          
+          if (elapsed < 0.2) {
+            currentPercent = Math.floor(elapsed * 150);
+            if (currentStep < 1) {
+              steps[0]?.classList.add('active');
+              currentStep = 1;
+              if (statusText) statusText.textContent = 'DNS情報を取得中...';
+            }
+          } else if (elapsed < 0.4) {
+            currentPercent = 30 + Math.floor((elapsed - 0.2) * 150);
+            if (currentStep < 2) {
+              steps[1]?.classList.add('active');
+              currentStep = 2;
+              if (statusText) statusText.textContent = 'WHOIS情報を確認中...';
+            }
+          } else if (elapsed < 0.6) {
+            currentPercent = 60 + Math.floor((elapsed - 0.4) * 75);
+            if (currentStep < 3) {
+              steps[2]?.classList.add('active');
+              currentStep = 3;
+              if (statusText) statusText.textContent = 'セキュリティチェック中...';
+              updateEyes('smile');
+            }
+          } else if (elapsed < 0.8) {
+            currentPercent = 75 + Math.floor((elapsed - 0.6) * 75);
+            if (currentStep < 4) {
+              steps[3]?.classList.add('active');
+              currentStep = 4;
+              if (statusText) statusText.textContent = '最終診断中...';
+            }
+          } else {
+            currentPercent = 90 + Math.floor((elapsed - 0.8) * 50);
+          }
+          
+          if (percentText) {
+            percentText.textContent = currentPercent + '%';
+          }
+        };
+        
+        // 進捗更新関数（グローバルに公開）
+        window['updateHealthProgress_' + loadingId] = (percent, step, statusMsg) => {
+          if (percent !== undefined && percentText) {
+            currentPercent = Math.min(100, Math.max(0, percent));
+            percentText.textContent = currentPercent + '%';
+            if (progressBar) {
+              progressBar.style.width = currentPercent + '%';
+              progressBar.style.animation = 'none';
+            }
+          }
+          if (step !== undefined && steps[step]) {
+            steps.forEach(s => s.classList.remove('active'));
+            for (let i = 0; i <= step && i < steps.length; i++) {
+              steps[i]?.classList.add('active');
+            }
+            currentStep = step;
+          }
+          if (statusMsg && statusText) {
+            statusText.textContent = statusMsg;
+          }
+          if (currentPercent > 80) {
+            updateEyes('smile');
+          } else if (currentPercent > 50) {
+            updateEyes('normal');
+          }
+        };
+        
+        // アニメーションループ
+        const animate = () => {
+          if (!isAnimating) return;
+          updateProgress();
+          animateCharacter();
+          updateMessage();
+          animationId = requestAnimationFrame(animate);
+        };
+        
+        // アニメーション開始
+        animate();
+        
+        // アニメーション停止関数（グローバルに公開）
+        window['stopHealthLoading_' + loadingId] = () => {
+          isAnimating = false;
+          if (animationId !== null) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+          }
+          if (rinkuContainer) {
+            rinkuContainer.style.animation = 'none';
+          }
+          updateEyes('smile');
+          updateMouth('open');
+          if (percentText) percentText.textContent = '100%';
+          if (progressBar) {
+            progressBar.style.width = '100%';
+            progressBar.style.animation = 'none';
+          }
+          if (statusText) statusText.textContent = '診断完了！';
+          if (messageText) messageText.textContent = '✅ 診断が完了しました！';
+          steps.forEach(s => s.classList.add('active'));
+        };
+        
+        // グローバルにloadingIdを保存
+        window['currentHealthLoadingId'] = loadingId;
+        
+        console.log('✅ サイト健康診断アニメーションを開始しました');
+      } catch (e) {
+        console.error('❌ アニメーションスクリプトの実行エラー:', e);
+      }
+    }
+  }, 100);
+  
+  // バージョン履歴トグル機能
+  setTimeout(() => {
+    const toggleBtn = document.getElementById('toggleVersionHistory');
+    const historyContent = document.getElementById('versionHistoryContent');
+    if (toggleBtn && historyContent) {
+      toggleBtn.addEventListener('click', () => {
+        const isVisible = historyContent.style.display === 'block';
+        historyContent.style.display = isVisible ? 'none' : 'block';
+        toggleBtn.textContent = isVisible ? '📋 バージョン履歴' : '✖️ 閉じる';
+        toggleBtn.style.background = isVisible ? '#2196f3' : '#f44336';
+      });
+      
+      toggleBtn.addEventListener('mouseenter', () => {
+        toggleBtn.style.transform = 'translateY(-2px)';
+        toggleBtn.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+      });
+      
+      toggleBtn.addEventListener('mouseleave', () => {
+        toggleBtn.style.transform = 'translateY(0)';
+        toggleBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+      });
+    }
+  }, 100);
+  
+  // 重要な警告セクションにstickyクラスを追加
+  setTimeout(() => {
+    const specialSections = els.specialSections.querySelectorAll('.special-section');
+    specialSections.forEach(section => {
+      const title = section.querySelector('.section-title')?.textContent || '';
+      const content = section.innerHTML || '';
+      
+      // 重要な警告のタイトルや内容をチェック
+      if (title.includes('🚨') || title.includes('⚠️') || 
+          content.includes('SSL証明書') || content.includes('ドメイン期限') ||
+          content.includes('マルウェア') || content.includes('風評被害') ||
+          content.includes('セキュリティ警告') || content.includes('SEO警告')) {
+        section.setAttribute('data-alert-type', 'critical');
+      }
+    });
+  }, 100);
 
   // CSS アニメーションを追加
   if (!document.getElementById('link-animation-style')) {
@@ -2525,10 +3319,41 @@ async function fetchAll(domain) {
   // サイト健康診断を実行
   try {
     console.log('🔍🔍🔍 サイト健康診断開始 - ドメイン:', domain);
+    
+    // 進捗更新関数を取得（少し待機してから取得）
+    await new Promise(resolve => setTimeout(resolve, 200));
+    const loadingId = window.currentHealthLoadingId;
+    const updateProgress = loadingId ? window['updateHealthProgress_' + loadingId] : null;
+    
+    // 進捗を更新（DNS開始）
+    if (updateProgress) {
+      updateProgress(10, 0, 'DNS情報を取得中...');
+    }
+    
     const healthResult = await chrome.runtime.sendMessage({
       type: 'analyzeSiteHealth',
       domain: domain
     });
+    
+    // 進捗を更新（WHOIS完了）
+    if (updateProgress) {
+      updateProgress(40, 1, 'WHOIS情報を確認中...');
+    }
+    
+    // 少し待機して進捗を更新
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // 進捗を更新（セキュリティチェック中）
+    if (updateProgress) {
+      updateProgress(70, 2, 'セキュリティチェック中...');
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // 進捗を更新（診断中）
+    if (updateProgress) {
+      updateProgress(90, 3, '最終診断中...');
+    }
 
     console.log('🔍🔍🔍 サイト健康診断結果（全体）:', healthResult);
     console.log('🔍🔍🔍 healthResult.success:', healthResult?.success);
@@ -2552,6 +3377,9 @@ async function fetchAll(domain) {
         console.log('❌ WordPressサイトと判定されませんでした');
       }
 
+    // ローディング開始時間を記録
+    const loadingStartTime = Date.now();
+    
     if (healthResult && healthResult.success) {
       let healthHtml = '';
 
@@ -2606,17 +3434,125 @@ async function fetchAll(domain) {
       }
 
       // ========================================
+      // 🚨 SSL証明書有効期限切れチェック
+      // ========================================
+      try {
+        const sslInfo = await chrome.runtime.sendMessage({
+          type: 'getSSLInfo',
+          domain: baseDomain
+        });
+
+        if (sslInfo && sslInfo.success && sslInfo.data && sslInfo.data.daysUntilExpiry !== undefined) {
+          const days = sslInfo.data.daysUntilExpiry;
+          if (days <= 7 && days >= 0) {
+            // 7日以内の場合
+            redAlertCount++;
+            healthHtml += UI.createSSLCertificateExpiryAlert(days, sslInfo.data.notAfterDate);
+          } else if (days < 0) {
+            // 既に切れている場合
+            redAlertCount++;
+            healthHtml += UI.createSSLCertificateExpiryAlert(0, sslInfo.data.notAfterDate);
+          }
+        }
+      } catch (sslExpiryError) {
+        if (DEBUG_MODE) console.error('SSL証明書有効期限チェックエラー:', sslExpiryError);
+        // エラーが発生しても処理を続行（SSL情報が取得できない場合はスキップ）
+      }
+
+      // ========================================
+      // 🚨 ドメイン有効期限チェック（30日前）
+      // ========================================
+      try {
+        // 🇯🇵 日本ドメインかどうかをチェック
+        const isJpDomain = baseDomain.endsWith('.jp') || baseDomain.includes('.co.jp') || baseDomain.includes('.ne.jp') ||
+                           baseDomain.includes('.or.jp') || baseDomain.includes('.ac.jp') || baseDomain.includes('.go.jp');
+        
+        let expirationDate = null;
+        let daysUntilExpiry = null;
+        
+        if (isJpDomain) {
+          // 日本ドメインの場合、WHOIS情報から有効期限を取得
+          let cleanDomain = baseDomain.replace(/^www\./i, '');
+          const jpWhoisResult = await chrome.runtime.sendMessage({
+            type: 'getJpWhois',
+            domain: cleanDomain
+          });
+          
+          if (jpWhoisResult && jpWhoisResult.success && jpWhoisResult.parsed) {
+            const parsed = jpWhoisResult.parsed;
+            const expiresOn = parsed['Expires on'];
+            
+            if (expiresOn) {
+              // 日付文字列をパース（複数の形式に対応）
+              let expiryDate = null;
+              if (expiresOn.includes('/')) {
+                // YYYY/MM/DD形式
+                const parts = expiresOn.split('/');
+                if (parts.length === 3) {
+                  expiryDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                }
+              } else {
+                // ISO形式やその他の形式
+                expiryDate = new Date(expiresOn);
+              }
+              
+              if (expiryDate && !isNaN(expiryDate.getTime())) {
+                expirationDate = expiryDate.toISOString();
+                const now = new Date();
+                daysUntilExpiry = Math.floor((expiryDate - now) / (1000 * 60 * 60 * 24));
+              }
+            }
+          }
+        } else {
+          // その他のドメインの場合、RDAP情報から有効期限を取得
+          const rdapDomainResult = await chrome.runtime.sendMessage({
+            type: 'getRdapDomain',
+            domain: baseDomain
+          });
+
+          if (rdapDomainResult && rdapDomainResult.success && rdapDomainResult.detailedInfo) {
+            const detailedInfo = rdapDomainResult.detailedInfo;
+            expirationDate = detailedInfo.dates?.expiration;
+            
+            if (expirationDate) {
+              const expiryDate = new Date(expirationDate);
+              const now = new Date();
+              daysUntilExpiry = Math.floor((expiryDate - now) / (1000 * 60 * 60 * 24));
+            }
+          }
+        }
+        
+        // 30日前になったらアラートを表示
+        if (daysUntilExpiry !== null && expirationDate) {
+          if (daysUntilExpiry <= 30 && daysUntilExpiry >= 0) {
+            redAlertCount++;
+            healthHtml += UI.createDomainExpiryAlert(daysUntilExpiry, expirationDate, baseDomain);
+          } else if (daysUntilExpiry < 0) {
+            // 既に切れている場合
+            redAlertCount++;
+            healthHtml += UI.createDomainExpiryAlert(0, expirationDate, baseDomain);
+          }
+        }
+      } catch (domainExpiryError) {
+        if (DEBUG_MODE) console.error('ドメイン有効期限チェックエラー:', domainExpiryError);
+        // エラーが発生しても処理を続行（ドメイン情報が取得できない場合はスキップ）
+      }
+
+      // ========================================
       // 🚨 PHPバージョンチェック（WordPressサイトでない場合も含む）
       // ========================================
       // WordPressサイトでない場合でも、PHPバージョンが古い場合はりんくのアラートで表示
-      // PHP 8.1未満の場合はすべてりんくのアラートで表示
+      // 最新バージョン未満の場合はすべてりんくのアラートで表示
       if (!healthResult.isWordPress && healthResult.phpVersion) {
         const phpVersionStr = String(healthResult.phpVersion);
         let isPhpOld = false;
         let phpVersionNum = null;
+        const VERSION_CONSTANTS = window.OsintConstants?.VERSION_CONSTANTS || { PHP_MINIMUM: 8.0 };
+        const phpMinimum = VERSION_CONSTANTS.PHP_MINIMUM || 8.1; // フォールバック値
+        
         if (phpVersionStr.match(/^[0-9.]+$/)) {
           phpVersionNum = parseFloat(phpVersionStr);
-          isPhpOld = phpVersionNum < 8.1; // 8.1未満はすべて古いとみなす
+          isPhpOld = phpVersionNum < phpMinimum;
         }
         
         if (isPhpOld && phpVersionNum !== null) {
@@ -2636,14 +3572,14 @@ async function fetchAll(domain) {
           if (phpVersionNum < 8.0) {
             phpAlertHtml += `<strong style="color: #d32f2f; font-size: 1.05em;">⚠️ PHPが古いです (${phpVersionStr})</strong><br><br>`;
             phpAlertHtml += '<div style="padding-left: 10px;">';
-            phpAlertHtml += '• PHP 8.1以上へのアップデートを推奨<br>';
+            phpAlertHtml += `• PHP ${phpMinimum}以上へのアップデートを推奨<br>`;
             phpAlertHtml += '• セキュリティリスクが高いです<br>';
             phpAlertHtml += '• パフォーマンスとセキュリティが向上します';
             phpAlertHtml += '</div>';
           } else {
             phpAlertHtml += `<strong style="color: #d32f2f; font-size: 1.05em;">⚠️ PHPがやや古いです (${phpVersionStr})</strong><br><br>`;
             phpAlertHtml += '<div style="padding-left: 10px;">';
-            phpAlertHtml += '• PHP 8.1以上へのアップデートを推奨<br>';
+            phpAlertHtml += `• PHP ${phpMinimum}以上へのアップデートを推奨<br>`;
             phpAlertHtml += '• 定期的なアップデートが必要です<br>';
             phpAlertHtml += '• パフォーマンスとセキュリティが向上します';
             phpAlertHtml += '</div>';
@@ -2692,12 +3628,16 @@ async function fetchAll(domain) {
 
         if (wpVersionStr.match(/^[0-9.]+$/)) {
           const wpVersionNum = parseFloat(wpVersionStr);
+          const VERSION_CONSTANTS = window.OsintConstants?.VERSION_CONSTANTS || { WP_MINIMUM: 6.8 };
           isWpOld = wpVersionNum < VERSION_CONSTANTS.WP_MINIMUM;
         }
 
         if (phpVersionStr.match(/^[0-9.]+$/)) {
           const phpVersionNum = parseFloat(phpVersionStr);
-          isPhpOld = phpVersionNum < 8.1; // 8.1未満はすべて古いとみなす
+          const VERSION_CONSTANTS = window.OsintConstants?.VERSION_CONSTANTS || { PHP_MINIMUM: 8.0 };
+          // 最新バージョンが取得できている場合はそれを使用、なければ8.1を基準とする
+          const phpMinimum = VERSION_CONSTANTS.PHP_MINIMUM || 8.1;
+          isPhpOld = phpVersionNum < phpMinimum;
         }
 
         if (isWpOld || isPhpOld) {
@@ -2716,6 +3656,7 @@ async function fetchAll(domain) {
           wpPhpAlertHtml += '<div style="color: #333; font-size: 0.95em; line-height: 1.8;">';
 
           if (isWpOld) {
+            const VERSION_CONSTANTS = window.OsintConstants?.VERSION_CONSTANTS || { WP_MINIMUM: 6.8 };
             wpPhpAlertHtml += `<strong style="color: #d32f2f; font-size: 1.05em;">⚠️ WordPressが古いです (${wpVersionStr})</strong><br><br>`;
             wpPhpAlertHtml += '<div style="padding-left: 10px;">';
             wpPhpAlertHtml += `• 最新メジャーバージョン（${VERSION_CONSTANTS.WP_MINIMUM}系統以上）への更新を推奨<br>`;
@@ -2727,17 +3668,20 @@ async function fetchAll(domain) {
 
           if (isPhpOld) {
             const phpVersionNum = parseFloat(phpVersionStr);
+            const VERSION_CONSTANTS = window.OsintConstants?.VERSION_CONSTANTS || { PHP_MINIMUM: 8.0 };
+            const phpMinimum = VERSION_CONSTANTS.PHP_MINIMUM || 8.1; // フォールバック値
+            
             if (phpVersionNum < 8.0) {
               wpPhpAlertHtml += `<strong style="color: #d32f2f; font-size: 1.05em;">⚠️ PHPが古いです (${phpVersionStr})</strong><br><br>`;
               wpPhpAlertHtml += '<div style="padding-left: 10px;">';
-              wpPhpAlertHtml += '• PHP 8.1以上へのアップデートを推奨<br>';
+              wpPhpAlertHtml += `• PHP ${phpMinimum}以上へのアップデートを推奨<br>`;
               wpPhpAlertHtml += '• セキュリティリスクが高いです<br>';
               wpPhpAlertHtml += '• パフォーマンスとセキュリティが向上します';
               wpPhpAlertHtml += '</div>';
             } else {
               wpPhpAlertHtml += `<strong style="color: #d32f2f; font-size: 1.05em;">⚠️ PHPがやや古いです (${phpVersionStr})</strong><br><br>`;
               wpPhpAlertHtml += '<div style="padding-left: 10px;">';
-              wpPhpAlertHtml += '• PHP 8.1以上へのアップデートを推奨<br>';
+              wpPhpAlertHtml += `• PHP ${phpMinimum}以上へのアップデートを推奨<br>`;
               wpPhpAlertHtml += '• 定期的なアップデートが必要です<br>';
               wpPhpAlertHtml += '• パフォーマンスとセキュリティが向上します';
               wpPhpAlertHtml += '</div>';
@@ -3311,14 +4255,46 @@ async function fetchAll(domain) {
         healthHtml += '</div>'; // main container end
       }
 
-      // 🔹 ローディング画面を最低500ms表示
+      // 🔹 ローディング画面を最低1秒表示（アニメーションを楽しめるように）
       const elapsedTime = Date.now() - loadingStartTime;
-      const minimumLoadingTime = 500;
+      const minimumLoadingTime = 1000;
+      
+      // 進捗を100%に更新
+      const loadingId = window.currentHealthLoadingId;
+      const updateProgress = loadingId ? window['updateHealthProgress_' + loadingId] : null;
+      const stopLoading = loadingId ? window['stopHealthLoading_' + loadingId] : null;
+      
+      if (updateProgress) {
+        updateProgress(100, 3, '診断完了！');
+      }
+      
       if (elapsedTime < minimumLoadingTime) {
         await new Promise(resolve => setTimeout(resolve, minimumLoadingTime - elapsedTime));
       }
-
-      document.getElementById('health-loading').innerHTML = healthHtml || '<div style="background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%); border: 3px solid #2e7d32; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><div style="display: flex; align-items: center; gap: 10px;"><img src="images/link.png" style="width: 50px; height: 50px; border-radius: 50%; border: 3px solid #fff;"><div style="flex: 1;"><strong style="color: #fff; font-size: 1.15em;">りんく:「完璧だね!リバースハックの技術で診断したよ!」</strong></div></div></div>';
+      
+      // アニメーションを停止
+      if (stopLoading) {
+        stopLoading();
+      } else {
+        // フォールバック: すべてのstopHealthLoading関数を呼び出す
+        Object.keys(window).forEach(key => {
+          if (key.startsWith('stopHealthLoading_')) {
+            try {
+              window[key]();
+            } catch (e) {
+              // エラーは無視
+            }
+          }
+        });
+      }
+      
+      // 少し待機してから結果を表示（アニメーション停止の視覚的確認のため）
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const healthLoadingElement = document.getElementById('health-loading');
+      if (healthLoadingElement) {
+        healthLoadingElement.innerHTML = healthHtml || '<div style="background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%); border: 3px solid #2e7d32; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><div style="display: flex; align-items: center; gap: 10px;"><img src="images/link.png" style="width: 50px; height: 50px; border-radius: 50%; border: 3px solid #fff;"><div style="flex: 1;"><strong style="color: #fff; font-size: 1.15em;">りんく:「完璧だね!リバースハックの技術で診断したよ!」</strong></div></div></div>';
+      }
     }
   } catch (error) {
     if (DEBUG_MODE) console.error('サイト健康診断エラー:', error);
@@ -3356,6 +4332,23 @@ async function fetchAll(domain) {
     catchErrorHtml += '</span>';
     catchErrorHtml += '</div>';
 
+    // 再試行ボタン
+    catchErrorHtml += '<div style="text-align: center; margin-bottom: 15px;">';
+    catchErrorHtml += '<button id="retryHealthCheckBtn" style="';
+    catchErrorHtml += 'padding: 12px 24px;';
+    catchErrorHtml += 'background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);';
+    catchErrorHtml += 'color: #fff;';
+    catchErrorHtml += 'border: none;';
+    catchErrorHtml += 'border-radius: 8px;';
+    catchErrorHtml += 'font-size: 1em;';
+    catchErrorHtml += 'font-weight: bold;';
+    catchErrorHtml += 'cursor: pointer;';
+    catchErrorHtml += 'box-shadow: 0 2px 4px rgba(0,0,0,0.2);';
+    catchErrorHtml += 'transition: all 0.3s;';
+    catchErrorHtml += 'margin-right: 10px;';
+    catchErrorHtml += '">🔄 再試行</button>';
+    catchErrorHtml += '</div>';
+
     // LINE相談ボタン（目立つデザイン）
     catchErrorHtml += '<div style="text-align: center;">';
     catchErrorHtml += '<a href="https://lin.ee/lrjVHvH" target="_blank" style="display: inline-flex; align-items: center; gap: 10px; padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 1.1em; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: all 0.3s;" onmouseover="this.style.transform=\'scale(1.05)\';this.style.boxShadow=\'0 6px 12px rgba(0,0,0,0.4)\'" onmouseout="this.style.transform=\'scale(1)\';this.style.boxShadow=\'0 4px 8px rgba(0,0,0,0.3)\'">';
@@ -3366,6 +4359,32 @@ async function fetchAll(domain) {
     catchErrorHtml += '※ 24時間以内にご返信いたします';
     catchErrorHtml += '</div>';
     catchErrorHtml += '</div>';
+    
+    catchErrorHtml += '</div>';
+    
+    // 再試行ボタンのイベントリスナーを設定
+    setTimeout(() => {
+      const retryBtn = document.getElementById('retryHealthCheckBtn');
+      if (retryBtn) {
+        retryBtn.addEventListener('click', () => {
+          const input = els.domain.value.trim();
+          if (input) {
+            clearResults();
+            fetchAll(normalizeDomain(input));
+          }
+        });
+        
+        retryBtn.addEventListener('mouseenter', () => {
+          retryBtn.style.transform = 'translateY(-2px)';
+          retryBtn.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+        });
+        
+        retryBtn.addEventListener('mouseleave', () => {
+          retryBtn.style.transform = 'translateY(0)';
+          retryBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+        });
+      }
+    }, 100);
 
     // 🔹 ローディング画面を最低500ms表示
     const elapsedTime = Date.now() - loadingStartTime;
@@ -3521,6 +4540,39 @@ async function fetchAll(domain) {
 
   if (aSet.length > 0) {
 
+    // 🆕 先にNSレコードとMXレコードからホスティング会社を推定
+    let estimatedHostingCompany = null;
+    try {
+      const ns = await U.dohQuery(baseDomain, "NS");
+      const nsRecords = (ns.Answer || []).map(r => r.data.replace(/\.$/, ''));
+      for (const nsRecord of nsRecords) {
+        const estimate = identifyServer(nsRecord);
+        if (estimate) {
+          estimatedHostingCompany = estimate.replace(/^[^\s]+\s+/, ''); // 絵文字を除去
+          break;
+        }
+      }
+    } catch (e) {
+      if (DEBUG_MODE) console.log('NSレコード取得エラー（ホスティング会社推定用）:', e);
+    }
+    
+    // NSから見つからない場合はMXレコードから推定
+    if (!estimatedHostingCompany) {
+      try {
+        const mx = await U.dohQuery(baseDomain, "MX");
+        const mxRecords = (mx.Answer || []).map(r => r.data.replace(/\.$/, ''));
+        for (const mxRecord of mxRecords) {
+          const estimate = identifyServer(mxRecord);
+          if (estimate) {
+            estimatedHostingCompany = estimate.replace(/^[^\s]+\s+/, ''); // 絵文字を除去
+            break;
+          }
+        }
+      } catch (e) {
+        if (DEBUG_MODE) console.log('MXレコード取得エラー（ホスティング会社推定用）:', e);
+      }
+    }
+
     // 🆕 ASN情報による詳細なサーバー会社判定
     for (const ip of aSet) {
       try {
@@ -3542,6 +4594,14 @@ async function fetchAll(domain) {
             if (ptrResult.Answer && ptrResult.Answer.length > 0) {
               const hostname = ptrResult.Answer[0].data;
               serverInfoLines.push(`<strong>リモートホスト（逆引き）:</strong> ${hostname}`);
+              
+              // 逆引きホスト名からもホスティング会社を推定
+              if (!estimatedHostingCompany) {
+                const hostnameEstimate = identifyServer(hostname);
+                if (hostnameEstimate) {
+                  estimatedHostingCompany = hostnameEstimate.replace(/^[^\s]+\s+/, '');
+                }
+              }
             }
           } catch (e) {
             if (DEBUG_MODE) console.log('PTRレコード取得エラー:', e);
@@ -3580,11 +4640,31 @@ async function fetchAll(domain) {
             `);
           }
 
-          // 🏢 サーバー会社 (ASN)
-          if (data.asn) {
-            serverInfoLines.push(`<strong>サーバー会社:</strong> ${data.org || data.asn}`);
+          // 🏢 サーバー会社（優先順位: NS/MX推定 > ISP > ASN組織名）
+          let serverCompany = null;
+          if (estimatedHostingCompany) {
+            serverCompany = estimatedHostingCompany;
+          } else if (data.isp) {
+            // ISP名にホスティング会社名が含まれているかチェック
+            const ispLower = data.isp.toLowerCase();
+            const ispEstimate = identifyServer(data.isp);
+            if (ispEstimate) {
+              serverCompany = ispEstimate.replace(/^[^\s]+\s+/, '');
+            } else {
+              serverCompany = data.isp;
+            }
+          } else if (data.org) {
+            serverCompany = data.org;
+          } else if (data.asn) {
+            serverCompany = `AS${data.asn}`;
           }
-          if (data.isp) {
+          
+          if (serverCompany) {
+            serverInfoLines.push(`<strong>サーバー会社:</strong> ${serverCompany}`);
+          }
+          
+          // ISP情報（サーバー会社と異なる場合のみ表示）
+          if (data.isp && serverCompany !== data.isp && (!estimatedHostingCompany || estimatedHostingCompany.toLowerCase() !== data.isp.toLowerCase())) {
             serverInfoLines.push(`<strong>ISP:</strong> ${data.isp}`);
           }
 
@@ -3603,12 +4683,19 @@ async function fetchAll(domain) {
   // MX - wwwあり/なし両方から取得
   let allMxRecords = [];
 
+  // MXレコードを1行ずつ表示（見やすくするため）
+  const formatMxRecords = (records) => {
+    return records.map(record => {
+      return `<div style="padding: 4px 0; font-family: monospace; font-size: 0.9em;">${U.escapeHtml(record)}</div>`;
+    }).join('');
+  };
+
   // ベースドメインのMXレコード
   try {
     const mx = await U.dohQuery(baseDomain, "MX");
-    const mxRecords = (mx.Answer || []).map(r => r.data);
+    const mxRecords = (mx.Answer || []).map(r => r.data.replace(/\.$/, '')).sort(); // 末尾のドットを削除
     if (mxRecords.length > 0) {
-      addRow(`MX (メールサーバー) - ${baseDomain}`, mxRecords.sort().join("<br>"));
+      addRow(`MX (メールサーバー) - ${baseDomain}`, formatMxRecords(mxRecords));
       allMxRecords = allMxRecords.concat(mxRecords);
     }
   } catch {}
@@ -3616,9 +4703,9 @@ async function fetchAll(domain) {
   // wwwドメインのMXレコード
   try {
     const mx = await U.dohQuery(wwwDomain, "MX");
-    const mxRecords = (mx.Answer || []).map(r => r.data);
+    const mxRecords = (mx.Answer || []).map(r => r.data.replace(/\.$/, '')).sort(); // 末尾のドットを削除
     if (mxRecords.length > 0) {
-      addRow(`MX (メールサーバー) - ${wwwDomain}`, mxRecords.sort().join("<br>"));
+      addRow(`MX (メールサーバー) - ${wwwDomain}`, formatMxRecords(mxRecords));
       allMxRecords = allMxRecords.concat(mxRecords);
     }
   } catch {}
@@ -3700,12 +4787,22 @@ async function fetchAll(domain) {
 
   try {
     const txt = await U.dohQuery(baseDomain, "TXT");
-    baseTxtRecords = (txt.Answer || []).map(r => r.data.replaceAll('"','')).sort();
+    // TXTレコードを処理：複数の文字列が結合されている場合は分割
+    baseTxtRecords = (txt.Answer || []).flatMap(r => {
+      // DNSレスポンスのdataフィールドから引用符を削除
+      const data = r.data.replaceAll('"', '');
+      // 長いTXTレコードが複数の文字列に分割されている場合を考慮
+      // 実際には各Answerが1つのTXTレコードなので、そのまま配列に追加
+      return [data];
+    }).sort();
   } catch {}
 
   try {
     const txt = await U.dohQuery(wwwDomain, "TXT");
-    wwwTxtRecords = (txt.Answer || []).map(r => r.data.replaceAll('"','')).sort();
+    wwwTxtRecords = (txt.Answer || []).flatMap(r => {
+      const data = r.data.replaceAll('"', '');
+      return [data];
+    }).sort();
   } catch {}
 
   // 両方のレコードを比較（重要なレコードが同じかをチェック）
@@ -3733,16 +4830,24 @@ async function fetchAll(domain) {
   // 重要なレコードが同じかを比較
   const areSimilar = baseTxtStr === wwwTxtStr && baseImportant.length > 0;
 
+  // TXTレコードを1行ずつ表示（見やすくするため）
+  const formatTxtRecords = (records) => {
+    return records.map(record => {
+      // 各レコードを個別の行として表示
+      return `<div style="padding: 4px 0; font-family: monospace; font-size: 0.9em; word-break: break-all;">${U.escapeHtml(record)}</div>`;
+    }).join('');
+  };
+
   if (baseTxtRecords.length > 0 && wwwTxtRecords.length > 0 && areSimilar) {
     // 重要な内容が同じ場合はベースドメインだけ表示
-    addRow(`TXT - ${baseDomain}`, baseTxtRecords.join("<br>"));
+    addRow(`TXT - ${baseDomain}`, formatTxtRecords(baseTxtRecords));
   } else {
     // 異なる場合、または重要なレコードがない場合は両方表示
     if (baseTxtRecords.length > 0) {
-      addRow(`TXT - ${baseDomain}`, baseTxtRecords.join("<br>"));
+      addRow(`TXT - ${baseDomain}`, formatTxtRecords(baseTxtRecords));
     }
     if (wwwTxtRecords.length > 0) {
-      addRow(`TXT - ${wwwDomain}`, wwwTxtRecords.join("<br>"));
+      addRow(`TXT - ${wwwDomain}`, formatTxtRecords(wwwTxtRecords));
     }
   }
 
@@ -3768,9 +4873,13 @@ async function fetchAll(domain) {
   // NS - ベースドメインのみ（通常wwwにはNSレコードはない）
   try {
     const ns = await U.dohQuery(baseDomain, "NS");
-    const nsRecords = (ns.Answer || []).map(r => r.data).sort();
+    const nsRecords = (ns.Answer || []).map(r => r.data.replace(/\.$/, '')).sort(); // 末尾のドットを削除
     if (nsRecords.length > 0) {
-      addRow(`NS (ネームサーバー) - ${baseDomain}`, nsRecords.join("<br>"));
+      // NSレコードを1行ずつ表示（見やすくするため）
+      const formattedNs = nsRecords.map(record => {
+        return `<div style="padding: 4px 0; font-family: monospace; font-size: 0.9em;">${U.escapeHtml(record)}</div>`;
+      }).join('');
+      addRow(`NS (ネームサーバー) - ${baseDomain}`, formattedNs);
     }
   } catch {}
 
@@ -3868,7 +4977,41 @@ async function fetchAll(domain) {
             if (parsed['Created Date']) whoisLines.push(`　・ 作成日: ${parsed['Created Date']} <span style="color: #666; font-size: 0.85em;">(ドメインが最初に作られた日)</span>`);
             if (parsed['Registered Date']) whoisLines.push(`　・ 登録日: ${parsed['Registered Date']} <span style="color: #666; font-size: 0.85em;">(正式に登録された日)</span>`);
             if (parsed['Connected Date']) whoisLines.push(`　・ 接続日: ${parsed['Connected Date']} <span style="color: #666; font-size: 0.85em;">(ネットワークに接続された日)</span>`);
-            if (parsed['Expires on']) whoisLines.push(`　・ 有効期限: ${parsed['Expires on']} <span style="color: #666; font-size: 0.85em;">(この日までに更新しないと使えなくなります)</span>`);
+            if (parsed['Expires on']) {
+              whoisLines.push(`　・ 有効期限: ${parsed['Expires on']} <span style="color: #666; font-size: 0.85em;">(この日までに更新しないと使えなくなります)</span>`);
+              
+              // ドメイン有効期限のチェック（30日前）
+              try {
+                const expiryDateStr = parsed['Expires on'];
+                // 日付文字列をパース（複数の形式に対応）
+                let expiryDate = null;
+                if (expiryDateStr.includes('/')) {
+                  // YYYY/MM/DD形式
+                  const parts = expiryDateStr.split('/');
+                  if (parts.length === 3) {
+                    expiryDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                  }
+                } else {
+                  // ISO形式やその他の形式
+                  expiryDate = new Date(expiryDateStr);
+                }
+                
+                if (expiryDate && !isNaN(expiryDate.getTime())) {
+                  const now = new Date();
+                  const daysUntilExpiry = Math.floor((expiryDate - now) / (1000 * 60 * 60 * 24));
+                  
+                  // 30日前になったらアラートを表示（サイト健康診断セクションで既に表示されている場合はスキップ）
+                  if (daysUntilExpiry <= 30 && daysUntilExpiry >= 0) {
+                    // アラートはサイト健康診断セクションで表示されるため、ここではスキップ
+                    console.log(`⚠️ ドメイン有効期限まで${daysUntilExpiry}日: ${baseDomain}`);
+                  } else if (daysUntilExpiry < 0) {
+                    console.log(`🚨 ドメイン有効期限が切れています: ${baseDomain}`);
+                  }
+                }
+              } catch (expiryCheckError) {
+                if (DEBUG_MODE) console.error('有効期限チェックエラー:', expiryCheckError);
+              }
+            }
             if (parsed['Last Update']) whoisLines.push(`　・ 最終更新: ${parsed['Last Update']} <span style="color: #666; font-size: 0.85em;">(情報が最後に更新された日)</span>`);
           }
 
@@ -5037,10 +6180,11 @@ async function checkGoogleIndexStatus() {
       indexHtml += '<div style="background: #fff3cd; border-left: 4px solid #ff9800; padding: 12px; border-radius: 4px; margin-bottom: 15px;"><div style="display: flex; gap: 10px; align-items: start;"><img src="images/link.png" style="width: 40px; height: 40px; border-radius: 50%;"><div style="flex: 1;">';
       indexHtml += '<strong style="color: #ff6f00;">💡 りんくからのアドバイス</strong><br><span style="font-size: 0.9em; color: #333;">「Google Search Consoleでさらに詳しい情報を確認できるよ！インデックスに問題があれば、りんくが頼りにしているSEO専門家に相談しよう！」</span></div></div></div>';
       
-      indexHtml += '<a href="https://lin.ee/X2aWSFO" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">';
+      indexHtml += '<a href="https://lin.ee/ThvxXZR" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">';
       indexHtml += '<img src="images/rev.png" style="height: 45px; width: auto;">';
       indexHtml += '<div style="text-align: left; flex: 1;"><div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（風評対策）</div>';
-      indexHtml += '<div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎</div></div><div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div></a></div>';
+      const rephBadge = window.OsintUIComponents?.createPremiumIdBadge ? window.OsintUIComponents.createPremiumIdBadge('@reph') : '<strong style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px;">@reph</strong>';
+      indexHtml += `<div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎ | ${rephBadge}</div></div><div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div></a></div>`;
       
       resultDiv.innerHTML = indexHtml;
     } else if (indexResult && !indexResult.success) {

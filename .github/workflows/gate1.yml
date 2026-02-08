@@ -1,0 +1,48 @@
+name: Gate 1 Check
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+
+jobs:
+  diff-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # 前回のコミットも取得
+      
+      - name: Run diff-check
+        run: |
+          chmod +x scripts/diff-check.sh
+          bash scripts/diff-check.sh || true  # 警告があっても続行（exit 0に変更済み）
+      
+      - name: Check manifest.json version
+        run: |
+          VERSION=$(grep -oP '"version":\s*"\K[^"]+' manifest.json || echo "")
+          if [ -z "$VERSION" ]; then
+            echo "⚠️  manifest.jsonにバージョン番号が見つかりません"
+            exit 1
+          fi
+          echo "✅ バージョン番号: $VERSION"
+      
+      - name: Validate manifest.json
+        run: |
+          # manifest.jsonが有効なJSONか確認
+          python3 -m json.tool manifest.json > /dev/null
+          echo "✅ manifest.jsonは有効なJSON形式です"
+      
+      - name: Check for CHANGELOG update
+        run: |
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff --name-only HEAD 2>/dev/null || echo "")
+          if echo "$CHANGED_FILES" | grep -qE "(manifest\.json|background\.js|popup\.(js|html))"; then
+            if ! git diff HEAD~1 HEAD -- CHANGELOG.md 2>/dev/null | grep -q "." && ! git diff HEAD -- CHANGELOG.md 2>/dev/null | grep -q "."; then
+              echo "ℹ️  CHANGELOG.mdが更新されていない可能性があります"
+              echo "   重要な変更がある場合は、CHANGELOG.mdの更新を検討してください"
+            else
+              echo "✅ CHANGELOG.mdが更新されています"
+            fi
+          fi

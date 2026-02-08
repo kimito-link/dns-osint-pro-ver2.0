@@ -6,108 +6,18 @@
   padding: 0;
 }
 
-/* ロゴスプラッシュ演出 */
-.logo-splash {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  animation: splashFadeOut 0.5s ease-out 1.8s forwards;
-  overflow: hidden;
-}
-
-/* 初音ミク風キラキラ粒子 */
-.logo-splash::before,
-.logo-splash::after {
-  content: '';
-  position: absolute;
-  width: 200%;
-  height: 200%;
-  background-image: 
-    radial-gradient(circle, #00ffff 1px, transparent 1px),
-    radial-gradient(circle, #ff00ff 1px, transparent 1px),
-    radial-gradient(circle, #39ff14 1px, transparent 1px);
-  background-size: 50px 50px, 80px 80px, 100px 100px;
-  background-position: 0 0, 40px 60px, 130px 270px;
-  animation: sparkle 4s linear infinite;
-  opacity: 0.6;
-}
-
-.logo-splash::after {
-  animation-duration: 6s;
-  animation-direction: reverse;
-}
-
-@keyframes sparkle {
-  0% { transform: translate(0, 0) rotate(0deg); }
-  100% { transform: translate(-50px, -50px) rotate(360deg); }
-}
-
-.splash-logo {
-  width: 400px;
-  height: auto;
-  object-fit: contain;
-  animation: splashBounce 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards, neonGlow 2s ease-in-out infinite;
-  filter: drop-shadow(0 0 20px #00ffff) drop-shadow(0 0 40px #ff00ff) drop-shadow(0 15px 40px rgba(0, 0, 0, 0.5));
-  border-radius: 20px;
-  position: relative;
-  z-index: 1;
-}
-
-@keyframes neonGlow {
-  0%, 100% {
-    filter: drop-shadow(0 0 20px #00ffff) drop-shadow(0 0 40px #ff00ff) drop-shadow(0 15px 40px rgba(0, 0, 0, 0.5));
-  }
-  50% {
-    filter: drop-shadow(0 0 30px #00ffff) drop-shadow(0 0 60px #ff00ff) drop-shadow(0 0 20px #39ff14) drop-shadow(0 15px 40px rgba(0, 0, 0, 0.5));
-  }
-}
-
-@keyframes splashBounce {
-  0% {
-    opacity: 0;
-    transform: scale(0) rotate(-180deg);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.2) rotate(10deg);
-  }
-  70% {
-    transform: scale(0.95) rotate(-5deg);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) rotate(0deg);
-  }
-}
-
-@keyframes splashFadeOut {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.5);
-    pointer-events: none;
-  }
-}
-
 body {
-  width: 800px !important;
-  height: 600px !important;
+  min-width: 600px;
+  max-width: 800px;
+  width: 100%;
+  height: 600px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   background: #ffffff;
   color: #333;
   display: flex;
   flex-direction: column;
-  overflow: hidden !important;
+  overflow-x: hidden !important;
+  overflow-y: auto;
 }
 
 /* ヘッダー */
@@ -275,6 +185,8 @@ table {
   width: 100%;
   border-collapse: collapse;
   background: white;
+  margin: 0;
+  padding: 0;
 }
 
 thead {
@@ -334,7 +246,7 @@ td:first-child {
 }
 
 main {
-  padding: 20px;
+  padding: 0;
   background: #ffffff;
   max-height: calc(600px - 200px);
   overflow-y: auto;
@@ -367,8 +279,31 @@ main::-webkit-scrollbar-thumb:hover {
   border-bottom: 1px solid #e0e0e0;
 }
 
+/* 重要な警告（赤・オレンジ系）を上部に固定 */
+.special-section.sticky-alert {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  margin-bottom: 10px;
+}
+
+#specialSections .special-section:first-child {
+  margin-top: 0 !important;
+  padding-top: 15px !important;
+}
+
 .special-section:hover {
   background: #f9f9f9;
+}
+
+/* 警告セクションの識別用クラス */
+.special-section[data-alert-type="critical"],
+.special-section[data-alert-type="warning"] {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
 .section-title {
@@ -417,6 +352,13 @@ main::-webkit-scrollbar-thumb:hover {
   color: #1976d2;
   border-bottom-color: #1976d2;
   z-index: 1001; /* アクティブタブはさらに前面 */
+  font-weight: 700;
+  box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+}
+
+.tab-button:hover:not(.active) {
+  background: #f0f0f0;
+  color: #333;
 }
 
 /* タブコンテンツ */
@@ -425,6 +367,8 @@ main::-webkit-scrollbar-thumb:hover {
   overflow-x: hidden !important;
   max-width: 800px;
   width: 100%;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .tab-content.active {
@@ -433,6 +377,8 @@ main::-webkit-scrollbar-thumb:hover {
   max-width: 800px !important;
   width: 100% !important;
   visibility: visible !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 /* サイト構造ツリーの横スクロール防止 */

@@ -4,7 +4,8 @@ on:
   pull_request:
     branches: [main, master]
   push:
-    branches: [main, master]
+    # すべてのブランチのpushでも実行（毎回のコミットでチェック）
+    # branches: [main, master]  # 特定ブランチのみにする場合はコメントを外す
 
 jobs:
   diff-check:

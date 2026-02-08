@@ -73,3 +73,6 @@ desktop.ini
 
 # Git
 *.orig
+
+# Local configuration (contains API keys)
+config.local.js

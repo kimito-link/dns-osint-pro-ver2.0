@@ -1,0 +1,23 @@
+/**
+ * ローカル設定ファイル（GitHubにはコミットされません）
+ * 
+ * このファイルをコピーして `config.local.js` を作成し、
+ * あなたのAPIキーを設定してください。
+ * 
+ * 使用方法:
+ * 1. このファイルを `config.local.js` にコピー
+ * 2. 以下のAPIキーをあなたのキーに置き換え
+ * 3. 拡張機能をリロード
+ */
+
+const LOCAL_API_CONFIG = {
+  // Google Custom Search API Key
+  googleApiKey: 'AIzaSyBaKHwsfmnxF3gDkvS177ST1Zd8jLRQwIs',
+  
+  // Google Custom Search Engine ID
+  googleSearchEngineId: '0480a8a24bbda42fc',
+  
+  // Google Maps API Key
+  googleMapsApiKey: 'AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8'
+};
+

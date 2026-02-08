@@ -15,14 +15,22 @@
   <main style="padding:16px; display:grid; gap:12px;">
     <section class="card">
       <h2>API キー</h2>
+      <h3 style="margin-top: 16px; margin-bottom: 8px; font-size: 14px; color: #666;">外部API</h3>
       <div class="kv"><span>SecurityTrails API Key</span><input id="stKey" placeholder="例: ST-xxxxxxxx" /></div>
       <div class="kv"><span>WhoisXML API Key</span><input id="wxKey" placeholder="例: at_xxxxxxxxx" /></div>
       <div class="kv"><span>ipdata API Key</span><input id="ipdKey" placeholder="例: xxxxxxxxx" /></div>
+      
+      <h3 style="margin-top: 24px; margin-bottom: 8px; font-size: 14px; color: #666;">Google API</h3>
+      <div class="kv"><span>Google Custom Search API Key</span><input id="googleApiKey" placeholder="例: AIzaSy..." type="password" /></div>
+      <div class="kv"><span>Google Custom Search Engine ID</span><input id="googleSearchEngineId" placeholder="例: 0480a8a24bbda42fc" /></div>
+      <div class="kv"><span>Google Maps API Key</span><input id="googleMapsApiKey" placeholder="例: AIzaSy..." type="password" /></div>
+      
       <div style="display:flex; gap:8px; margin-top:10px;">
         <button id="save">保存</button>
         <button id="clear">クリア</button>
       </div>
       <p class="note">※ 入力は端末間で同期されます。公開前にキーの取り扱いをご確認ください。</p>
+      <p class="note" style="color: #d32f2f; margin-top: 8px;">⚠️ セキュリティのため、APIキーはGitHubなどの公開リポジトリにコミットしないでください。</p>
     </section>
   </main>
 

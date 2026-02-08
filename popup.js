@@ -4624,20 +4624,28 @@ async function fetchAll(domain) {
             serverInfoLines.push(`<strong>緯度・経度:</strong> ${data.latitude}, ${data.longitude}`);
             serverInfoLines.push(`<a href="https://www.google.com/maps?q=${data.latitude},${data.longitude}" target="_blank" style="color: #1976d2; text-decoration: none; border-bottom: 1px dotted #1976d2;">📍 Google Mapsで開く</a>`);
             
-            // 地図の埋め込み
-            serverInfoLines.push(`
-              <div style="margin-top: 10px; border-radius: 8px; overflow: hidden;">
-                <iframe 
-                  width="100%" 
-                  height="200" 
-                  frameborder="0" 
-                  style="border:0" 
-                  referrerpolicy="no-referrer-when-downgrade"
-                  src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${data.latitude},${data.longitude}&zoom=10"
-                  allowfullscreen>
-                </iframe>
-              </div>
-            `);
+            // 地図の埋め込み（Google Maps APIキーが設定されている場合のみ）
+            try {
+              const settings = await chrome.storage.local.get(['googleMapsApiKey']);
+              const mapsApiKey = settings.googleMapsApiKey;
+              if (mapsApiKey) {
+                serverInfoLines.push(`
+                  <div style="margin-top: 10px; border-radius: 8px; overflow: hidden;">
+                    <iframe 
+                      width="100%" 
+                      height="200" 
+                      frameborder="0" 
+                      style="border:0" 
+                      referrerpolicy="no-referrer-when-downgrade"
+                      src="https://www.google.com/maps/embed/v1/place?key=${mapsApiKey}&q=${data.latitude},${data.longitude}&zoom=10"
+                      allowfullscreen>
+                    </iframe>
+                  </div>
+                `);
+              }
+            } catch (e) {
+              if (DEBUG_MODE) console.error('Google Maps APIキー取得エラー:', e);
+            }
           }
 
           // 🏢 サーバー会社（優先順位: NS/MX推定 > ISP > ASN組織名）

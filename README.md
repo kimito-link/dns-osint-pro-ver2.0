@@ -1,9 +1,13 @@
 # 🔍 DNS OSINT Pro ver2.0
 
-[![Version](https://img.shields.io/badge/version-6.5.1-blue.svg)](https://github.com/yourusername/dns-osint-pro-ver2.0)
+[![Version](https://img.shields.io/badge/version-8.0.3-blue.svg)](https://github.com/kimito-link/dns-osint-pro-ver2.0)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-orange.svg)](https://chrome.google.com/webstore)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![GitHub commits](https://img.shields.io/github/commit-activity/m/kimito-link/dns-osint-pro-ver2.0)](https://github.com/kimito-link/dns-osint-pro-ver2.0/commits/master)
+[![GitHub contributors](https://img.shields.io/github/contributors/kimito-link/dns-osint-pro-ver2.0)](https://github.com/kimito-link/dns-osint-pro-ver2.0/graphs/contributors)
+[![GitHub last commit](https://img.shields.io/github/last-commit/kimito-link/dns-osint-pro-ver2.0)](https://github.com/kimito-link/dns-osint-pro-ver2.0/commits/master)
+[![GitHub repo size](https://img.shields.io/github/repo-size/kimito-link/dns-osint-pro-ver2.0)](https://github.com/kimito-link/dns-osint-pro-ver2.0)
 
 **君斗りんくのWEBサイト健康診断＆OSINT調査ツール**
 
@@ -43,7 +47,7 @@ Chrome拡張機能として動作する、ドメイン情報の総合分析ツ�
 
 ---
 
-## 📌 最新バージョン: v6.5.1 (2025-11-08)
+## 📌 最新バージョン: v8.0.3 (2026-02-08)
 
 ### 🎉 新機能ハイライト
 

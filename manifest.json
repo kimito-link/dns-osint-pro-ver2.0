@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "💙 君斗りんくのWEBサイト健康診断 & OSINT Helper",
-  "version": "8.0.3",
+  "version": "8.0.4",
   "description": "複数の検索エンジンのサジェスト機能から、ネガティブキーワードを自動検出します。DNS/WHOIS/SSL診断、CSV出力機能を搭載。",
   "action": {
     "default_popup": "popup.html",

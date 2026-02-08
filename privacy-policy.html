@@ -153,7 +153,7 @@
         プライバシーポリシー
       </h1>
       <p class="app-name">君斗りんくのWEBサイト健康診断 & OSINT Helper</p>
-      <p class="last-updated">最終更新日: 2025年10月19日</p>
+      <p class="last-updated">最終更新日: 2026年2月8日</p>
     </header>
 
     <section>
@@ -196,13 +196,14 @@
         <div class="permission-name">2. storage（ストレージへのアクセス）</div>
         <p><strong>使用目的：</strong></p>
         <ul>
-          <li>ユーザーが設定した<strong>APIキー</strong>（SecurityTrails API、WHOIS XML API、ipdata API）をブラウザ内に保存するため</li>
+          <li>ユーザーが設定した<strong>APIキー</strong>（SecurityTrails API、WHOIS XML API、ipdata API、Google Custom Search API、Google Maps APIなど）をブラウザ内に保存するため</li>
           <li>過去に検索したドメインの履歴をブラウザ内に保存し、次回以降の検索を高速化するため</li>
           <li>ユーザーが設定したカスタマイズオプション（表示設定など）を保存するため</li>
         </ul>
         <p><strong>データの取り扱い：</strong></p>
         <ul>
           <li>すべてのデータは<strong>お客様のブラウザ内（chrome.storage.local）</strong>にのみ保存されます</li>
+          <li>APIキーは<strong>Chrome Sync</strong>を使用して、ユーザーがログインしているChromeアカウントの端末間で同期されます（オプション設定で有効化した場合）</li>
           <li>開発者や第三者がこれらのデータにアクセスすることは一切ありません</li>
           <li>データは暗号化されたブラウザのローカルストレージに保存され、他のWebサイトやアプリケーションからはアクセスできません</li>
         </ul>
@@ -263,6 +264,8 @@
         <li><strong>SecurityTrails API：</strong> 詳細なDNS履歴やサブドメイン情報の取得（APIキーが設定されている場合のみ）</li>
         <li><strong>WHOIS XML API：</strong> 詳細なWHOIS情報の取得（APIキーが設定されている場合のみ）</li>
         <li><strong>ipdata.co API：</strong> IPアドレスの地理的位置情報の取得（APIキーが設定されている場合のみ）</li>
+        <li><strong>Google Custom Search API：</strong> Google検索結果の取得（APIキーが設定されている場合のみ）</li>
+        <li><strong>Google Maps API：</strong> 地図表示機能（APIキーが設定されている場合のみ）</li>
       </ul>
       
       <h3>送信されるデータ</h3>
@@ -283,7 +286,7 @@
       <h3>収集する情報</h3>
       <ul>
         <li><strong>収集しません：</strong> 本拡張機能は、ユーザーの個人情報（氏名、メールアドレス、電話番号、住所など）を一切収集しません。</li>
-        <li><strong>APIキー：</strong> ユーザーが任意で設定するAPIキーは、ブラウザ内のローカルストレージにのみ保存され、外部に送信されることはありません（各APIプロバイダーへの認証時を除く）。</li>
+        <li><strong>APIキー：</strong> ユーザーが任意で設定するAPIキーは、ブラウザ内のローカルストレージに保存され、Chrome Syncを使用して端末間で同期されます（オプション設定で有効化した場合）。APIキーは各APIプロバイダーへの認証時のみ送信され、それ以外の目的で外部に送信されることはありません。</li>
       </ul>
       
       <h3>データの保存</h3>
@@ -342,7 +345,7 @@
     </section>
 
     <footer>
-      <p>&copy; 2025 君斗りんくのWEBサイト健康診断 & OSINT Helper. All rights reserved.</p>
+      <p>&copy; 2026 君斗りんくのWEBサイト健康診断 & OSINT Helper. All rights reserved.</p>
       <p>本拡張機能は、ユーザーのプライバシーを最優先に考えて開発されています。</p>
     </footer>
   </div>

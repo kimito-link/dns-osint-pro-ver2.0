@@ -8,7 +8,8 @@ $tempDir = ".\temp-zip-v$version"
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Chrome拡張機能 ZIPファイル作成" -ForegroundColor Cyan
 Write-Host "バージョン: $version" -ForegroundColor Cyan
-Write-Host "========================================`n" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
 
 # 一時ディレクトリを作成
 Write-Host "📁 一時ディレクトリを作成中..." -ForegroundColor Yellow
@@ -44,7 +45,8 @@ foreach ($file in $files) {
 }
 
 # imagesフォルダをコピー
-Write-Host "`n🖼️  imagesフォルダをコピー中..." -ForegroundColor Yellow
+Write-Host ""
+Write-Host "imagesフォルダをコピー中..." -ForegroundColor Yellow
 if (Test-Path "images") {
     Copy-Item -Path "images" -Destination $tempDir -Recurse -Force
     Write-Host "  ✓ imagesフォルダ" -ForegroundColor Green
@@ -53,7 +55,8 @@ if (Test-Path "images") {
 }
 
 # srcフォルダをコピー（コンポーネントファイル）
-Write-Host "`n📦 srcフォルダをコピー中..." -ForegroundColor Yellow
+Write-Host ""
+Write-Host "srcフォルダをコピー中..." -ForegroundColor Yellow
 if (Test-Path "src") {
     Copy-Item -Path "src" -Destination $tempDir -Recurse -Force
     Write-Host "  ✓ srcフォルダ" -ForegroundColor Green
@@ -62,7 +65,8 @@ if (Test-Path "src") {
 }
 
 # ZIPファイルを作成
-Write-Host "`n📦 ZIPファイルを作成中..." -ForegroundColor Yellow
+Write-Host ""
+Write-Host "ZIPファイルを作成中..." -ForegroundColor Yellow
 if (Test-Path $zipName) {
     Remove-Item -Path $zipName -Force
 }
@@ -74,7 +78,8 @@ Write-Host "🧹 一時ファイルをクリーンアップ中..." -ForegroundCo
 Remove-Item -Path $tempDir -Recurse -Force
 
 # 完了メッセージ
-Write-Host "`n========================================" -ForegroundColor Green
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Green
 Write-Host "✅ ZIPファイル作成完了！" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host "📦 ファイル名: $zipName" -ForegroundColor Cyan
@@ -86,5 +91,7 @@ $sizeKB = [math]::Round($zipFile.Length / 1KB, 2)
 $sizeMB = [math]::Round($zipFile.Length / 1MB, 2)
 Write-Host "📊 ファイルサイズ: $sizeKB KB ($sizeMB MB)" -ForegroundColor Cyan
 
-Write-Host "`n🚀 Chrome Web Storeへアップロード準備完了！" -ForegroundColor Green
-Write-Host "========================================`n" -ForegroundColor Green
+Write-Host ""
+Write-Host "Chrome Web Storeへアップロード準備完了！" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Green
+Write-Host ""

@@ -1868,6 +1868,14 @@ async function checkSuggestPollution(domain, siteTitle) {
                          ]);
     html += UI.createReviewSiteSection(reviewContent);
 
+    // 🔴 逆SEO・ネガティブサイトチェック
+    const reverseSeoContent = UI.createReverseSeoButtons(searchName) +
+      UI.createHintBox([
+        'これらのサイトでネガティブが多く表示される場合は早急な対策を',
+        '検索結果の順位や掲載数も逆SEO対策の判断材料に'
+      ]);
+    html += UI.createReverseSeoSection(reverseSeoContent);
+
     // 🎯 サービスPRセクション（ネガティブがない場合のみ表示）
     if (!hasNegativeSuggest) {
       html += '<div style="margin-top: 20px;">';
@@ -2209,9 +2217,89 @@ async function fetchAll(domain) {
   })();
   
   // ========================================
-  // 🔍 風評被害チェック（サジェスト汚染）は後で表示（ITインフラ系の後）
+  // 🔍 風評被害チェック（サジェスト汚染）【最優先表示】
   // ========================================
   const siteTitle = await getActiveTabTitle();
+  
+  // 風評関係を最上部に表示（サジェスト汚染チェッカー・個人名チェック）
+  addSpecialSection("🔍 風評被害チェック", `
+    <div id="suggest-loading" style="padding: 20px; background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%); border-radius: 8px; border: 2px solid #fbc02d;">
+      <div style="text-align: center;">
+        <div style="color: #f57f17; font-weight: bold; font-size: 1.1em; margin-bottom: 8px;">🔍 風評被害のチェック中...</div>
+        <div class="loading-dots" style="color: #f57f17; font-size: 0.9em;">サジェストを取得しています<span class="dots"></span></div>
+      </div>
+    </div>
+  `);
+  (async () => {
+    try {
+      await checkSuggestPollution(domain, siteTitle);
+    } catch (error) {
+      console.error('サジェストチェックエラー:', error);
+      const loadingDiv = document.getElementById('suggest-loading');
+      if (loadingDiv) {
+        loadingDiv.innerHTML = `
+          <div style="padding: 15px; background: #fff3e0; border: 2px solid #ff9800; border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+              <img src="images/konta.png" style="width: 40px; height: 40px; border-radius: 50%;">
+              <strong style="color: #e65100;">こん太：「サジェストが取得できなかったぜ！」</strong>
+            </div>
+            <div style="font-size: 0.9em; color: #333;">
+              ブラウザの制限でサジェスト情報を取得できませんでした。<br>
+              DNS情報やその他の機能は正常に動作します。
+            </div>
+          </div>
+        `;
+      }
+    }
+  })();
+
+  // 👤 個人名ネガティブチェック（風評関係として先に表示）
+  const checkPersonNamesEnabled = document.getElementById('checkPersonNames')?.checked;
+  if (checkPersonNamesEnabled) {
+    addSpecialSection("👤 個人名ネガティブチェック", `
+    <div id="person-loading" style="position: relative; padding: 20px; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-radius: 8px; border: 2px solid #ff9800; overflow: hidden; min-height: 100px;">
+      <img src="images/konta.png" class="loading-link-bounce" style="width: 60px; height: auto; position: absolute; left: -80px; top: 50%; margin-top: -30px; box-shadow: 0 4px 12px rgba(255,152,0,0.4); z-index: 2; border-radius: 50%;">
+      <div style="text-align: center;">
+        <div style="color: #e65100; font-weight: bold; font-size: 1.2em; margin-bottom: 8px;">🦝 こん太：「個人名をチェック中だぜ！」</div>
+        <div class="loading-dots" style="color: #e65100; font-size: 0.95em;">役員・スタッフの風評を調査中<span class="dots"></span></div>
+      </div>
+    </div>
+  `);
+    (async () => {
+      try {
+        const personResult = await chrome.runtime.sendMessage({
+          type: 'checkPersonReputations',
+          domain: domain,
+          url: `https://${domain}`
+        });
+        const personDiv = document.getElementById('person-loading');
+        if (!personDiv) {
+          console.error('person-loading div not found');
+        } else if (!personResult.success) {
+          personDiv.innerHTML = UI.createErrorBox(personResult.error);
+        } else {
+          let personHtml = '';
+          if (personResult.persons.length === 0) {
+            personHtml = UI.createCharacterMessage('tanu-nee', 'たぬ姉：「個人名が検出されなかったわ」', 'サイトから役職付きの個人名を検出できませんでした。');
+          } else if (!personResult.hasNegative) {
+            personHtml = UI.createPersonCheckSuccess(personResult.persons);
+          } else {
+            personHtml = UI.createPersonCheckNegative(personResult.persons);
+          }
+          personDiv.innerHTML = personHtml;
+        }
+      } catch (error) {
+        console.error('個人名チェックエラー:', error);
+        const personDiv = document.getElementById('person-loading');
+        if (personDiv) {
+          personDiv.innerHTML = UI.createWarningBox(
+            'サイトへのアクセス制限により個人名を取得できませんでした。<br>他の機能は正常に動作します。',
+            'たぬ姉：「個人名チェックができなかったわ」'
+          );
+        }
+      }
+    })();
+  }
   
   // ⚡ 重い処理を全て非同期化して、即座にUIを操作可能にする
   // メインのローディング表示を早めに終了
@@ -4396,110 +4484,8 @@ async function fetchAll(domain) {
     document.getElementById('health-loading').innerHTML = catchErrorHtml;
   }
 
-  // ========================================
-  // 👤 個人名ネガティブチェック（オプション）
-  // ユーザーがチェックボックスを有効にした場合のみ実行
-  // ========================================
-  // ========================================
-  // 🔍 風評系セクション - WEB系の後、ITインフラ系の前
-  // ========================================
+  // 風評系セクション（サジェスト汚染チェッカー・個人名）は最上部に移動済み
   
-  // 🔍 風評被害チェック（サジェスト汚染）
-  addSpecialSection("🔍 風評被害チェック", `
-    <div id="suggest-loading" style="padding: 20px; background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%); border-radius: 8px; border: 2px solid #fbc02d;">
-      <div style="text-align: center;">
-        <div style="color: #f57f17; font-weight: bold; font-size: 1.1em; margin-bottom: 8px;">🔍 風評被害のチェック中...</div>
-        <div class="loading-dots" style="color: #f57f17; font-size: 0.9em;">サジェストを取得しています<span class="dots"></span></div>
-      </div>
-    </div>
-  `);
-
-  // サジェストチェックを非同期で実行（エラーが発生しても続行）
-  (async () => {
-    try {
-      await checkSuggestPollution(domain, siteTitle);
-    } catch (error) {
-      console.error('サジェストチェックエラー:', error);
-      // エラー表示
-      const loadingDiv = document.getElementById('suggest-loading');
-      if (loadingDiv) {
-        loadingDiv.innerHTML = `
-          <div style="padding: 15px; background: #fff3e0; border: 2px solid #ff9800; border-radius: 8px;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-              <img src="images/konta.png" style="width: 40px; height: 40px; border-radius: 50%;">
-              <strong style="color: #e65100;">こん太：「サジェストが取得できなかったぜ！」</strong>
-            </div>
-            <div style="font-size: 0.9em; color: #333;">
-              ブラウザの制限でサジェスト情報を取得できませんでした。<br>
-              DNS情報やその他の機能は正常に動作します。
-            </div>
-          </div>
-        `;
-      }
-    }
-  })();
-
-  // 👤 個人名ネガティブチェック（オプション）
-  const checkPersonNamesEnabled = document.getElementById('checkPersonNames')?.checked;
-
-  if (checkPersonNamesEnabled) {
-    addSpecialSection("👤 個人名ネガティブチェック", `
-    <div id="person-loading" style="position: relative; padding: 20px; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-radius: 8px; border: 2px solid #ff9800; overflow: hidden; min-height: 100px;">
-      <img src="images/konta.png" class="loading-link-bounce" style="width: 60px; height: auto; position: absolute; left: -80px; top: 50%; margin-top: -30px; box-shadow: 0 4px 12px rgba(255,152,0,0.4); z-index: 2; border-radius: 50%;">
-      <div style="text-align: center;">
-        <div style="color: #e65100; font-weight: bold; font-size: 1.2em; margin-bottom: 8px;">🦝 こん太：「個人名をチェック中だぜ！」</div>
-        <div class="loading-dots" style="color: #e65100; font-size: 0.95em;">役員・スタッフの風評を調査中<span class="dots"></span></div>
-      </div>
-    </div>
-  `);
-
-  // 個人名チェックを実行
-  (async () => {
-    try {
-      const personResult = await chrome.runtime.sendMessage({
-        type: 'checkPersonReputations',
-        domain: domain,
-        url: `https://${domain}`
-      });
-
-      const personDiv = document.getElementById('person-loading');
-      if (!personDiv) {
-        console.error('person-loading div not found');
-      } else if (!personResult.success) {
-        personDiv.innerHTML = UI.createErrorBox(personResult.error);
-      } else {
-        let personHtml = '';
-
-        if (personResult.persons.length === 0) {
-          // 個人名が検出されなかった
-          personHtml = UI.createCharacterMessage(
-            'tanu-nee',
-            'たぬ姉：「個人名が検出されなかったわ」',
-            'サイトから役職付きの個人名を検出できませんでした。'
-          );
-        } else if (!personResult.hasNegative) {
-          // ネガティブなし
-          personHtml = UI.createPersonCheckSuccess(personResult.persons);
-        } else {
-          // ⚠️ ネガティブ検出
-          personHtml = UI.createPersonCheckNegative(personResult.persons);
-        }
-
-        personDiv.innerHTML = personHtml;
-      }
-    } catch (error) {
-      console.error('個人名チェックエラー:', error);
-      const personDiv = document.getElementById('person-loading');
-      if (personDiv) {
-        personDiv.innerHTML = UI.createWarningBox(
-          'サイトへのアクセス制限により個人名を取得できませんでした。<br>他の機能は正常に動作します。',
-          'たぬ姉：「個人名チェックができなかったわ」'
-        );
-      }
-    }
-  })();
-  } // if (checkPersonNamesEnabled)
-
   // ========================================
   // 📡 DNS情報セクション（ITインフラ系 - 最後）
   // ========================================

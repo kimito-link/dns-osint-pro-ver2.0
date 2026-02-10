@@ -1,23 +1,23 @@
 {
   "manifest_version": 3,
-  "name": "💙 君斗りんくのWEBサイト健康診断 & OSINT Helper",
-  "version": "8.0.4",
+  "name": "💙 サジェスト汚染チェッカー",
+  "version": "8.0.5",
   "description": "複数の検索エンジンのサジェスト機能から、ネガティブキーワードを自動検出します。DNS/WHOIS/SSL診断、CSV出力機能を搭載。",
   "action": {
     "default_popup": "popup.html",
-    "default_title": "💙 君斗りんくのWEBサイト健康診断 & OSINT Helper",
+    "default_title": "💙 サジェスト汚染チェッカー",
     "default_icon": {
-      "16": "images/link.png",
-      "32": "images/link.png",
-      "48": "images/link.png",
-      "128": "images/link.png"
+      "16": "images/rev.png",
+      "32": "images/rev.png",
+      "48": "images/rev.png",
+      "128": "images/rev.png"
     }
   },
   "icons": {
-    "16": "images/link.png",
-    "32": "images/link.png",
-    "48": "images/link.png",
-    "128": "images/link.png"
+    "16": "images/rev.png",
+    "32": "images/rev.png",
+    "48": "images/rev.png",
+    "128": "images/rev.png"
   },
   "permissions": [
     "activeTab",

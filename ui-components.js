@@ -1125,6 +1125,70 @@ Object.assign(window.OsintUIComponents, {
           <strong style="color: #e65100; font-size: 1.05em;">口コミサイトで評判を確認:</strong>
         </div>
         ${content}
+        <div style="margin-top: 15px; padding-top: 12px; border-top: 1px solid rgba(255,152,0,0.4);">
+          <a href="https://lin.ee/8XbiSq6" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">
+            <img src="images/rev.png" style="height: 45px; width: auto;">
+            <div style="text-align: left; flex: 1;">
+              <div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（口コミ）</div>
+              <div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎ | ${window.OsintUIComponents?.createPremiumIdBadge ? window.OsintUIComponents.createPremiumIdBadge('@reph') : '<strong style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px;">@reph</strong>'}</div>
+            </div>
+            <div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>
+          </a>
+        </div>
+      </div>
+    `;
+  },
+
+  /**
+   * 逆SEO・ネガティブサイトリンクボタン群
+   * @param {string} searchName - 検索名（会社名・個人名）
+   * @returns {string} HTML文字列
+   */
+  createReverseSeoButtons(searchName) {
+    const url5ch = `https://www.google.com/search?q=${encodeURIComponent(searchName + ' site:5ch.net')}`;
+    const urlBakusai = `https://www.google.com/search?q=${encodeURIComponent(searchName + ' site:bakusai.com')}`;
+    const urlJpnumber = `https://www.google.com/search?q=${encodeURIComponent(searchName + ' site:jpnumber.com')}`;
+    const urlHostlove = `https://www.google.com/search?q=${encodeURIComponent(searchName + ' site:hostlove.jp')}`;
+
+    return `
+      <div style="margin-bottom: 12px;">
+        <div style="font-size: 0.85em; color: #666; margin-bottom: 6px; font-weight: 600;">🔴 逆SEO・ネガティブサイト:</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <a href="${url5ch}" target="_blank" class="review-btn" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #e53935; border-radius: 4px; text-decoration: none; color: #c62828; font-size: 0.85em; font-weight: 500;">5ch</a>
+          <a href="${urlBakusai}" target="_blank" class="review-btn" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #e53935; border-radius: 4px; text-decoration: none; color: #c62828; font-size: 0.85em; font-weight: 500;">爆サイ</a>
+          <a href="${urlJpnumber}" target="_blank" class="review-btn" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #e53935; border-radius: 4px; text-decoration: none; color: #c62828; font-size: 0.85em; font-weight: 500;">jpnumber</a>
+          <a href="${urlHostlove}" target="_blank" class="review-btn" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border: 1.5px solid #e53935; border-radius: 4px; text-decoration: none; color: #c62828; font-size: 0.85em; font-weight: 500;">ホスラブ</a>
+        </div>
+      </div>
+    `;
+  },
+
+  /**
+   * 逆SEO・ネガティブサイトセクションラッパー
+   * @param {string} content - 内部コンテンツ
+   * @returns {string} HTML文字列
+   */
+  createReverseSeoSection(content) {
+    return `
+      <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%); border: 2px solid #e53935; border-radius: 8px;">
+        <div style="display: flex; align-items: center; margin-bottom: 12px;">
+          <span style="font-size: 1.3em; margin-right: 8px;">🔴</span>
+          <strong style="color: #c62828; font-size: 1.05em;">逆SEO・ネガティブサイトで個人名・会社名をチェック</strong>
+        </div>
+        <p style="font-size: 0.9em; color: #555; margin-bottom: 12px;">
+          掲示板や評判サイトで、ネガティブな投稿が表示されていないか確認できます。
+        </p>
+        ${content}
+        <div style="margin-top: 15px; padding-top: 12px; border-top: 1px solid rgba(229,57,53,0.4);">
+          <a href="https://lin.ee/8XbiSq6" target="_blank" class="hover-scale" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 18px 30px; background: #06C755; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 12px rgba(6,199,85,0.3); border: none;">
+            <img src="images/rev.png" style="height: 45px; width: auto;">
+            <div style="text-align: left; flex: 1;">
+              <div style="color: #fff; font-weight: bold; font-size: 1.2em;">リバースハックに相談（逆SEO・ネガティブ対策）</div>
+              <div style="font-size: 0.85em; color: rgba(255,255,255,0.9);">りんくが頼りにしている専門家 | レスポンス◎ | ${window.OsintUIComponents?.createPremiumIdBadge ? window.OsintUIComponents.createPremiumIdBadge('@reph') : '<strong style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px;">@reph</strong>'}</div>
+            </div>
+            <div style="color: #fff; font-size: 1.5em; font-weight: bold;">→</div>
+          </a>
+        </div>
       </div>
     `;
   },
